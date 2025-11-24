@@ -1,0 +1,200 @@
+"""
+Serializers para productos y categorías
+"""
+
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from .models import CategoriaProducto, Producto
+
+Usuario = get_user_model()
+
+
+class CategoriaProductoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para categorías de productos
+    """
+    productos_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CategoriaProducto
+        fields = [
+            'id', 'nombre', 'descripcion', 'icono', 
+            'estado', 'fecha_creacion', 'productos_count'
+        ]
+        read_only_fields = ['id', 'fecha_creacion']
+    
+    def get_productos_count(self, obj):
+        """Cuenta los productos disponibles en esta categoría"""
+        return obj.productos_count()
+
+
+class ProductoListSerializer(serializers.ModelSerializer):
+    """
+    Serializer para lista de productos (vista resumida)
+    """
+    campesino_nombre = serializers.CharField(source='usuario.get_full_name', read_only=True)
+    categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
+    categoria_icono = serializers.CharField(source='categoria.icono', read_only=True)
+    finca_nombre = serializers.CharField(source='finca.nombre_finca', read_only=True)
+    ubicacion = serializers.CharField(source='finca.ubicacion_completa', read_only=True)
+    precio_formateado = serializers.ReadOnlyField()
+    is_disponible = serializers.ReadOnlyField()
+    tags_list = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Producto
+        fields = [
+            'id', 'nombre', 'descripcion', 'precio_por_kg', 'precio_formateado',
+            'stock_disponible', 'unidad_medida', 'estado', 'is_disponible',
+            'imagen_principal', 'calidad', 'fecha_cosecha', 'disponible_entrega_inmediata',
+            'campesino_nombre', 'categoria_nombre', 'categoria_icono', 
+            'finca_nombre', 'ubicacion', 'tags_list'
+        ]
+    
+    def get_tags_list(self, obj):
+        return obj.get_tags_list()
+
+
+class ProductoDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer detallado para un producto específico
+    """
+    campesino = serializers.SerializerMethodField()
+    categoria = CategoriaProductoSerializer(read_only=True)
+    finca = serializers.SerializerMethodField()
+    precio_formateado = serializers.ReadOnlyField()
+    is_disponible = serializers.ReadOnlyField()
+    tags_list = serializers.SerializerMethodField()
+    galeria_urls = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Producto
+        fields = [
+            'id', 'nombre', 'descripcion', 'precio_por_kg', 'precio_formateado',
+            'stock_disponible', 'unidad_medida', 'estado', 'is_disponible',
+            'imagen_principal', 'galeria_urls', 'tags_list', 'calidad',
+            'fecha_cosecha', 'fecha_vencimiento', 'peso_minimo_venta',
+            'peso_maximo_venta', 'disponible_entrega_inmediata',
+            'tiempo_preparacion_dias', 'fecha_creacion', 'fecha_actualizacion',
+            'campesino', 'categoria', 'finca'
+        ]
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
+    
+    def get_campesino(self, obj):
+        return {
+            'id': obj.usuario.id,
+            'nombre': obj.usuario.get_full_name(),
+            'email': obj.usuario.email,
+            'calificacion_promedio': obj.usuario.calificacion_promedio,
+            'total_calificaciones': obj.usuario.total_calificaciones,
+            'avatar': obj.usuario.avatar.url if obj.usuario.avatar else None
+        }
+    
+    def get_finca(self, obj):
+        return {
+            'id': obj.finca.id,
+            'nombre': obj.finca.nombre_finca,
+            'ubicacion': obj.finca.ubicacion_completa,
+            'area_hectareas': obj.finca.area_hectareas,
+            'tipo_cultivo': obj.finca.get_tipo_cultivo_display(),
+            'certificaciones_count': obj.finca.certificaciones.filter(estado='vigente').count()
+        }
+    
+    def get_tags_list(self, obj):
+        return obj.get_tags_list()
+    
+    def get_galeria_urls(self, obj):
+        return obj.get_galeria_urls()
+
+
+class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer para crear/actualizar productos
+    """
+    tags_list = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        required=False,
+        help_text="Lista de tags para el producto"
+    )
+    
+    class Meta:
+        model = Producto
+        fields = [
+            'categoria', 'finca', 'nombre', 'descripcion', 'precio_por_kg',
+            'stock_disponible', 'unidad_medida', 'estado', 'imagen_principal',
+            'tags_list', 'calidad', 'fecha_cosecha', 'fecha_vencimiento',
+            'peso_minimo_venta', 'peso_maximo_venta', 'disponible_entrega_inmediata',
+            'tiempo_preparacion_dias'
+        ]
+    
+    def validate_finca(self, value):
+        """Validar que la finca pertenece al usuario autenticado"""
+        user = self.context['request'].user
+        if not user.is_campesino:
+            raise serializers.ValidationError("Solo los campesinos pueden crear productos")
+        
+        if value.usuario != user:
+            raise serializers.ValidationError("La finca debe pertenecerte")
+        
+        return value
+    
+    def validate(self, attrs):
+        """Validaciones adicionales"""
+        peso_min = attrs.get('peso_minimo_venta', 0.5)
+        peso_max = attrs.get('peso_maximo_venta', 100.0)
+        
+        if peso_min >= peso_max:
+            raise serializers.ValidationError(
+                "El peso mínimo debe ser menor que el peso máximo"
+            )
+        
+        return attrs
+    
+    def create(self, validated_data):
+        tags_list = validated_data.pop('tags_list', [])
+        
+        # Asignar usuario automáticamente
+        validated_data['usuario'] = self.context['request'].user
+        
+        producto = Producto.objects.create(**validated_data)
+        
+        # Procesar tags
+        if tags_list:
+            producto.set_tags_from_list(tags_list)
+            producto.save()
+        
+        return producto
+    
+    def update(self, instance, validated_data):
+        tags_list = validated_data.pop('tags_list', None)
+        
+        # Actualizar campos
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Procesar tags si se proporcionaron
+        if tags_list is not None:
+            instance.set_tags_from_list(tags_list)
+        
+        instance.save()
+        return instance
+
+
+class ProductoStockUpdateSerializer(serializers.Serializer):
+    """
+    Serializer para actualizar stock de productos
+    """
+    cantidad = serializers.IntegerField(min_value=0)
+    accion = serializers.ChoiceField(choices=['set', 'add', 'subtract'])
+    
+    def validate(self, attrs):
+        producto = self.context['producto']
+        cantidad = attrs['cantidad']
+        accion = attrs['accion']
+        
+        if accion == 'subtract' and cantidad > producto.stock_disponible:
+            raise serializers.ValidationError(
+                f"No se puede restar más stock del disponible ({producto.stock_disponible})"
+            )
+        
+        return attrs

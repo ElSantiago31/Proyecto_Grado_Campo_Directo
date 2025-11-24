@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Campo Directo - Conectando productores y consumidores{% endblock %}
+
+{% block content %}
+    <!-- Header con navegación -->
+    <header class="header">
+        <nav class="nav-container">
+            <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="logo">
+            <ul class="nav-menu">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#mision">Misión</a></li>
+                <li><a href="#vision">Visión</a></li>
+                <li><a href="#metas">Metas</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <!-- Sección principal -->
+    <main>
+        <section id="inicio" class="hero">
+            <h1>Bienvenidos a<br>Campo Directo</h1>
+            
+            <!-- Botones de registro -->
+            <div class="registration-buttons">
+                <a href="{% url 'frontend:login' %}" class="btn btn-primary">🌱 Soy Campesino</a>
+                <a href="{% url 'frontend:login-comprador' %}" class="btn btn-primary">🛒 Soy Comprador</a>
+                <a href="{% url 'frontend:register' %}" class="btn btn-primary">Registrarse</a>
+            </div>
+        </section>
+        
+        <!-- Secciones de información -->
+        <section class="info-sections">
+            <div id="mision" class="info-card">
+                <h2>Misión</h2>
+                <p>Conectar directamente a los productores del campo con los consumidores de la ciudad, reduciendo la cantidad de intermediarios y promoviendo el comercio justo a través de una plataforma web fácil de usar, accesible y segura.</p>
+            </div>
+            
+            <div id="vision" class="info-card">
+                <h2>Visión</h2>
+                <p>Ser el puente digital que une el campo con la ciudad, fortaleciendo la agricultura local y fomentando una economía más justa y sostenible.</p>
+            </div>
+            
+            <div id="metas" class="info-card">
+                <h2>Metas</h2>
+                <p>Nuestra meta es fortalecer el vínculo entre productores agrícolas y consumidores urbanos, reduciendo intermediarios y promoviendo el comercio justo.
+                Buscamos impulsar el desarrollo del sector agrícola a través de la tecnología, ofreciendo una plataforma accesible, segura y eficiente que facilite la compra y venta directa de productos del campo.</p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer con información de contacto -->
+    <footer id="contacto" class="footer">
+        <div class="footer-content">
+            <h3>Contacto</h3>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <svg class="contact-icon" viewBox="0 0 24 24">
+                        <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
+                    </svg>
+                    <span>infocampodirecto@gmail.com</span>
+                </div>
+                
+                <div class="contact-item">
+                    <svg class="contact-icon" viewBox="0 0 24 24">
+                        <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" />
+                    </svg>
+                    <span>+57-000-000000</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+{% endblock %}

@@ -1,0 +1,4 @@
+# Ignorar todos los archivos pero mantener estructura
+*
+!.gitignore
+!*/.gitkeep

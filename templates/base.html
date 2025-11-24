@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Campo Directo - Conectando campesinos directamente con compradores{% endblock %}</title>
+    <meta name="description" content="{% block description %}Plataforma web que conecta productores agrícolas directamente con consumidores{% endblock %}">
+    
+    {% load static %}
+    
+    <!-- CSS Base -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    <!-- CSS específicos por página -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    
+    {% block content %}
+    <!-- El contenido se renderizará aquí -->
+    {% endblock %}
+    
+    <!-- Scripts base -->
+    <script src="{% static 'js/config/api.js' %}"></script>
+    
+    <!-- Scripts específicos por página -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Configuración global de Django -->
+    <script>
+        // Configuración para CSRF token
+        window.csrfToken = '{{ csrf_token }}';
+        
+        // Configuración de Django para el frontend
+        window.djangoConfig = {
+            mediaUrl: '{{ MEDIA_URL }}',
+            staticUrl: '{{ STATIC_URL }}',
+            debug: {% if debug %}true{% else %}false{% endif %}
+        };
+    </script>
+</body>
+</html>

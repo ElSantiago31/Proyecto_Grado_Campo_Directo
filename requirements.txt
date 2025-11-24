@@ -1,0 +1,48 @@
+# Campo Directo - Django Requirements
+
+# Django Core
+Django==5.2.7
+djangorestframework==3.16.1
+
+# Authentication
+djangorestframework-simplejwt==5.5.1
+
+# CORS
+django-cors-headers==4.9.0
+
+# Image handling
+Pillow==11.3.0
+
+# Environment variables
+python-decouple==3.8
+
+# API Documentation
+drf-yasg==1.21.11
+
+# Filtering
+django-filter==25.2
+
+# Database
+# Para desarrollo (SQLite ya incluido en Django)
+# Para producción MySQL:
+mysql-connector-python==9.4.0
+
+# PostgreSQL (alternativo)
+psycopg2-binary==2.9.11
+
+# Development
+# nodemon equivalente para Django (opcional)
+# watchdog==3.0.0
+
+# Production (opcional)
+# gunicorn==21.2.0
+# whitenoise==6.6.0
+
+# Testing (opcional)
+# pytest==7.4.3
+# pytest-django==4.7.0
+# coverage==7.3.2
+
+# Quality (opcional)
+# flake8==6.1.0
+# black==23.11.0
