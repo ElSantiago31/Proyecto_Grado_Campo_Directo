@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrarse - Campo Directo{% endblock %}
+{% block description %}Registro de usuarios en Campo Directo - Plataforma agrícola{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registro.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Header con navegación -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="{% url 'frontend:home' %}">
+                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="logo">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="{% url 'frontend:home' %}#inicio">Inicio</a></li>
+                <li><a href="{% url 'frontend:home' %}#mision">Misión</a></li>
+                <li><a href="{% url 'frontend:home' %}#vision">Visión</a></li>
+                <li><a href="{% url 'frontend:home' %}#metas">Metas</a></li>
+                <li><a href="{% url 'frontend:home' %}#contacto">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <!-- Sección principal de registro -->
+    <main class="register-main">
+        <div class="register-container">
+            <!-- Lado izquierdo - Imagen ilustrativa -->
+            <div class="register-image-section">
+                <img src="{% static 'images/LogoCel.png' %}" alt="Campesino Campo Directo" class="register-illustration">
+            </div>
+            
+            <!-- Lado derecho - Formulario de registro -->
+            <div class="register-form-section">
+                <div class="register-header">
+                    <div class="register-icon">
+                        <img src="{% static 'images/logo.png' %}" alt="Campo Directo Icon" class="register-logo-icon">
+                    </div>
+                    <h1>Registrarse</h1>
+                </div>
+                
+                <form class="register-form" id="registerForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <input type="text" id="nombre" name="nombre" placeholder="Nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="text" id="apellido" name="apellido" placeholder="Apellido" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="tel" id="contacto" name="contacto" placeholder="Teléfono (10 dígitos)" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="email" id="correo" name="correo" placeholder="Correo" required>
+                    </div>
+                    
+                    <!-- Radio buttons para tipo de usuario -->
+                    <div class="form-group radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="campesino" name="tipoUsuario" value="campesino" checked>
+                            <label for="campesino">Soy Campesino</label>
+                        </div>
+                        
+                        <div class="radio-option">
+                            <input type="radio" id="comprador" name="tipoUsuario" value="comprador">
+                            <label for="comprador">Soy Comprador</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group date-group">
+                        <input type="text" id="fechaNacimiento" name="fechaNacimiento" placeholder="Fecha de nacimiento DD/MM/AAAA" required onfocus="(this.type='date')" onblur="if(!this.value) this.type='text'">
+                    </div>
+                    
+                    <!-- Campo específico para campesinos -->
+                    <div class="form-group campesino-field">
+                        <input type="text" id="nombreFinca" name="nombreFinca" placeholder="Nombre de Finca">
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="form-group">
+                        <input type="password" id="password" name="password" placeholder="Contraseña" required minlength="6">
+                    </div>
+
+                    <!-- Confirmar contraseña -->
+                    <div class="form-group">
+                        <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirmar contraseña" required minlength="6">
+                    </div>
+                    
+                    <button type="submit" class="btn-register">Registrarse</button>
+                </form>
+                
+                <div class="login-link">
+                    <p>¿Ya tienes cuenta? <a href="{% url 'frontend:login' %}">Iniciar Sesión</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Hacer el CSRF token disponible para JavaScript
+window.csrfToken = '{{ csrf_token }}';
+</script>
+<script src="{% static 'js/config/api.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/registro.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

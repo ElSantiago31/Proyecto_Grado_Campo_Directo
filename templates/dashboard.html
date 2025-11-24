@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Campo Directo{% endblock %}
+{% block description %}Panel de control para campesinos - Campo Directo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block content %}
+    <div id="appContainer">
+    <!-- Header con navegación del dashboard -->
+    <header class="dashboard-header">
+        <nav class="dashboard-nav">
+            <div class="nav-left">
+                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="dashboard-logo">
+                <h1 class="dashboard-title">Panel del Campesino</h1>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <span class="user-greeting">¡Hola, <span id="userName">{% if usuario %}{{ usuario.nombre }}{% else %}Usuario{% endif %}</span>!</span>
+                    <div class="user-menu">
+                        <button class="user-menu-btn" id="userMenuBtn">
+                            <span class="user-avatar">🌱</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" id="profileLink">Mi Perfil</a>
+                            <a href="#" id="settingsLink">Configuración</a>
+                            <hr>
+                            <a href="#" id="logoutBtn">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenido principal del dashboard -->
+    <main class="dashboard-main">
+        <!-- Sidebar de navegación -->
+        <aside class="dashboard-sidebar">
+            <nav class="sidebar-nav">
+                <ul class="nav-items">
+                    <li>
+                        <a href="#overview" class="nav-item active" data-section="overview">
+                            <span class="nav-icon">📊</span>
+                            Resumen
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#products" class="nav-item" data-section="products">
+                            <span class="nav-icon">🌾</span>
+                            Mis Productos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#orders" class="nav-item" data-section="orders">
+                            <span class="nav-icon">📦</span>
+                            Pedidos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#farm" class="nav-item" data-section="farm">
+                            <span class="nav-icon">🏡</span>
+                            Mi Finca
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#sales" class="nav-item" data-section="sales">
+                            <span class="nav-icon">💰</span>
+                            Ventas
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido de las secciones -->
+        <div class="dashboard-content">
+            <!-- Sección Resumen -->
+            <section id="overview" class="content-section active">
+                <div class="section-header">
+                    <h2>Resumen de tu Actividad</h2>
+                    <p>Vista general de tu finca y ventas</p>
+                </div>
+
+                <!-- Tarjetas de estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-content">
+                            <h3>Productos Activos</h3>
+                            <div class="stat-number" id="activeProducts">{{ estadisticas.productos_activos }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3>Pedidos Pendientes</h3>
+                            <div class="stat-number" id="pendingOrders">{{ estadisticas.pedidos_pendientes }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3>Ventas del Mes</h3>
+                            <div class="stat-number">$<span id="monthSales">{{ estadisticas.ventas_mes|floatformat:0 }}</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <h3>Calificación</h3>
+                            <div class="stat-number" id="rating">{{ estadisticas.calificacion|floatformat:1 }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actividad reciente -->
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3>
+                    <div class="activity-list" id="recentActivityList">
+                        {% for actividad in actividad_reciente %}
+                        <div class="activity-item">
+                            <span class="activity-icon">
+                                {% if actividad.estado == 'completed' %}✅
+                                {% elif actividad.estado == 'pending' %}🕰️
+                                {% elif actividad.estado == 'confirmed' %}📝
+                                {% else %}📦{% endif %}
+                            </span>
+                            <div class="activity-content">
+                                <p><strong>{{ actividad.descripcion }}</strong></p>
+                                <small>{{ actividad.tiempo }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="activity-item">
+                            <span class="activity-icon">📈</span>
+                            <div class="activity-content">
+                                <p><strong>No hay actividad reciente</strong></p>
+                                <small>Comienza agregando productos a tu finca</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Productos -->
+            <section id="products" class="content-section">
+                <div class="section-header">
+                    <h2>Mis Productos</h2>
+                    <button class="btn btn-primary" id="addProductBtn">
+                        <span>+</span> Agregar Producto
+                    </button>
+                </div>
+
+                <!-- Filtros de productos -->
+                <div class="filters">
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">Todas las categorías</option>
+                        <option value="vegetales">Vegetales</option>
+                        <option value="frutas">Frutas</option>
+                        <option value="granos">Granos</option>
+                        <option value="hierbas">Hierbas</option>
+                    </select>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="disponible">Disponible</option>
+                        <option value="agotado">Agotado</option>
+                        <option value="temporada">Fuera de temporada</option>
+                    </select>
+                </div>
+
+                <!-- Lista de productos -->
+                <div class="products-grid" id="productsGrid">
+                    <!-- Los productos se generarán dinámicamente con JavaScript -->
+                </div>
+            </section>
+
+            <!-- Sección Pedidos -->
+            <section id="orders" class="content-section">
+                <div class="section-header">
+                    <h2>Pedidos</h2>
+                    <div class="order-tabs">
+                        <button class="tab-btn active" data-tab="pending">Pendientes (<span id="pendingCount">--</span>)</button>
+                        <button class="tab-btn" data-tab="completed">Completados</button>
+                        <button class="tab-btn" data-tab="cancelled">Cancelados</button>
+                    </div>
+                </div>
+
+                <div class="orders-list" id="ordersList">
+                    <!-- Los pedidos se generarán dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Sección Mi Finca -->
+            <section id="farm" class="content-section">
+                <div class="section-header">
+                    <h2>Mi Finca</h2>
+                    <button class="btn btn-secondary" id="editFarmBtn">Editar Información</button>
+                </div>
+
+                <div class="farm-info">
+                    <div class="farm-card">
+                        <h3>Información General</h3>
+                        {% if finca_info %}
+                        <div class="info-row">
+                            <label>Nombre de la Finca:</label>
+                            <span id="farmName">{{ finca_info.nombre }}</span>
+                        </div>
+                        <div class="info-row">
+                            <label>Ubicación:</label>
+                            <span id="farmLocation">{{ finca_info.ubicacion }}</span>
+                        </div>
+                        <div class="info-row">
+                            <label>Área:</label>
+                            <span id="farmArea">{{ finca_info.area }} hectáreas</span>
+                        </div>
+                        <div class="info-row">
+                            <label>Tipo de Cultivo:</label>
+                            <span id="farmType">{{ finca_info.tipo_cultivo }}</span>
+                        </div>
+                        {% else %}
+                        <div class="info-row">
+                            <label>Finca:</label>
+                            <span>No hay finca registrada</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="farm-card">
+                        <h3>Certificaciones</h3>
+                        <div class="certifications" id="certificationsList">
+                            <div class="cert-badge">🌱 Orgánico</div>
+                            <div class="cert-badge">✅ BPA</div>
+                            <div class="cert-badge">🌿 Sostenible</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Ventas -->
+            <section id="sales" class="content-section">
+                <div class="section-header">
+                    <h2>Ventas y Estadísticas</h2>
+                    <select class="period-select" id="salesPeriod">
+                        <option value="week">Esta semana</option>
+                        <option value="month" selected>Este mes</option>
+                        <option value="year">Este año</option>
+                    </select>
+                </div>
+
+                <div class="sales-summary">
+                    <div class="summary-card">
+                        <h3>Ingresos Totales</h3>
+                        <div class="summary-amount" id="totalRevenue">${{ estadisticas.ventas_mes|floatformat:0 }}</div>
+                        <div class="summary-change positive">Mes actual</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Productos Vendidos</h3>
+                        <div class="summary-amount" id="productsSold">{{ estadisticas.productos_vendidos }} unidades</div>
+                        <div class="summary-change positive">Este mes</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Clientes Únicos</h3>
+                        <div class="summary-amount" id="uniqueCustomers">{{ estadisticas.clientes_unicos }}</div>
+                        <div class="summary-change positive">Este mes</div>
+                    </div>
+                </div>
+
+                <!-- Gráfico placeholder -->
+                <div class="chart-container">
+                    <h3>Ventas por Día</h3>
+                    <div class="chart-placeholder">
+                        <p>📊 Gráfico de ventas diarias</p>
+                        <small>Funcionalidad de gráficos disponible próximamente</small>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal para agregar producto -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agregar Nuevo Producto</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form id="addProductForm" class="modal-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="productName">Nombre del Producto</label>
+                    <input type="text" id="productName" name="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Categoría</label>
+                    <select id="productCategory" name="productCategory" required>
+                        <option value="">Seleccionar categoría</option>
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Precio por kg/unidad</label>
+                    <input type="number" id="productPrice" name="productPrice" min="0" step="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="productStock">Cantidad disponible</label>
+                    <input type="number" id="productStock" name="productStock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Descripción</label>
+                    <textarea id="productDescription" name="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">Imagen del producto</label>
+                    <input type="file" id="productImage" name="productImage" accept="image/*">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelProduct">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para editar producto -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Producto</h3>
+                <button class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <form id="editProductForm" class="modal-form">
+                {% csrf_token %}
+                <input type="hidden" id="editProductId" name="productId">
+                
+                <div class="form-group">
+                    <label for="editProductName">Nombre del Producto</label>
+                    <input type="text" id="editProductName" name="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductCategory">Categoría</label>
+                    <select id="editProductCategory" name="productCategory" required>
+                        <option value="">Seleccionar categoría</option>
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editProductPrice">Precio por kg/unidad</label>
+                    <input type="number" id="editProductPrice" name="productPrice" min="0" step="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductStock">Cantidad disponible</label>
+                    <input type="number" id="editProductStock" name="productStock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductDescription">Descripción</label>
+                    <textarea id="editProductDescription" name="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editProductImage">Cambiar imagen del producto</label>
+                    <input type="file" id="editProductImage" name="productImage" accept="image/*">
+                    <small class="form-text">Deja vacío para mantener la imagen actual</small>
+                </div>
+                <div class="form-group">
+                    <label for="editProductStatus">Estado</label>
+                    <select id="editProductStatus" name="productStatus" required>
+                        <option value="disponible">Disponible</option>
+                        <option value="agotado">Agotado</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEditProduct">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>Confirmar eliminación</h3>
+                <button class="modal-close" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon">⚠️</div>
+                <p><strong>¿Estás seguro de que quieres eliminar este producto?</strong></p>
+                <p id="deleteProductName" class="product-name-confirm"></p>
+                <p class="warning-text">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelDelete">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema de notificaciones -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variables globales para el JavaScript del dashboard
+    window.dashboardData = {
+        usuario: {
+            nombre: '{% if usuario %}{{ usuario.nombre|escapejs }}{% else %}{% endif %}',
+            apellido: '{% if usuario %}{{ usuario.apellido|escapejs }}{% else %}{% endif %}',
+            email: '{% if usuario %}{{ usuario.email|escapejs }}{% else %}{% endif %}',
+            tipo_usuario: '{% if usuario %}{{ usuario.tipo_usuario|escapejs }}{% else %}{% endif %}',
+            is_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %}
+        },
+        finca: {
+            tiene_finca: {% if finca_info %}true{% else %}false{% endif %},
+            nombre: '{% if finca_info %}{{ finca_info.nombre|escapejs }}{% else %}{% endif %}'
+        }
+    };
+    
+    console.log('[Dashboard Template] Datos del usuario:', window.dashboardData);
+</script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

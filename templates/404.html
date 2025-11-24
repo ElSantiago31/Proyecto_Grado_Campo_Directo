@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Página no encontrada - Campo Directo{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+}
+
+.error-content {
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 3rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+.error-icon {
+    font-size: 6rem;
+    color: #2d5016;
+    margin-bottom: 1rem;
+}
+
+.error-title {
+    color: #2d5016;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.error-btn {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2d5016 0%, #1a3009 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1a3009 0%, #0d1504 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: #2d5016;
+    border: 2px solid #2d5016;
+}
+
+.btn-secondary:hover {
+    background: #2d5016;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 80, 22, 0.3);
+}
+
+@media (max-width: 768px) {
+    .error-content {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .error-title {
+        font-size: 2rem;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .error-btn {
+        width: 100%;
+        max-width: 250px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">🌱</div>
+        <h1 class="error-title">Página no encontrada</h1>
+        <p class="error-message">
+            Lo sentimos, la página que buscas no existe o ha sido movida. 
+            Puede que hayas escrito mal la dirección o que el enlace esté desactualizado.
+        </p>
+        
+        <div class="error-actions">
+            <a href="{% url 'frontend:home' %}" class="error-btn btn-primary">
+                🏠 Ir al Inicio
+            </a>
+            <button onclick="history.back()" class="error-btn btn-secondary">
+                ← Volver Atrás
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

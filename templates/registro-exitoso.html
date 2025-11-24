@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro Exitoso - Campo Directo{% endblock %}
+{% block description %}Tu registro en Campo Directo ha sido exitoso{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/registro-exitoso.css' %}">
+{% endblock %}
+
+{% block content %}
+    <main class="success-main">
+        <div class="success-container">
+            <!-- Logo Campo Directo en la parte superior -->
+            <div class="header-logo">
+                <img src="{% static 'images/logo.png' %}" alt="Campo Directo" class="logo-img">
+                <div class="logo-text">
+                    <span class="campo">CAMPO</span><br>
+                    <span class="directo">DIRECTO</span>
+                </div>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="main-content">
+                <div class="left-side">
+                    <div class="farmers-illustration">
+                        <img src="{% static 'images/LogoRegistroExitoso.png' %}" alt="Campesinos Campo Directo" class="farmers-img">
+                    </div>
+                </div>
+
+                <div class="right-side">
+                    <div class="success-check">
+                        <svg class="check-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" fill="#2d5016"/>
+                            <path d="M25 50 L40 65 L75 30" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                    <h1 class="success-title">Registro exitoso</h1>
+                    <button class="main-menu-btn" onclick="window.location.href='{% url 'frontend:home' %}'">
+                        Volver al menú principal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}

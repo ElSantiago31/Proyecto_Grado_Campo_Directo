@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Comprador - Campo Directo{% endblock %}
+{% block description %}Panel de control para compradores - Campo Directo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+/* Estilos específicos para compradores */
+.dashboard-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.dashboard-title {
+    color: white;
+}
+
+.nav-icon {
+    filter: brightness(0) invert(1);
+}
+
+.nav-item.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.stat-card {
+    border-left: 4px solid #007bff;
+}
+
+.user-greeting {
+    color: white;
+}
+
+.user-avatar {
+    background: #0056b3;
+}
+</style>
+{% endblock %}
+
+{% block body_class %}dashboard-body{% endblock %}
+
+{% block content %}
+    <div id="appContainer">
+    <!-- Header con navegación del dashboard -->
+    <header class="dashboard-header">
+        <nav class="dashboard-nav">
+            <div class="nav-left">
+                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="dashboard-logo">
+                <h1 class="dashboard-title">Panel del Comprador</h1>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <span class="user-greeting">¡Hola, <span id="userName">{{ usuario.nombre }}</span>!</span>
+                    <div class="user-menu">
+                        <button class="user-menu-btn" id="userMenuBtn">
+                            <span class="user-avatar">🛒</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" id="profileLink">Mi Perfil</a>
+                            <a href="#" id="settingsLink">Configuración</a>
+                            <hr>
+                            <a href="#" id="logoutBtn">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenido principal del dashboard -->
+    <main class="dashboard-main">
+        <!-- Sidebar de navegación -->
+        <aside class="dashboard-sidebar">
+            <nav class="sidebar-nav">
+                <ul class="nav-items">
+                    <li>
+                        <a href="#overview" class="nav-item active" data-section="overview">
+                            <span class="nav-icon">📊</span>
+                            Resumen
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#marketplace" class="nav-item" data-section="marketplace">
+                            <span class="nav-icon">🛒</span>
+                            Marketplace
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#my-orders" class="nav-item" data-section="my-orders">
+                            <span class="nav-icon">📦</span>
+                            Mis Pedidos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#favorites" class="nav-item" data-section="favorites">
+                            <span class="nav-icon">❤️</span>
+                            Favoritos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#messages" class="nav-item" data-section="messages">
+                            <span class="nav-icon">💬</span>
+                            Mensajes
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido de las secciones -->
+        <div class="dashboard-content">
+            <!-- Sección Resumen -->
+            <section id="overview" class="content-section active">
+                <div class="section-header">
+                    <h2>Resumen de tu Actividad de Compras</h2>
+                    <p>Vista general de tus compras y actividad en Campo Directo</p>
+                </div>
+
+                <!-- Tarjetas de estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📦</div>
+                        <div class="stat-content">
+                            <h3>Pedidos del Mes</h3>
+                            <div class="stat-number" id="monthOrders">{{ estadisticas.pedidos_mes }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <h3>Total Gastado</h3>
+                            <div class="stat-number">$<span id="totalSpent">{{ estadisticas.total_gastado|floatformat:0 }}</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🌾</div>
+                        <div class="stat-content">
+                            <h3>Campesinos Favoritos</h3>
+                            <div class="stat-number" id="favoriteFarmers">{{ estadisticas.campesinos_favoritos }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">💚</div>
+                        <div class="stat-content">
+                            <h3>Ahorro Total</h3>
+                            <div class="stat-number">$<span id="totalSavings">{{ estadisticas.ahorro_total|floatformat:0 }}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actividad reciente -->
+                <div class="recent-activity">
+                    <h3>Actividad Reciente</h3>
+                    <div class="activity-list" id="recentActivityList">
+                        <div class="activity-item">
+                            <span class="activity-icon">✅</span>
+                            <div class="activity-content">
+                                <p><strong>Pedido recibido</strong> - Tomates orgánicos de Finca San José</p>
+                                <small>Hace 1 día</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <span class="activity-icon">🛒</span>
+                            <div class="activity-content">
+                                <p><strong>Nueva compra</strong> - Lechugas hidropónicas (3 unidades)</p>
+                                <small>Hace 2 días</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <span class="activity-icon">💬</span>
+                            <div class="activity-content">
+                                <p><strong>Mensaje enviado</strong> - Consulta sobre disponibilidad de fresas</p>
+                                <small>Hace 3 días</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Marketplace -->
+            <section id="marketplace" class="content-section">
+                <div class="section-header">
+                    <h2>Marketplace - Productos Disponibles</h2>
+                    <div class="search-filters">
+                        <input type="text" placeholder="Buscar productos..." class="search-input" id="productSearch">
+                        <select class="filter-select" id="categoryFilter">
+                            <option value="">Todas las categorías</option>
+                            <option value="vegetales">Vegetales</option>
+                            <option value="frutas">Frutas</option>
+                            <option value="granos">Granos</option>
+                            <option value="hierbas">Hierbas</option>
+                        </select>
+                        <select class="filter-select" id="locationFilter">
+                            <option value="">Todas las ubicaciones</option>
+                            <option value="cundinamarca">Cundinamarca</option>
+                            <option value="boyaca">Boyacá</option>
+                            <option value="antioquia">Antioquia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Grid de productos -->
+                <div class="products-marketplace" id="marketplaceGrid">
+                    <!-- Los productos se generarán dinámicamente con JavaScript -->
+                    <div class="product-card">
+                        <img src="{% static 'images/logo.png' %}" alt="Producto" class="product-image">
+                        <div class="product-info">
+                            <h4>Tomates Cherry Orgánicos</h4>
+                            <p class="product-farmer">Finca San José - Cundinamarca</p>
+                            <p class="product-price">$8,000 /kg</p>
+                            <p class="product-stock">25kg disponibles</p>
+                            <div class="product-actions">
+                                <button class="btn btn-primary btn-small">Agregar al Carrito</button>
+                                <button class="btn btn-secondary btn-small">💬 Contactar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Mis Pedidos -->
+            <section id="my-orders" class="content-section">
+                <div class="section-header">
+                    <h2>Mis Pedidos</h2>
+                    <div class="order-tabs">
+                        <button class="tab-btn active" data-tab="active">Activos (<span id="activeOrdersCount">2</span>)</button>
+                        <button class="tab-btn" data-tab="completed">Completados</button>
+                        <button class="tab-btn" data-tab="cancelled">Cancelados</button>
+                    </div>
+                </div>
+
+                <div class="orders-list" id="buyerOrdersList">
+                    <!-- Los pedidos se generarán dinámicamente -->
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-id">ORD-001</span>
+                            <span class="order-status status-pending">En Proceso</span>
+                        </div>
+                        <div class="order-content">
+                            <p><strong>Campesino:</strong> Juan Pérez - Finca San José</p>
+                            <p><strong>Productos:</strong> Tomates Cherry (3kg), Lechugas (2 unidades)</p>
+                            <p><strong>Total:</strong> $41,500</p>
+                            <p><strong>Fecha:</strong> 06 Oct 2024</p>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary">Ver Detalles</button>
+                            <button class="btn btn-primary">💬 Contactar Campesino</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Favoritos -->
+            <section id="favorites" class="content-section">
+                <div class="section-header">
+                    <h2>Mis Campesinos Favoritos</h2>
+                    <p>Campesinos y productos que has marcado como favoritos</p>
+                </div>
+
+                <div class="favorites-grid" id="favoritesGrid">
+                    <!-- Los favoritos se generarán dinámicamente -->
+                    <div class="favorite-card">
+                        <div class="favorite-farmer">
+                            <img src="{% static 'images/campesino.png' %}" alt="Campesino" class="farmer-avatar">
+                            <div class="farmer-info">
+                                <h4>Juan Pérez</h4>
+                                <p>Finca San José - Cundinamarca</p>
+                                <p>⭐ 4.8 (23 reseñas)</p>
+                            </div>
+                        </div>
+                        <div class="favorite-actions">
+                            <button class="btn btn-primary">Ver Productos</button>
+                            <button class="btn btn-secondary">💬 Contactar</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Mensajes -->
+            <section id="messages" class="content-section">
+                <div class="section-header">
+                    <h2>Mensajes</h2>
+                    <p>Conversaciones con campesinos</p>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Las conversaciones se generarán dinámicamente -->
+                    <div class="conversation-card">
+                        <div class="conversation-header">
+                            <img src="{% static 'images/campesino.png' %}" alt="Campesino" class="conversation-avatar">
+                            <div class="conversation-info">
+                                <h4>Juan Pérez</h4>
+                                <p class="last-message">Hola, los tomates estarán listos mañana...</p>
+                                <small>Hace 2 horas</small>
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="btn btn-primary">Abrir Chat</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard-comprador.js' %}"></script>
+{% endblock %}

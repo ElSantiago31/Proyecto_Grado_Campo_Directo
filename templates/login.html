@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - Campo Directo{% endblock %}
+{% block description %}Inicia sesión en Campo Directo como campesino{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block body_class %}login-body{% endblock %}
+
+{% block content %}
+    <div class="login-container">
+        <!-- Sección izquierda con logo y ilustración -->
+        <div class="login-left-section">
+            <div class="logo-section">
+                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="main-logo">
+            </div>
+            
+            <div class="illustration-section">
+                <img src="{% static 'images/campesino.png' %}" alt="Campesino ilustración" class="campesino-illustration">
+            </div>
+        </div>
+        
+        <!-- Sección derecha con formulario -->
+        <div class="login-right-section">
+            <div class="welcome-section">
+                <h2 class="welcome-title">Bienvenido Campesino 🌱</h2>
+                <p class="welcome-description">
+                    Accede para gestionar tus productos y ofrecerlos directamente a los compradores.
+                </p>
+            </div>
+            
+            <form id="loginForm" class="login-form" novalidate>
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Usuario / correo" 
+                        class="form-input"
+                        required
+                    >
+                    <span class="error-message" id="username-error"></span>
+                </div>
+                
+                <div class="form-group">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Contraseña" 
+                        class="form-input"
+                        required
+                    >
+                    <span class="error-message" id="password-error"></span>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-checkbox">
+                        <input type="checkbox" id="remember" name="remember">
+                        <span class="checkmark"></span>
+                        Recordar mi sesión
+                    </label>
+                    
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                </div>
+                
+                <button type="submit" class="login-button">
+                    <span class="button-icon">🌱</span>
+                    Ingresar al Campo
+                </button>
+                
+                <div class="form-footer">
+                    <p>¿No tienes una cuenta? <a href="{% url 'frontend:register' %}" class="register-link">Regístrate aquí</a></p>
+                    <p><a href="{% url 'frontend:home' %}" class="back-home">← Volver al inicio</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/login-new.js' %}"></script>
+{% endblock %}

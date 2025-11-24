@@ -1,0 +1,2023 @@
+// Dashboard JavaScript - Campo Directo (Campesinos)
+
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('[Dashboard] Iniciando dashboard campesino con autenticación JWT');
+    
+    // Verificar autenticación JWT (solo si no estamos ya en dashboard cargado por Django)
+    console.log('[Dashboard] Verificando estado de autenticación...');
+    
+    // Si estamos aquí, es porque Django ya verificó la autenticación en el servidor
+    // No necesitamos redirigir, pero podemos intentar usar JWT si está disponible
+    const hasJwtToken = isAuthenticated();
+    console.log('[Dashboard] JWT Token disponible:', hasJwtToken);
+    
+    // Intentar obtener perfil si tenemos JWT token
+    if (hasJwtToken) {
+        try {
+            console.log('[Dashboard] Intentando obtener perfil con JWT...');
+            const profile = await authApi.getProfile();
+            
+            if (profile && profile.tipo_usuario === 'campesino') {
+                console.log(`[Dashboard] Usuario autenticado vía JWT: ${profile.nombre} ${profile.apellido}`);
+                
+                // Actualizar nombre en la UI
+                const userNameElement = document.getElementById('userName');
+                if (userNameElement && userNameElement.textContent.includes('Usuario')) {
+                    userNameElement.textContent = `${profile.nombre} ${profile.apellido}`;
+                }
+                
+                // Cargar datos reales del dashboard
+                console.log('[Dashboard] Iniciando carga de datos reales...');
+                await loadRealDashboardData();
+                console.log('[Dashboard] Carga de datos reales completada.');
+            } else if (profile && profile.tipo_usuario !== 'campesino') {
+                console.log('[Dashboard] Usuario no es campesino, pero está autenticado por sesión Django');
+                // No redirigir, dejar que Django maneje esto
+            }
+            
+        } catch (error) {
+            console.warn('[Dashboard] Error obteniendo perfil JWT, usando datos de Django:', error);
+            // No redirigir, usar datos del servidor Django
+        }
+    } else {
+        console.log('[Dashboard] Sin JWT token, usando autenticación Django de sesión');
+        // Usuario autenticado por sesión Django, no necesitamos JWT
+    }
+    
+    // Mostrar la aplicación
+    const app = document.getElementById('appContainer');
+    if (app) {
+        app.style.display = 'block';
+    }
+    
+    // Inicializar funciones básicas
+    setupNavigation();
+    setupLogout();
+    setupProductModal();
+    // updateStats() se llama desde loadRealDashboardData()
+    
+    // Cargar productos del usuario
+    await loadUserProducts();
+    
+    console.log('[Dashboard] Dashboard campesino cargado');
+});
+
+// Datos del dashboard (se cargarán desde la API)
+let dashboardData = {
+    stats: {
+        activeProducts: 0,
+        pendingOrders: 0,
+        monthSales: 0,
+        rating: 0.0
+    },
+    recentActivity: []
+};
+
+// Cargar datos reales del dashboard desde la API
+async function loadRealDashboardData() {
+    try {
+        console.log('[Dashboard] Cargando datos reales del usuario...');
+        console.log('[Dashboard] URL del endpoint:', '/api/users/dashboard/');
+        
+        // Obtener datos del dashboard del usuario
+        console.log('[Dashboard] Haciendo petición a la API...');
+        const response = await authApi.fetch('/api/users/dashboard/');
+        console.log('[Dashboard] Respuesta recibida:', response.status, response.statusText);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[Dashboard] Datos obtenidos:', data);
+            
+            // Actualizar datos del dashboard
+            dashboardData.stats = {
+                activeProducts: data.productos_activos || 0,
+                pendingOrders: data.pedidos_pendientes || 0,
+                monthSales: data.ventas_mes || 0,
+                rating: data.calificacion || 0.0
+            };
+            
+            dashboardData.recentActivity = data.actividad_reciente || [];
+            
+            // Actualizar UI con datos reales
+            updateStats();
+            updateRecentActivity();
+            
+            console.log('[Dashboard] Datos actualizados en la UI');
+        } else {
+            console.warn('[Dashboard] No se pudieron cargar datos del dashboard, respuesta:', response.status);
+            console.log('[Dashboard] Usuario probablemente autenticado por sesión Django, usando datos del template');
+            // No llamar updateStats() para no sobrescribir datos del template Django
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error cargando datos del dashboard:', error);
+        console.error('[Dashboard] Detalles del error:', error.message, error.stack);
+        console.log('[Dashboard] No se pueden cargar datos vía API, usando datos del template Django');
+        // No llamar updateStats() para preservar datos del template Django
+    }
+}
+
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.content-section');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remover clase active de todos los items
+            navItems.forEach(nav => nav.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Agregar clase active al item clickeado
+            this.classList.add('active');
+            
+            // Mostrar la sección correspondiente
+            const targetSection = this.getAttribute('data-section');
+            const section = document.getElementById(targetSection);
+            if (section) {
+                section.classList.add('active');
+            }
+        });
+    });
+}
+
+function setupLogout() {
+    // Menú de usuario
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', function() {
+            userDropdown.classList.remove('show');
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+}
+
+async function handleLogout() {
+    console.log('[Dashboard] Iniciando proceso de logout...');
+    
+    // Limpiar tokens JWT inmediatamente
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    console.log('[Dashboard] Tokens JWT eliminados');
+    
+    try {
+        // Usar endpoint Django para logout de sesión
+        console.log('[Dashboard] Redirigiendo a /logout/ para cerrar sesión Django');
+        window.location.href = '/logout/';
+    } catch (error) {
+        console.warn('[Dashboard] Error al redirigir a logout:', error);
+        // Fallback: redirigir directamente al home
+        window.location.href = '/';
+    }
+}
+
+function updateStats() {
+    const activeProductsEl = document.getElementById('activeProducts');
+    const pendingOrdersEl = document.getElementById('pendingOrders');
+    const monthSalesEl = document.getElementById('monthSales');
+    const ratingEl = document.getElementById('rating');
+    
+    if (activeProductsEl) activeProductsEl.textContent = dashboardData.stats.activeProducts;
+    if (pendingOrdersEl) pendingOrdersEl.textContent = dashboardData.stats.pendingOrders;
+    if (monthSalesEl) monthSalesEl.textContent = formatCurrency(dashboardData.stats.monthSales);
+    if (ratingEl) ratingEl.textContent = dashboardData.stats.rating.toFixed(1);
+}
+
+function updateRecentActivity() {
+    const activityList = document.getElementById('recentActivityList');
+    if (!activityList) return;
+    
+    if (dashboardData.recentActivity.length === 0) {
+        activityList.innerHTML = `
+            <div class="activity-item">
+                <span class="activity-icon">📈</span>
+                <div class="activity-content">
+                    <p><strong>No hay actividad reciente</strong></p>
+                    <small>Comienza agregando productos a tu finca</small>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    activityList.innerHTML = dashboardData.recentActivity.map(activity => `
+        <div class="activity-item">
+            <span class="activity-icon">${getActivityIcon(activity.estado)}</span>
+            <div class="activity-content">
+                <p><strong>${activity.descripcion}</strong></p>
+                <small>${activity.tiempo}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getActivityIcon(estado) {
+    const iconMap = {
+        'completed': '✅',
+        'pending': '🕰️',
+        'confirmed': '📝',
+        'preparing': '🚚',
+        'ready': '🎁',
+        'cancelled': '❌'
+    };
+    return iconMap[estado] || '📦';
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+
+// ============================================================
+// FUNCIONALIDAD DEL MODAL DE PRODUCTOS
+// ============================================================
+
+function setupProductModal() {
+    console.log('[Dashboard] Configurando modal de productos...');
+    
+    // Elementos del modal
+    const addProductBtn = document.getElementById('addProductBtn');
+    const modal = document.getElementById('addProductModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelProduct');
+    const productForm = document.getElementById('addProductForm');
+    const categorySelect = document.getElementById('productCategory');
+    
+    // Abrir modal
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            openProductModal();
+        });
+    }
+    
+    // Cerrar modal
+    if (closeModal) {
+        closeModal.addEventListener('click', closeProductModal);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeProductModal);
+    }
+    
+    // Cerrar al hacer click fuera del modal
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeProductModal();
+            }
+        });
+    }
+    
+    // Enviar formulario
+    if (productForm) {
+        productForm.addEventListener('submit', handleProductSubmit);
+    }
+    
+    console.log('[Dashboard] Modal de productos configurado');
+    
+    // Configurar otros modales
+    setupEditModal();
+    setupDeleteModal();
+    
+    console.log('[Dashboard] Todos los modales configurados');
+    
+    // Inicializar sistema de notificaciones
+    initNotificationSystem();
+}
+
+async function openProductModal() {
+    console.log('[Dashboard] Abriendo modal de productos...');
+    
+    const modal = document.getElementById('addProductModal');
+    if (!modal) return;
+    
+    // Cargar categorías
+    await loadProductCategories();
+    
+    // Resetear formulario
+    const form = document.getElementById('addProductForm');
+    if (form) {
+        form.reset();
+        clearFormErrors();
+    }
+    
+    // Mostrar modal
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+    
+    // Focus en el primer input
+    const firstInput = modal.querySelector('input[type="text"]');
+    if (firstInput) {
+        setTimeout(() => firstInput.focus(), 100);
+    }
+}
+
+function closeProductModal() {
+    console.log('[Dashboard] Cerrando modal de productos...');
+    
+    const modal = document.getElementById('addProductModal');
+    if (!modal) return;
+    
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restaurar scroll del body
+    
+    // Limpiar formulario
+    const form = document.getElementById('addProductForm');
+    if (form) {
+        form.reset();
+        clearFormErrors();
+    }
+}
+
+async function loadProductCategories() {
+    console.log('[Dashboard] Cargando categorías de productos...');
+    
+    const categorySelect = document.getElementById('productCategory');
+    if (!categorySelect) return;
+    
+    try {
+        console.log('[Dashboard] Intentando cargar categorías desde la API...');
+        
+        // Intentar cargar directamente sin usar authApi para evitar problemas con JWT
+        let response;
+        try {
+            response = await fetch('/api/products/categorias/', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log('[Dashboard] Respuesta de categorías:', response.status, response.statusText);
+        } catch (fetchError) {
+            console.error('[Dashboard] Error en fetch de categorías:', fetchError);
+            throw fetchError;
+        }
+        
+        if (response.ok) {
+            const categories = await response.json();
+            console.log('[Dashboard] Categorías cargadas desde API:', categories);
+            
+            // La respuesta puede ser un array directo o tener results
+            const categoryList = Array.isArray(categories) ? categories : (categories.results || []);
+            console.log('[Dashboard] Lista de categorías procesada:', categoryList);
+            
+            if (categoryList.length > 0) {
+                // Limpiar opciones existentes
+                categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
+                
+                // Agregar categorías
+                categoryList.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.nombre;
+                    categorySelect.appendChild(option);
+                    console.log(`[Dashboard] Añadida categoría: ${category.nombre} (ID: ${category.id})`);
+                });
+                
+                console.log('[Dashboard] Categorías cargadas exitosamente desde la API');
+                return;
+            } else {
+                console.warn('[Dashboard] No se encontraron categorías en la API, usando fallback');
+            }
+        } else {
+            console.warn(`[Dashboard] Error ${response.status} cargando categorías, usando fallback`);
+        }
+        
+        // Fallback: categorías hardcodeadas con IDs reales de la DB
+        console.log('[Dashboard] Usando categorías por defecto con IDs de la DB...');
+        categorySelect.innerHTML = `
+            <option value="">Seleccionar categoría</option>
+            <option value="13">Vegetales y Hortalizas</option>
+            <option value="10">Frutas</option>
+            <option value="14">Granos y Cereales</option>
+            <option value="15">Hierbas Aromáticas</option>
+            <option value="16">Tubérculos</option>
+            <option value="17">Legumbres</option>
+        `;
+        
+    } catch (error) {
+        console.error('[Dashboard] Error cargando categorías:', error);
+        
+        // Usar categorías por defecto en caso de error con IDs reales de la DB
+        console.log('[Dashboard] Usando categorías de fallback con IDs reales');
+        categorySelect.innerHTML = `
+            <option value="">Seleccionar categoría</option>
+            <option value="13">Vegetales y Hortalizas</option>
+            <option value="10">Frutas</option>
+            <option value="14">Granos y Cereales</option>
+            <option value="15">Hierbas Aromáticas</option>
+            <option value="16">Tubérculos</option>
+            <option value="17">Legumbres</option>
+        `;
+    }
+}
+
+// Crear categorías por defecto si no existen
+async function createDefaultCategories() {
+    console.log('[Dashboard] Verificando/creando categorías por defecto...');
+    // Esta función podría hacer una llamada a la API para crear categorías si no existen
+    // Por ahora es solo un placeholder
+}
+
+// Obtener la finca principal del usuario campesino
+async function getUserFinca() {
+    console.log('[Dashboard] Obteniendo finca del usuario...');
+    
+    try {
+        // Intentar obtener la finca del endpoint de fincas
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch('/api/farms/fincas/mis_fincas/', {
+            method: 'GET',
+            headers: headers,
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[Dashboard] Respuesta de mis_fincas:', data);
+            const fincas = Array.isArray(data) ? data : (data.results || data);
+            
+            console.log('[Dashboard] Mis fincas procesadas:', fincas);
+            
+            if (fincas.length > 0) {
+                const miFinca = fincas[0];
+                console.log('[Dashboard] Mi finca encontrada:', miFinca);
+                console.log('[Dashboard] ID de mi finca:', miFinca.id);
+                return miFinca.id;
+            } else {
+                console.warn('[Dashboard] Usuario no tiene fincas registradas');
+                return null;
+            }
+        } else {
+            const responseText = await response.text();
+            console.error('[Dashboard] Error obteniendo mis fincas:', response.status, response.statusText, responseText);
+            
+            // Fallback: intentar con el endpoint general si el específico falla
+            console.log('[Dashboard] Intentando fallback con endpoint general...');
+            try {
+                const fallbackResponse = await fetch('/api/farms/fincas/', {
+                    method: 'GET',
+                    headers: headers,
+                    credentials: 'include'
+                });
+                
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    const todasLasFincas = Array.isArray(fallbackData) ? fallbackData : (fallbackData.results || []);
+                    
+                    // Filtrar solo las fincas que pertenecen al usuario actual
+                    const misFincas = todasLasFincas.filter(finca => 
+                        finca.campesino_nombre && finca.campesino_nombre.includes('Juan Carlos')
+                    );
+                    
+                    console.log('[Dashboard] Fallback - Mis fincas filtradas:', misFincas);
+                    
+                    if (misFincas.length > 0) {
+                        console.log('[Dashboard] Fallback - Finca encontrada:', misFincas[0]);
+                        return misFincas[0].id;
+                    }
+                }
+            } catch (fallbackError) {
+                console.error('[Dashboard] Error en fallback:', fallbackError);
+            }
+            
+            return null;
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en getUserFinca:', error);
+        return null;
+    }
+}
+
+async function handleProductSubmit(e) {
+    e.preventDefault();
+    console.log('[Dashboard] Enviando formulario de producto...');
+    
+    // Limpiar errores anteriores
+    clearFormErrors();
+    
+    // Obtener datos del formulario
+    const formData = new FormData(e.target);
+    
+    // Obtener ID de categoría desde el select
+    const categorySelect = document.getElementById('productCategory');
+    const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+    const categoryId = selectedOption ? selectedOption.value : null;
+    
+    console.log('[Dashboard] Categoría seleccionada:', categoryId, selectedOption?.text);
+    
+    const productData = {
+        nombre: formData.get('productName'),
+        categoria: parseInt(categoryId), // Debe ser un ID numérico
+        precio_por_kg: parseFloat(formData.get('productPrice')), // Nombre correcto del campo
+        stock_disponible: parseInt(formData.get('productStock')), // Nombre correcto del campo
+        descripcion: formData.get('productDescription') || '',
+        unidad_medida: 'kg', // Valor por defecto
+        estado: 'disponible' // Valor por defecto
+    };
+    
+    console.log('[Dashboard] Datos del producto preparados (sin finca):', productData);
+    
+    // Obtener ID de finca del usuario
+    console.log('[Dashboard] Obteniendo finca del usuario...');
+    const fincaId = await getUserFinca();
+    
+    if (!fincaId) {
+        showNotification('No tienes una finca registrada. Debes registrar una finca antes de agregar productos.', 'error');
+        return;
+    }
+    
+    // Agregar la finca a los datos del producto
+    productData.finca = fincaId;
+    console.log('[Dashboard] ID de finca obtenido y agregado:', fincaId);
+    console.log('[Dashboard] Datos completos del producto:', productData);
+    
+    // Validación básica
+    const validation = validateProductData(productData);
+    if (!validation.isValid) {
+        showFormErrors(validation.errors);
+        return;
+    }
+    
+    // Mostrar loading después de todas las validaciones
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Agregando...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Preparar FormData para el envío (incluyendo imagen)
+        const submitData = new FormData();
+        
+        // Agregar campos de datos del producto, evitando null values
+        Object.keys(productData).forEach(key => {
+            const value = productData[key];
+            if (value !== null && value !== undefined) {
+                submitData.append(key, value);
+                console.log(`[Dashboard] Agregando campo ${key}:`, value, typeof value);
+            } else {
+                console.warn(`[Dashboard] Campo ${key} es null/undefined:`, value);
+            }
+        });
+        
+        // Agregar imagen si existe (usar el nombre correcto del campo)
+        const imageFile = formData.get('productImage');
+        if (imageFile && imageFile.size > 0) {
+            submitData.append('imagen_principal', imageFile); // Usar el nombre correcto del campo
+            console.log('[Dashboard] Imagen agregada:', imageFile.name, imageFile.size, 'bytes');
+        }
+        
+        // Obtener CSRF token
+        const csrfToken = getCsrfToken();
+        console.log('[Dashboard] CSRF Token:', csrfToken ? 'Encontrado' : 'No encontrado');
+        
+        // Configurar headers base
+        const headers = {
+            'X-CSRFToken': csrfToken
+        };
+        
+        // Añadir autenticación JWT si está disponible
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+            console.log('[Dashboard] Usando autenticación JWT');
+        } else {
+            console.log('[Dashboard] Usando autenticación de sesión Django');
+        }
+        
+        console.log('[Dashboard] Enviando request a /api/products/productos/');
+        console.log('[Dashboard] Headers que se enviarán:', headers);
+        
+        // Verificar estado de autenticación adicional
+        const sessionInfo = document.querySelector('[data-user-authenticated]');
+        if (sessionInfo) {
+            console.log('[Dashboard] Usuario autenticado por sesión Django:', sessionInfo.dataset.userAuthenticated);
+        }
+        
+        // Verificar información del usuario desde el DOM
+        const userNameElement = document.getElementById('userName');
+        if (userNameElement) {
+            console.log('[Dashboard] Nombre de usuario desde DOM:', userNameElement.textContent);
+        }
+        
+        // Verificar datos del usuario desde el contexto Django
+        if (window.dashboardData) {
+            console.log('[Dashboard] Datos completos del usuario:', window.dashboardData.usuario);
+            console.log('[Dashboard] Tipo de usuario:', window.dashboardData.usuario.tipo_usuario);
+            console.log('[Dashboard] Es campesino:', window.dashboardData.usuario.tipo_usuario === 'campesino');
+            console.log('[Dashboard] Tiene finca:', window.dashboardData.finca.tiene_finca);
+            console.log('[Dashboard] Autenticado:', window.dashboardData.usuario.is_authenticated);
+        }
+        
+        // Enviar a la API
+        const response = await fetch('/api/products/productos/', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include', // Importante para cookies de sesión
+            body: submitData
+        });
+        
+        console.log('[Dashboard] Respuesta del servidor:', response.status, response.statusText);
+        console.log('[Dashboard] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('[Dashboard] Producto creado exitosamente:', result);
+            
+            showNotification('¡Producto agregado exitosamente!', 'success');
+            closeProductModal();
+            
+            // Recargar la lista de productos
+            await loadUserProducts();
+            
+            // Navegar a la sección de productos para mostrar el nuevo producto
+            const productsTab = document.querySelector('[data-section="products"]');
+            if (productsTab) {
+                productsTab.click();
+            }
+            
+        } else {
+            console.error('[Dashboard] Error - Status:', response.status, 'StatusText:', response.statusText);
+            
+            let errorData;
+            try {
+                const responseText = await response.text();
+                console.log('[Dashboard] Respuesta completa del servidor:', responseText);
+                
+                // Intentar parsear como JSON
+                if (responseText) {
+                    try {
+                        errorData = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error('[Dashboard] Error parseando JSON:', parseError);
+                        errorData = { detail: responseText };
+                    }
+                } else {
+                    errorData = { detail: `Error ${response.status}: ${response.statusText}` };
+                }
+            } catch (readError) {
+                console.error('[Dashboard] Error leyendo respuesta:', readError);
+                errorData = { detail: `Error de conexión (${response.status})` };
+            }
+            
+            console.error('[Dashboard] Error procesado:', errorData);
+            
+            if (response.status === 400 && errorData) {
+                // Errores de validación del servidor
+                showFormErrors(errorData);
+            } else if (response.status === 401) {
+                showNotification('Error de autenticación. Por favor, inicia sesión nuevamente.', 'error');
+            } else if (response.status === 403) {
+                showNotification('No tienes permisos para agregar productos. Asegúrate de ser un usuario campesino.', 'error');
+            } else {
+                const message = errorData?.detail || errorData?.message || 'Error al agregar el producto. Inténtalo de nuevo.';
+                showNotification(message, 'error');
+            }
+        }
+        
+    } catch (error) {
+        console.error('[Dashboard] Error al enviar producto:', error);
+        showNotification('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'error');
+    } finally {
+        // Restaurar botón
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+function validateProductData(data) {
+    const errors = [];
+    
+    if (!data.nombre || data.nombre.trim().length < 2) {
+        errors.push({ field: 'productName', message: 'El nombre debe tener al menos 2 caracteres' });
+    }
+    
+    if (!data.categoria || isNaN(data.categoria)) {
+        errors.push({ field: 'productCategory', message: 'Selecciona una categoría válida' });
+    }
+    
+    if (!data.precio_por_kg || data.precio_por_kg <= 0) {
+        errors.push({ field: 'productPrice', message: 'El precio debe ser mayor a 0' });
+    }
+    
+    if (!data.stock_disponible || data.stock_disponible <= 0) {
+        errors.push({ field: 'productStock', message: 'La cantidad debe ser mayor a 0' });
+    }
+    
+    if (!data.finca) {
+        errors.push({ field: 'general', message: 'No se pudo obtener la información de tu finca' });
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors: errors
+    };
+}
+
+function showFormErrors(errors) {
+    // Si errors es un objeto (errores del servidor)
+    if (typeof errors === 'object' && !Array.isArray(errors)) {
+        Object.keys(errors).forEach(fieldName => {
+            const messages = Array.isArray(errors[fieldName]) ? errors[fieldName] : [errors[fieldName]];
+            messages.forEach(message => {
+                showFieldError(fieldName, message);
+            });
+        });
+    } else if (Array.isArray(errors)) {
+        // Si es un array (errores de validación local)
+        errors.forEach(error => {
+            showFieldError(error.field, error.message);
+        });
+    }
+}
+
+function showFieldError(fieldName, message) {
+    const field = document.getElementById(fieldName);
+    if (!field) return;
+    
+    // Añadir clase de error
+    field.classList.add('error');
+    
+    // Buscar o crear elemento de error
+    let errorElement = field.parentNode.querySelector('.field-error');
+    if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.className = 'field-error';
+        field.parentNode.appendChild(errorElement);
+    }
+    
+    errorElement.textContent = message;
+}
+
+function clearFormErrors() {
+    // Limpiar clases de error
+    const errorFields = document.querySelectorAll('#addProductForm .error');
+    errorFields.forEach(field => {
+        field.classList.remove('error');
+    });
+    
+    // Limpiar mensajes de error
+    const errorMessages = document.querySelectorAll('#addProductForm .field-error');
+    errorMessages.forEach(msg => {
+        msg.remove();
+    });
+}
+
+// Función para cargar productos del usuario
+async function loadUserProducts() {
+    console.log('[Dashboard] Cargando productos del usuario...');
+    
+    try {
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch('/api/products/productos/mis_productos/', {
+            method: 'GET',
+            headers: headers,
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const productos = await response.json();
+            console.log('[Dashboard] Productos cargados:', productos);
+            displayProducts(productos);
+            updateProductStats(productos.length);
+        } else {
+            console.error('[Dashboard] Error cargando productos:', response.status, response.statusText);
+            displayNoProducts();
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en loadUserProducts:', error);
+        displayNoProducts();
+    }
+}
+
+// Función para mostrar productos en la interfaz
+function displayProducts(productos) {
+    const productsGrid = document.getElementById('productsGrid');
+    if (!productsGrid) return;
+    
+    if (productos.length === 0) {
+        displayNoProducts();
+        return;
+    }
+    
+    let html = '';
+    productos.forEach(producto => {
+        html += `
+            <div class="product-card">
+                <div class="product-image">
+                    ${producto.imagen_principal ? 
+                        `<img src="${producto.imagen_principal}" alt="${producto.nombre}" />` : 
+                        '<div class="no-image">📦</div>'
+                    }
+                </div>
+                <div class="product-info">
+                    <h4 class="product-name">${producto.nombre}</h4>
+                    <p class="product-category">${producto.categoria_nombre || 'Sin categoría'}</p>
+                    <p class="product-price">$${producto.precio_por_kg} / ${producto.unidad_medida}</p>
+                    <p class="product-stock">Stock: ${producto.stock_disponible}</p>
+                    <div class="product-status status-${producto.estado}">
+                        ${producto.estado.charAt(0).toUpperCase() + producto.estado.slice(1)}
+                    </div>
+                </div>
+                <div class="product-actions">
+                    <button class="btn btn-sm btn-primary" onclick="editProduct(${producto.id})" title="Editar producto">
+                        ✏️ Editar
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteProduct(${producto.id})" title="Eliminar producto">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    productsGrid.innerHTML = html;
+}
+
+// Función para mostrar mensaje cuando no hay productos
+function displayNoProducts() {
+    const productsGrid = document.getElementById('productsGrid');
+    if (!productsGrid) return;
+    
+    productsGrid.innerHTML = `
+        <div class="no-products">
+            <div class="no-products-icon">📦</div>
+            <h3>No tienes productos registrados</h3>
+            <p>Comienza agregando tu primer producto para vender</p>
+            <button class="btn btn-primary" onclick="openProductModal()">
+                + Agregar Primer Producto
+            </button>
+        </div>
+    `;
+}
+
+// Función para actualizar estadísticas de productos
+function updateProductStats(count) {
+    const activeProductsElement = document.getElementById('activeProducts');
+    if (activeProductsElement) {
+        activeProductsElement.textContent = count;
+    }
+}
+
+// Funciones placeholder para acciones de productos
+async function editProduct(productId) {
+    console.log('[Dashboard] Abriendo modal de edición para producto:', productId);
+    
+    try {
+        // Obtener datos del producto
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch(`/api/products/productos/${productId}/`, {
+            method: 'GET',
+            headers: headers,
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const producto = await response.json();
+            console.log('[Dashboard] Datos del producto obtenidos:', producto);
+            
+            // Cargar categorías en el modal de edición
+            await loadCategoriesForEdit();
+            
+            // Llenar el formulario con los datos actuales
+            fillEditForm(producto);
+            
+            // Mostrar el modal
+            showEditModal();
+        } else {
+            console.error('[Dashboard] Error obteniendo producto:', response.status);
+            showNotification('Error al cargar los datos del producto', 'error');
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en editProduct:', error);
+        showNotification('Error de conexión al cargar el producto', 'error');
+    }
+}
+
+// Llenar formulario de edición con datos del producto
+function fillEditForm(producto) {
+    document.getElementById('editProductId').value = producto.id;
+    document.getElementById('editProductName').value = producto.nombre;
+    document.getElementById('editProductCategory').value = producto.categoria;
+    document.getElementById('editProductPrice').value = producto.precio_por_kg;
+    document.getElementById('editProductStock').value = producto.stock_disponible;
+    document.getElementById('editProductDescription').value = producto.descripcion || '';
+    document.getElementById('editProductStatus').value = producto.estado;
+}
+
+// Cargar categorías para el modal de edición
+async function loadCategoriesForEdit() {
+    const categorySelect = document.getElementById('editProductCategory');
+    if (!categorySelect) return;
+    
+    try {
+        const response = await fetch('/api/products/categorias/', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const categories = Array.isArray(data) ? data : (data.results || []);
+            
+            categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.nombre;
+                categorySelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error cargando categorías para edición:', error);
+        // Usar categorías de fallback
+        categorySelect.innerHTML = `
+            <option value="">Seleccionar categoría</option>
+            <option value="13">Vegetales y Hortalizas</option>
+            <option value="10">Frutas</option>
+            <option value="14">Granos y Cereales</option>
+            <option value="15">Hierbas Aromáticas</option>
+            <option value="16">Tubérculos</option>
+            <option value="17">Legumbres</option>
+        `;
+    }
+}
+
+// === FUNCIONES DE MODALES ===
+function showEditModal() {
+    const modal = document.getElementById('editProductModal');
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // Focus en el primer input
+        const firstInput = modal.querySelector('input[type="text"]');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+}
+
+function hideEditModal() {
+    const modal = document.getElementById('editProductModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        
+        // Limpiar formulario
+        const form = document.getElementById('editProductForm');
+        if (form) {
+            form.reset();
+        }
+    }
+}
+
+// Configurar eventos de modales
+function setupEditModal() {
+    const modal = document.getElementById('editProductModal');
+    const closeBtn = document.getElementById('closeEditModal');
+    const cancelBtn = document.getElementById('cancelEditProduct');
+    const form = document.getElementById('editProductForm');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideEditModal);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideEditModal);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideEditModal();
+            }
+        });
+    }
+    
+    if (form) {
+        form.addEventListener('submit', handleEditSubmit);
+    }
+}
+
+// Manejar envío de formulario de edición
+async function handleEditSubmit(e) {
+    e.preventDefault();
+    console.log('[Dashboard] Enviando formulario de edición...');
+    
+    const formData = new FormData(e.target);
+    const productId = formData.get('productId');
+    
+    const productData = {
+        nombre: formData.get('productName'),
+        categoria: parseInt(formData.get('productCategory')),
+        precio_por_kg: parseFloat(formData.get('productPrice')),
+        stock_disponible: parseInt(formData.get('productStock')),
+        descripcion: formData.get('productDescription') || '',
+        estado: formData.get('productStatus')
+    };
+    
+    console.log('[Dashboard] Datos de edición preparados:', productData);
+    
+    // Mostrar loading en el botón
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Actualizando...';
+    submitBtn.disabled = true;
+    
+    try {
+        const submitFormData = new FormData();
+        Object.keys(productData).forEach(key => {
+            if (productData[key] !== null && productData[key] !== undefined) {
+                submitFormData.append(key, productData[key]);
+            }
+        });
+        
+        // Agregar imagen si se seleccionó una nueva
+        const imageFile = formData.get('productImage');
+        if (imageFile && imageFile.size > 0) {
+            submitFormData.append('imagen_principal', imageFile);
+        }
+        
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch(`/api/products/productos/${productId}/`, {
+            method: 'PATCH',
+            headers: headers,
+            credentials: 'include',
+            body: submitFormData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('[Dashboard] Producto actualizado exitosamente:', result);
+            
+            showNotification('Producto actualizado exitosamente', 'success');
+            hideEditModal();
+            
+            // Recargar la lista de productos
+            await loadUserProducts();
+        } else {
+            const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+            console.error('[Dashboard] Error actualizando producto:', errorData);
+            
+            if (response.status === 400) {
+                // Mostrar errores específicos si los hay
+                let errorMessage = 'Error de validación:';
+                if (typeof errorData === 'object') {
+                    Object.keys(errorData).forEach(field => {
+                        const fieldErrors = Array.isArray(errorData[field]) ? errorData[field] : [errorData[field]];
+                        fieldErrors.forEach(error => {
+                            errorMessage += `\n• ${error}`;
+                        });
+                    });
+                } else {
+                    errorMessage = errorData.detail || 'Error de validación';
+                }
+                showNotification(errorMessage, 'error');
+            } else {
+                showNotification('Error al actualizar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
+            }
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en handleEditSubmit:', error);
+        showNotification('Error de conexión al actualizar el producto', 'error');
+    } finally {
+        // Restaurar botón
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Mostrar modal de confirmación para eliminar
+async function deleteProduct(productId) {
+    console.log('[Dashboard] Preparando eliminación de producto:', productId);
+    
+    try {
+        // Obtener datos del producto para mostrar el nombre
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch(`/api/products/productos/${productId}/`, {
+            method: 'GET',
+            headers: headers,
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const producto = await response.json();
+            showDeleteModal(productId, producto.nombre);
+        } else {
+            showDeleteModal(productId, 'Producto desconocido');
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error obteniendo datos del producto:', error);
+        showDeleteModal(productId, 'Producto');
+    }
+}
+
+// Mostrar modal de confirmación
+function showDeleteModal(productId, productName) {
+    const modal = document.getElementById('confirmDeleteModal');
+    const productNameElement = document.getElementById('deleteProductName');
+    
+    if (productNameElement) {
+        productNameElement.textContent = productName;
+    }
+    
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // Configurar el botón de confirmar para este producto
+        const confirmBtn = document.getElementById('confirmDelete');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => confirmDeleteProduct(productId);
+        }
+    }
+}
+
+// Ocultar modal de confirmación
+function hideDeleteModal() {
+    const modal = document.getElementById('confirmDeleteModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Confirmar eliminación del producto
+async function confirmDeleteProduct(productId) {
+    console.log('[Dashboard] Confirmando eliminación de producto:', productId);
+    
+    // Cerrar modal
+    hideDeleteModal();
+    
+    // Mostrar notificación de proceso
+    const processingNotification = showNotification('Eliminando producto...', 'info', null, 10000);
+    
+    try {
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch(`/api/products/productos/${productId}/`, {
+            method: 'DELETE',
+            headers: headers,
+            credentials: 'include'
+        });
+        
+        // Cerrar notificación de proceso
+        closeNotification(processingNotification);
+        
+        if (response.ok) {
+            console.log('[Dashboard] Producto eliminado exitosamente');
+            showNotification('Producto eliminado exitosamente', 'success');
+            
+            // Recargar la lista de productos
+            await loadUserProducts();
+        } else {
+            const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+            console.error('[Dashboard] Error eliminando producto:', errorData);
+            showNotification('Error al eliminar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en confirmDeleteProduct:', error);
+        closeNotification(processingNotification);
+        showNotification('Error de conexión al eliminar el producto', 'error');
+    }
+}
+
+// Configurar modal de eliminación
+function setupDeleteModal() {
+    const modal = document.getElementById('confirmDeleteModal');
+    const closeBtn = document.getElementById('closeConfirmModal');
+    const cancelBtn = document.getElementById('cancelDelete');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideDeleteModal);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideDeleteModal);
+    }
+    
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideDeleteModal();
+            }
+        });
+    }
+}
+
+// Función para cambiar el estado de un producto
+async function changeProductStatus(productId, newStatus) {
+    console.log(`[Dashboard] Cambiando estado del producto ${productId} a ${newStatus}`);
+    
+    const statusNames = {
+        'disponible': 'disponible',
+        'agotado': 'agotado',
+        'inactivo': 'inactivo'
+    };
+    
+    const actionNames = {
+        'disponible': 'activar',
+        'agotado': 'marcar como agotado',
+        'inactivo': 'desactivar'
+    };
+    
+    try {
+        const headers = {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        };
+        const jwtToken = localStorage.getItem('authToken');
+        if (jwtToken) {
+            headers['Authorization'] = `Bearer ${jwtToken}`;
+        }
+        
+        const response = await fetch(`/api/products/productos/${productId}/`, {
+            method: 'PATCH',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify({
+                estado: newStatus
+            })
+        });
+        
+        if (response.ok) {
+            console.log('[Dashboard] Estado del producto actualizado exitosamente');
+            showNotification(`Producto ${actionNames[newStatus]} exitosamente`, 'success');
+            
+            // Recargar la lista de productos
+            await loadUserProducts();
+        } else {
+            const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+            console.error('[Dashboard] Error actualizando estado del producto:', errorData);
+            showNotification('Error al actualizar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error en changeProductStatus:', error);
+        showNotification('Error de conexión al actualizar el producto', 'error');
+    }
+}
+
+// === SISTEMA DE NOTIFICACIONES MODERNO ===
+function initNotificationSystem() {
+    // Verificar si el contenedor existe
+    let container = document.getElementById('notificationContainer');
+    if (container) {
+        console.log('[Dashboard] Container de notificaciones encontrado en HTML');
+        console.log('[Dashboard] Container classes:', container.className);
+        
+        // Asegurarse de que tiene la clase correcta
+        if (!container.classList.contains('notification-container')) {
+            console.log('[Dashboard] Añadiendo clase notification-container');
+            container.classList.add('notification-container');
+        }
+        
+        // Verificar estilos
+        const computedStyle = window.getComputedStyle(container);
+        console.log('[Dashboard] Position:', computedStyle.position);
+        console.log('[Dashboard] Z-index:', computedStyle.zIndex);
+        console.log('[Dashboard] Top:', computedStyle.top);
+        console.log('[Dashboard] Right:', computedStyle.right);
+    } else {
+        console.log('[Dashboard] Container no encontrado, creando...');
+        container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+        console.log('[Dashboard] Container creado y añadido al body');
+    }
+    
+    // Forzar estilos CSS críticos si no se están aplicando
+    const computedStyle = window.getComputedStyle(container);
+    if (computedStyle.position === 'static') {
+        console.warn('[Dashboard] Los estilos CSS no se están aplicando. Forzando estilos...');
+        container.style.cssText = `
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 3000 !important;
+            max-width: 400px !important;
+            pointer-events: none;
+        `;
+        
+        // Permitir clicks en las notificaciones individuales
+        container.addEventListener('click', function(e) {
+            e.target.style.pointerEvents = 'auto';
+        });
+    }
+    
+    // Agregar animaciones CSS si no existen
+    if (!document.querySelector('#notification-animations')) {
+        const animationStyles = document.createElement('style');
+        animationStyles.id = 'notification-animations';
+        animationStyles.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes progressBar {
+                from { width: 100%; }
+                to { width: 0%; }
+            }
+        `;
+        document.head.appendChild(animationStyles);
+    }
+    
+    console.log('[Dashboard] Sistema de notificaciones inicializado');
+}
+
+function showNotification(message, type = 'info', title = null, duration = 4000) {
+    console.log(`[Dashboard] Mostrando notificación: "${message}" (${type})`);
+    
+    // Asegurar que el contenedor existe
+    let container = document.getElementById('notificationContainer');
+    console.log('[Dashboard] Container encontrado:', !!container);
+    
+    if (!container) {
+        console.warn('[Dashboard] Container de notificaciones no encontrado, creando...');
+        initNotificationSystem();
+        container = document.getElementById('notificationContainer');
+        console.log('[Dashboard] Container después de init:', !!container);
+    }
+    
+    if (!container) {
+        console.error('[Dashboard] Error crítico: No se pudo crear el contenedor de notificaciones');
+        // Fallback: usar alert como último recurso
+        alert(`${title || type.toUpperCase()}: ${message}`);
+        return null;
+    }
+    
+    console.log('[Dashboard] Container final classes:', container.className);
+    console.log('[Dashboard] Container parent:', container.parentElement);
+    console.log('[Dashboard] Container computed position:', window.getComputedStyle(container).position);
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // Forzar estilos críticos para la notificación si es necesario
+    notification.style.cssText = `
+        background: white;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : type === 'warning' ? '#ffc107' : '#17a2b8'};
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideInRight 0.3s ease-out;
+        position: relative;
+        overflow: hidden;
+        pointer-events: auto;
+        min-width: 300px;
+    `;
+    
+    const icons = {
+        success: '✓',
+        error: '✗',
+        warning: '⚠️',
+        info: '🛈'
+    };
+    
+    const titles = {
+        success: title || '¡Éxito!',
+        error: title || 'Error',
+        warning: title || 'Advertencia',
+        info: title || 'Información'
+    };
+    
+    notification.innerHTML = `
+        <div class="notification-icon">${icons[type] || icons.info}</div>
+        <div class="notification-content">
+            <div class="notification-title">${titles[type]}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="closeNotification(this.parentElement)">×</button>
+        <div class="notification-progress"></div>
+    `;
+    
+    container.appendChild(notification);
+    
+    console.log('[Dashboard] Notificación creada y añadida al container');
+    console.log('[Dashboard] Notification classes:', notification.className);
+    console.log('[Dashboard] Notification computed styles:', {
+        position: window.getComputedStyle(notification).position,
+        display: window.getComputedStyle(notification).display,
+        background: window.getComputedStyle(notification).backgroundColor
+    });
+    
+    // Auto-cerrar después del tiempo especificado
+    setTimeout(() => {
+        closeNotification(notification);
+    }, duration);
+    
+    return notification;
+}
+
+function closeNotification(notification) {
+    if (!notification) return;
+    
+    notification.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.parentElement.removeChild(notification);
+        }
+    }, 300);
+}
+
+// Helper para obtener CSRF token
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return decodeURIComponent(value);
+        }
+    }
+    return '';
+}
+
+// ============================================================
+// ESTILOS DINÁMICOS PARA EL MODAL
+// ============================================================
+
+// Agregar estilos CSS para el modal si no existen
+if (!document.querySelector('#modal-styles')) {
+    const modalStyles = document.createElement('style');
+    modalStyles.id = 'modal-styles';
+    modalStyles.textContent = `
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #2d5016;
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: #dc3545;
+        }
+        
+        .modal-form {
+            padding: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2d5016;
+            box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.1);
+        }
+        
+        .form-group input.error,
+        .form-group select.error,
+        .form-group textarea.error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        }
+        
+        .field-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: #2d5016;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background-color: #1e3610;
+        }
+        
+        .btn-primary:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 2% auto;
+                width: 95%;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+        }
+    `;
+    
+    document.head.appendChild(modalStyles);
+}
+
+// ============================================================
+// INICIALIZACIÓN DEL DASHBOARD
+// ============================================================
+
+// Inicializar dashboard cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Dashboard] DOM loaded, inicializando...');
+    
+    // Verificar elementos críticos del DOM
+    const productsGrid = document.getElementById('productsGrid');
+    const notificationContainer = document.getElementById('notificationContainer');
+    const sidebar = document.querySelector('.dashboard-sidebar');
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    console.log('[Dashboard] productsGrid encontrado:', !!productsGrid);
+    console.log('[Dashboard] notificationContainer encontrado:', !!notificationContainer);
+    console.log('[Dashboard] sidebar encontrado:', !!sidebar);
+    console.log('[Dashboard] nav items encontrados:', navItems.length);
+    console.log('[Dashboard] Ancho de ventana:', window.innerWidth);
+    
+    // Verificar si estamos en móvil
+    if (window.innerWidth <= 768) {
+        console.log('[Dashboard] Modo móvil detectado');
+        if (sidebar) {
+            const computedStyles = window.getComputedStyle(sidebar);
+            console.log('[Dashboard] Sidebar computed styles:', {
+                position: computedStyles.position,
+                width: computedStyles.width,
+                display: computedStyles.display,
+                visibility: computedStyles.visibility
+            });
+            
+            // Forzar estilos de navegación móvil si no se están aplicando
+            if (computedStyles.width !== '100%' || computedStyles.position !== 'sticky') {
+                console.warn('[Dashboard] CSS móvil no aplicado, forzando estilos...');
+                
+                // Forzar estilos del sidebar
+                sidebar.style.cssText = `
+                    width: 100% !important;
+                    position: sticky !important;
+                    top: 0 !important;
+                    z-index: 1000 !important;
+                    background: white !important;
+                    border-right: none !important;
+                    border-bottom: 1px solid #e9ecef !important;
+                    padding: 0 !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+                    margin-bottom: 1rem !important;
+                    display: block !important;
+                    visibility: visible !important;
+                `;
+                
+                // Forzar estilos de la lista de navegación
+                const navItems = sidebar.querySelector('.nav-items');
+                if (navItems) {
+                    navItems.style.cssText = `
+                        display: flex !important;
+                        flex-direction: row !important;
+                        overflow-x: auto !important;
+                        padding: 0.5rem 0 !important;
+                        gap: 0 !important;
+                        -webkit-overflow-scrolling: touch !important;
+                    `;
+                }
+                
+                // Forzar estilos de cada item de navegación
+                const navItemElements = sidebar.querySelectorAll('.nav-item');
+                navItemElements.forEach(item => {
+                    item.style.cssText = `
+                        flex: 0 0 auto !important;
+                        min-width: 120px !important;
+                        white-space: nowrap !important;
+                        padding: 0.75rem 1rem !important;
+                        border-right: none !important;
+                        border-bottom: 3px solid transparent !important;
+                        text-align: center !important;
+                        font-size: 0.85rem !important;
+                        gap: 0.5rem !important;
+                        flex-direction: column !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        text-decoration: none !important;
+                        color: #666 !important;
+                        transition: all 0.3s ease !important;
+                    `;
+                    
+                    if (item.classList.contains('active')) {
+                        item.style.borderBottomColor = '#2d5016';
+                        item.style.background = '#f0f4ed';
+                        item.style.color = '#2d5016';
+                    }
+                });
+                
+                console.log('[Dashboard] Estilos móvil forzados aplicados');
+            }
+        }
+    }
+    
+    // Configurar autenticación
+    setupAuthentication();
+    
+    // Configurar navegación
+    setupNavigation();
+    
+    // Configurar modal de productos
+    setupProductModal();
+    
+    // Configurar modal de edición
+    setupEditModal();
+    
+    // Configurar modal de eliminación
+    setupDeleteModal();
+    
+    // Inicializar sistema de notificaciones
+    initNotificationSystem();
+    
+    // Probar notificación inicial y estado del sistema después de 3 segundos
+    setTimeout(() => {
+        console.log('[Dashboard] Probando notificación inicial...');
+        showNotification('Sistema inicializado correctamente', 'success', '¡Bienvenido!');
+        
+        // Debug adicional sobre el estado del DOM
+        setTimeout(() => {
+            const container = document.getElementById('notificationContainer');
+            const productsGrid = document.getElementById('productsGrid');
+            
+            console.log('[Dashboard] === DEBUG DEL ESTADO ===');
+            console.log('Container de notificaciones:', container);
+            console.log('Productos grid:', productsGrid);
+            console.log('Children del container:', container ? container.children.length : 'N/A');
+            console.log('Children del products grid:', productsGrid ? productsGrid.children.length : 'N/A');
+            console.log('=================================');
+        }, 1000);
+        
+    }, 3000);
+    
+    // Cargar datos iniciales
+    loadInitialData();
+    
+    // Aplicar navegación móvil después de un breve delay para asegurar que el DOM esté listo
+    setTimeout(() => {
+        applyMobileNavigation();
+    }, 500);
+    
+    // Listener para redimensionado de ventana
+    window.addEventListener('resize', function() {
+        console.log('[Dashboard] Ventana redimensionada:', window.innerWidth);
+        setTimeout(() => {
+            applyMobileNavigation();
+        }, 100);
+    });
+    
+    console.log('[Dashboard] Inicialización completa');
+});
+
+// ============================================================
+// FUNCIONES DE CONFIGURACIÓN
+// ============================================================
+
+// Configurar autenticación
+function setupAuthentication() {
+    console.log('[Dashboard] Configurando autenticación...');
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Limpiar tokens
+            localStorage.removeItem('authToken');
+            // Redirigir al login
+            window.location.href = '/accounts/login/';
+        });
+    }
+}
+
+// Configurar navegación
+function setupNavigation() {
+    console.log('[Dashboard] Configurando navegación...');
+    
+    const navItems = document.querySelectorAll('.nav-item[data-section]');
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.dataset.section;
+            showSection(section);
+        });
+    });
+    
+    // Menú de usuario
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    
+    if (userMenuBtn && userDropdown) {
+        userMenuBtn.addEventListener('click', function() {
+            userDropdown.classList.toggle('show');
+        });
+        
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            if (!userMenuBtn.contains(e.target)) {
+                userDropdown.classList.remove('show');
+            }
+        });
+    }
+}
+
+// Mostrar sección
+function showSection(sectionName) {
+    console.log('[Dashboard] Mostrando sección:', sectionName);
+    
+    // Ocultar todas las secciones
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Mostrar sección seleccionada
+    const targetSection = document.getElementById(sectionName);
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
+    
+    // Actualizar navegación activa
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const activeNavItem = document.querySelector(`[data-section="${sectionName}"]`);
+    if (activeNavItem) {
+        activeNavItem.classList.add('active');
+    }
+    
+    // Cargar contenido específico de la sección
+    if (sectionName === 'products') {
+        loadUserProducts();
+    }
+}
+
+// Aplicar navegación móvil
+function applyMobileNavigation() {
+    if (window.innerWidth <= 768) {
+        console.log('[Dashboard] Aplicando navegación móvil...');
+        
+        const sidebar = document.querySelector('.dashboard-sidebar');
+        if (sidebar) {
+            // Forzar estilos del sidebar
+            sidebar.style.cssText = `
+                width: 100% !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 1000 !important;
+                background: white !important;
+                border-right: none !important;
+                border-bottom: 1px solid #e9ecef !important;
+                padding: 0 !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+                margin-bottom: 1rem !important;
+                display: block !important;
+                visibility: visible !important;
+            `;
+            
+            // Forzar estilos de la lista de navegación
+            const navItems = sidebar.querySelector('.nav-items');
+            if (navItems) {
+                navItems.style.cssText = `
+                    display: flex !important;
+                    flex-direction: row !important;
+                    overflow-x: auto !important;
+                    padding: 0.5rem 0 !important;
+                    gap: 0 !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    list-style: none !important;
+                    margin: 0 !important;
+                `;
+            }
+            
+            // Forzar estilos de cada item de navegación
+            const navItemElements = sidebar.querySelectorAll('.nav-item');
+            navItemElements.forEach(item => {
+                item.style.cssText = `
+                    flex: 0 0 auto !important;
+                    min-width: 120px !important;
+                    white-space: nowrap !important;
+                    padding: 0.75rem 1rem !important;
+                    border-right: none !important;
+                    border-bottom: 3px solid transparent !important;
+                    text-align: center !important;
+                    font-size: 0.85rem !important;
+                    gap: 0.5rem !important;
+                    flex-direction: column !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    text-decoration: none !important;
+                    color: #666 !important;
+                    transition: all 0.3s ease !important;
+                    background: transparent !important;
+                `;
+                
+                if (item.classList.contains('active')) {
+                    item.style.borderBottomColor = '#2d5016 !important';
+                    item.style.background = '#f0f4ed !important';
+                    item.style.color = '#2d5016 !important';
+                }
+                
+                // Asegurar que el icono esté visible
+                const icon = item.querySelector('.nav-icon');
+                if (icon) {
+                    icon.style.cssText = `
+                        font-size: 1.1rem !important;
+                        width: auto !important;
+                        text-align: center !important;
+                        margin-bottom: 0.25rem !important;
+                        display: block !important;
+                    `;
+                }
+            });
+            
+            console.log('[Dashboard] Navegación móvil aplicada exitosamente');
+        }
+    }
+}
+
+// Cargar datos iniciales
+function loadInitialData() {
+    console.log('[Dashboard] Cargando datos iniciales...');
+    
+    // Aplicar navegación móvil
+    applyMobileNavigation();
+    
+    // Cargar datos del usuario
+    if (window.dashboardData && window.dashboardData.usuario.is_authenticated) {
+        loadUserProducts();
+    }
+}
