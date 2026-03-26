@@ -156,23 +156,52 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
         finca = attrs.get('finca')
         
         if precio and nombre:
-            # Primero buscamos coincidencias parciales del nombre de producto
-            sipsa_qs = SipsaPrecio.objects.filter(producto__icontains=nombre)
+            # Extraemos la primera palabra (ej 'Papa')
+            palabra_clave = nombre.split()[0].strip() if nombre else ''
+            sipsa_qs = SipsaPrecio.objects.none()
+            if palabra_clave:
+                sipsa_qs = SipsaPrecio.objects.filter(producto__icontains=palabra_clave)
             
             sipsa_val = None
-            if finca and finca.ubicacion_municipio:
-                sipsa_val = sipsa_qs.filter(ciudad__icontains=finca.ubicacion_municipio).first()
-            
-            # Si no hay en el municipio, o no hay finca, buscar promedio nacional genérico
-            if not sipsa_val:
-                sipsa_val = sipsa_qs.first()
+            if sipsa_qs.exists():
+                import re
+                palabra_lower = palabra_clave.lower()
+                opciones = []
+                if finca and finca.ubicacion_municipio:
+                    opciones.append(sipsa_qs.filter(ciudad__icontains=finca.ubicacion_municipio))
+                opciones.append(sipsa_qs)
+                
+                matches_validos = []
+                for qs in opciones:
+                    for s in qs:
+                        palabras_sipsa = re.findall(r'\w+', s.producto.lower())
+                        if palabra_lower in palabras_sipsa:
+                            matches_validos.append(s)
+                    if matches_validos:
+                        break # Si hay matches locales, priorizarlos
+                
+                if matches_validos:
+                    # Intento 1: Coincidencia exacta de variante (Papa sabanera in "Papa sabanera sucia")
+                    matches_exactos = [s for s in matches_validos if s.producto.replace('*', '').strip().lower() in nombre.lower()]
+                    es_exacto = False
+                    if matches_exactos:
+                        sipsa_val = matches_exactos[0]
+                        es_exacto = True
+                    else:
+                        # Intento 2: Beneficio campesino (Tomar el techo más alto de la variante 'Papa')
+                        sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
                 
             if sipsa_val:
                 # El precio máximo permitido será un 130% (x1.3) del valor SIPSA
                 limite_maximo = sipsa_val.precio_promedio * Decimal('1.30')
                 if precio > limite_maximo:
+                    if es_exacto or sipsa_val.producto.lower() == palabra_clave.lower():
+                        mensaje = f'El precio que intentas asignar excede el límite ético. Según el DANE, el promedio de {sipsa_val.producto} en tu área es ${sipsa_val.precio_promedio:,.0f} COP. Límite: ${limite_maximo:,.0f}.'
+                    else:
+                        mensaje = f'Tu variante exacta no figura en el DANE hoy. Por precaución, te evaluamos contra la variante más cara de tu rubro ({sipsa_val.producto} a ${sipsa_val.precio_promedio:,.0f} COP). Aún así, tu precio excede el límite permitido de ${limite_maximo:,.0f} COP.'
+                    
                     raise serializers.ValidationError({
-                        'precio_por_kg': f'El precio que intentas asignar excede el máximo ético permitido. Según el SIPSA-DANE, el promedio de {sipsa_val.producto} en tu área es ${sipsa_val.precio_promedio:,.0f} COP. El máximo permitido en la plataforma es ${limite_maximo:,.0f} COP.'
+                        'precio_por_kg': mensaje
                     })
         
         return attrs

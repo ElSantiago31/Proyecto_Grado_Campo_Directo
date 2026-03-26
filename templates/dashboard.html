@@ -380,7 +380,21 @@
                         
                         <div class="form-group" id="fincaFieldGroup" style="margin-bottom: 20px;">
                             <label for="profileNombreFinca" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre de tu Finca</label>
-                            <input type="text" id="profileNombreFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="text" id="profileNombreFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
+                            <div style="display: flex; gap: 15px;">
+                                <div style="flex: 1;">
+                                    <label for="profileDepartamentoFinca" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: gray;">Departamento</label>
+                                    <select id="profileDepartamentoFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <option value="">Selecciona Departamento</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label for="profileMunicipioFinca" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: gray;">Ciudad / Municipio Mkt.</label>
+                                    <select id="profileMunicipioFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                                        <option value="">Selecciona Municipio</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         
                         <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
@@ -475,7 +489,7 @@
                 </div>
                 <div class="form-group">
                     <label for="productPrice">Precio por kg/unidad</label>
-                    <input type="number" id="productPrice" name="productPrice" min="0" step="100" required>
+                    <input type="number" id="productPrice" name="productPrice" min="0" step="any" required>
                 </div>
                 <div class="form-group">
                     <label for="productStock">Cantidad disponible</label>
@@ -521,7 +535,7 @@
                 </div>
                 <div class="form-group">
                     <label for="editProductPrice">Precio por kg/unidad</label>
-                    <input type="number" id="editProductPrice" name="productPrice" min="0" step="100" required>
+                    <input type="number" id="editProductPrice" name="productPrice" min="0" step="any" required>
                 </div>
                 <div class="form-group">
                     <label for="editProductStock">Cantidad disponible</label>
@@ -598,5 +612,7 @@
     console.log('[Dashboard Template] Datos del usuario:', window.dashboardData);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/colombia.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/config/api.js' %}?v={% now 'U' %}"></script>
 <script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

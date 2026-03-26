@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registerForm');
     const campesinRadio = document.getElementById('campesino');
     const compradorRadio = document.getElementById('comprador');
-    const campesinField = document.querySelector('.campesino-field');
+    const campesinFields = document.querySelectorAll('.campesino-field');
     const nombreFincaInput = document.getElementById('nombreFinca');
 
     const compradorField = document.querySelector('.comprador-field');
@@ -13,16 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Manejar la visibilidad del campo "Nombre de Finca" y "Dirección"
     function toggleFields() {
         if (campesinRadio.checked) {
-            campesinField.classList.remove('hidden');
+            campesinFields.forEach(el => el.classList.remove('hidden'));
             nombreFincaInput.required = true;
+            document.getElementById('departamentoFinca').required = true;
+            document.getElementById('municipioFinca').required = true;
             
             compradorField.classList.add('hidden');
             direccionInput.required = false;
             direccionInput.value = '';
         } else {
-            campesinField.classList.add('hidden');
+            campesinFields.forEach(el => el.classList.add('hidden'));
             nombreFincaInput.required = false;
             nombreFincaInput.value = '';
+            document.getElementById('departamentoFinca').required = false;
+            document.getElementById('municipioFinca').required = false;
             
             compradorField.classList.remove('hidden');
             direccionInput.required = true;
@@ -32,6 +36,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners para los radio buttons
     campesinRadio.addEventListener('change', toggleFields);
     compradorRadio.addEventListener('change', toggleFields);
+
+    // Poblar selects de Colombia
+    const deptoSelect = document.getElementById('departamentoFinca');
+    const muniSelect = document.getElementById('municipioFinca');
+    
+    if (typeof colombiaData !== 'undefined' && deptoSelect && muniSelect) {
+        colombiaData.forEach(d => {
+            const option = document.createElement('option');
+            option.value = d.departamento;
+            option.textContent = d.departamento;
+            deptoSelect.appendChild(option);
+        });
+
+        deptoSelect.addEventListener('change', function() {
+            muniSelect.innerHTML = '<option value="">Municipio</option>';
+            if (this.value) {
+                const deptoData = colombiaData.find(d => d.departamento === this.value);
+                if (deptoData) {
+                    deptoData.ciudades.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c;
+                        option.textContent = c;
+                        muniSelect.appendChild(option);
+                    });
+                    muniSelect.disabled = false;
+                }
+            } else {
+                muniSelect.disabled = true;
+            }
+        });
+    }
 
     // Configuración inicial
     toggleFields();
@@ -50,6 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tipoUsuario: formData.get('tipoUsuario'),
             fechaNacimiento: formData.get('fechaNacimiento'),
             nombreFinca: formData.get('nombreFinca') || null,
+            departamentoFinca: formData.get('departamentoFinca') || null,
+            municipioFinca: formData.get('municipioFinca') || null,
             direccion: formData.get('direccion') || null,
             password: formData.get('password'),
             passwordConfirm: formData.get('passwordConfirm')
@@ -73,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 password: data.password,
                 password_confirm: data.passwordConfirm,
                 ...(data.nombreFinca ? { nombre_finca: data.nombreFinca } : {}),
+                ...(data.departamentoFinca ? { departamento_finca: data.departamentoFinca } : {}),
+                ...(data.municipioFinca ? { municipio_finca: data.municipioFinca } : {}),
                 ...(data.direccion ? { direccion: data.direccion } : {})
             };
 
