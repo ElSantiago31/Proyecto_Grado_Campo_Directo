@@ -3,7 +3,7 @@
 **Fecha de creación:** 11 de Octubre 2025
 **Estado:** Usuarios listos para producción
 
-## 🌱 CAMPESINOS
+##  CAMPESINOS
 
 ### Usuario Principal
 - **Email:** `campesino@campodirecto.com`
@@ -19,7 +19,7 @@
 
 ---
 
-## 🛒 COMPRADORES
+##  COMPRADORES
 
 ### Usuario Principal
 - **Email:** `comprador@campodirecto.com`
@@ -35,7 +35,7 @@
 
 ---
 
-## 🔧 ADMINISTRADOR
+##  ADMINISTRADOR
 
 ### Superusuario
 - **Email:** `admin@campodirecto.com`
@@ -46,20 +46,20 @@
 
 ---
 
-## 📱 URLs DE ACCESO
+##  URLs DE ACCESO
 
 ### Usuarios Finales
 - **Campesinos:** `https://tudominio.com/login/`
 - **Compradores:** `https://tudominio.com/login-comprador/`
 - **Página Principal:** `https://tudominio.com/`
 
-### Administración  
+### Administración
 - **Django Admin:** `https://tudominio.com/admin/`
 - **API Docs:** `https://tudominio.com/api/docs/`
 
 ---
 
-## ⚠️ IMPORTANTE PARA PRODUCCIÓN
+##  IMPORTANTE PARA PRODUCCIÓN
 
 1. **Cambiar contraseñas** después del primer login
 2. **Configurar HTTPS** obligatorio
@@ -70,7 +70,7 @@
 
 ---
 
-## 🔧 COMANDOS ÚTILES
+##  COMANDOS ÚTILES
 
 ### Crear nuevos usuarios de producción
 ```bash
@@ -94,7 +94,7 @@ python manage.py createsuperuser
 
 ---
 
-## 📊 ESTADÍSTICAS INICIALES
+##  ESTADÍSTICAS INICIALES
 
 - **Total usuarios:** 5
 - **Campesinos:** 2

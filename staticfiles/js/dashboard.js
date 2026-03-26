@@ -1,31 +1,31 @@
 // Dashboard JavaScript - Campo Directo (Campesinos)
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('[Dashboard] Iniciando dashboard campesino con autenticación JWT');
-    
+
     // Verificar autenticación JWT (solo si no estamos ya en dashboard cargado por Django)
     console.log('[Dashboard] Verificando estado de autenticación...');
-    
+
     // Si estamos aquí, es porque Django ya verificó la autenticación en el servidor
     // No necesitamos redirigir, pero podemos intentar usar JWT si está disponible
     const hasJwtToken = isAuthenticated();
     console.log('[Dashboard] JWT Token disponible:', hasJwtToken);
-    
+
     // Intentar obtener perfil si tenemos JWT token
     if (hasJwtToken) {
         try {
             console.log('[Dashboard] Intentando obtener perfil con JWT...');
             const profile = await authApi.getProfile();
-            
+
             if (profile && profile.tipo_usuario === 'campesino') {
                 console.log(`[Dashboard] Usuario autenticado vía JWT: ${profile.nombre} ${profile.apellido}`);
-                
+
                 // Actualizar nombre en la UI
                 const userNameElement = document.getElementById('userName');
                 if (userNameElement && userNameElement.textContent.includes('Usuario')) {
                     userNameElement.textContent = `${profile.nombre} ${profile.apellido}`;
                 }
-                
+
                 // Cargar datos reales del dashboard
                 console.log('[Dashboard] Iniciando carga de datos reales...');
                 await loadRealDashboardData();
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.log('[Dashboard] Usuario no es campesino, pero está autenticado por sesión Django');
                 // No redirigir, dejar que Django maneje esto
             }
-            
+
         } catch (error) {
             console.warn('[Dashboard] Error obteniendo perfil JWT, usando datos de Django:', error);
             // No redirigir, usar datos del servidor Django
@@ -43,22 +43,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('[Dashboard] Sin JWT token, usando autenticación Django de sesión');
         // Usuario autenticado por sesión Django, no necesitamos JWT
     }
-    
+
     // Mostrar la aplicación
     const app = document.getElementById('appContainer');
     if (app) {
         app.style.display = 'block';
     }
-    
+
     // Inicializar funciones básicas
     setupNavigation();
     setupLogout();
     setupProductModal();
+    setupOrderTabsCampesino();
     // updateStats() se llama desde loadRealDashboardData()
-    
+
     // Cargar productos del usuario
     await loadUserProducts();
-    
+
     console.log('[Dashboard] Dashboard campesino cargado');
 });
 
@@ -78,16 +79,16 @@ async function loadRealDashboardData() {
     try {
         console.log('[Dashboard] Cargando datos reales del usuario...');
         console.log('[Dashboard] URL del endpoint:', '/api/users/dashboard/');
-        
+
         // Obtener datos del dashboard del usuario
         console.log('[Dashboard] Haciendo petición a la API...');
         const response = await authApi.fetch('/api/users/dashboard/');
         console.log('[Dashboard] Respuesta recibida:', response.status, response.statusText);
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('[Dashboard] Datos obtenidos:', data);
-            
+
             // Actualizar datos del dashboard
             dashboardData.stats = {
                 activeProducts: data.productos_activos || 0,
@@ -95,13 +96,13 @@ async function loadRealDashboardData() {
                 monthSales: data.ventas_mes || 0,
                 rating: data.calificacion || 0.0
             };
-            
+
             dashboardData.recentActivity = data.actividad_reciente || [];
-            
+
             // Actualizar UI con datos reales
             updateStats();
             updateRecentActivity();
-            
+
             console.log('[Dashboard] Datos actualizados en la UI');
         } else {
             console.warn('[Dashboard] No se pudieron cargar datos del dashboard, respuesta:', response.status);
@@ -121,21 +122,26 @@ function setupNavigation() {
     const sections = document.querySelectorAll('.content-section');
 
     navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             e.preventDefault();
-            
+
             // Remover clase active de todos los items
             navItems.forEach(nav => nav.classList.remove('active'));
             sections.forEach(section => section.classList.remove('active'));
-            
+
             // Agregar clase active al item clickeado
             this.classList.add('active');
-            
+
             // Mostrar la sección correspondiente
             const targetSection = this.getAttribute('data-section');
             const section = document.getElementById(targetSection);
             if (section) {
                 section.classList.add('active');
+                if (targetSection === 'orders') {
+                    loadCampesinoOrders();
+                } else if (targetSection === 'products') {
+                    loadUserProducts();
+                }
             }
         });
     });
@@ -148,19 +154,41 @@ function setupLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
 
     if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', function(e) {
+        userMenuBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             userDropdown.classList.toggle('show');
         });
 
         // Cerrar dropdown al hacer click fuera
-        document.addEventListener('click', function() {
+        document.addEventListener('click', function () {
             userDropdown.classList.remove('show');
         });
+
+        // Manejar enlaces de perfil y configuración
+        const showSection = (sectionId, e) => {
+            e.preventDefault();
+            userDropdown.classList.remove('show');
+            
+            // Remover 'active' de navegación lateral y todas las secciones
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                if (sectionId === 'profile') {
+                    loadProfileData();
+                    document.getElementById('changePasswordForm')?.reset();
+                }
+            }
+        };
+
+        const profileLink = document.getElementById('profileLink');
+        if (profileLink) profileLink.addEventListener('click', (e) => showSection('profile', e));
     }
 
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
             handleLogout();
         });
@@ -169,12 +197,12 @@ function setupLogout() {
 
 async function handleLogout() {
     console.log('[Dashboard] Iniciando proceso de logout...');
-    
+
     // Limpiar tokens JWT inmediatamente
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
     console.log('[Dashboard] Tokens JWT eliminados');
-    
+
     try {
         // Usar endpoint Django para logout de sesión
         console.log('[Dashboard] Redirigiendo a /logout/ para cerrar sesión Django');
@@ -191,7 +219,7 @@ function updateStats() {
     const pendingOrdersEl = document.getElementById('pendingOrders');
     const monthSalesEl = document.getElementById('monthSales');
     const ratingEl = document.getElementById('rating');
-    
+
     if (activeProductsEl) activeProductsEl.textContent = dashboardData.stats.activeProducts;
     if (pendingOrdersEl) pendingOrdersEl.textContent = dashboardData.stats.pendingOrders;
     if (monthSalesEl) monthSalesEl.textContent = formatCurrency(dashboardData.stats.monthSales);
@@ -201,7 +229,7 @@ function updateStats() {
 function updateRecentActivity() {
     const activityList = document.getElementById('recentActivityList');
     if (!activityList) return;
-    
+
     if (dashboardData.recentActivity.length === 0) {
         activityList.innerHTML = `
             <div class="activity-item">
@@ -214,7 +242,7 @@ function updateRecentActivity() {
         `;
         return;
     }
-    
+
     activityList.innerHTML = dashboardData.recentActivity.map(activity => `
         <div class="activity-item">
             <span class="activity-icon">${getActivityIcon(activity.estado)}</span>
@@ -253,7 +281,7 @@ function formatCurrency(amount) {
 
 function setupProductModal() {
     console.log('[Dashboard] Configurando modal de productos...');
-    
+
     // Elementos del modal
     const addProductBtn = document.getElementById('addProductBtn');
     const modal = document.getElementById('addProductModal');
@@ -261,70 +289,70 @@ function setupProductModal() {
     const cancelBtn = document.getElementById('cancelProduct');
     const productForm = document.getElementById('addProductForm');
     const categorySelect = document.getElementById('productCategory');
-    
+
     // Abrir modal
     if (addProductBtn) {
-        addProductBtn.addEventListener('click', function(e) {
+        addProductBtn.addEventListener('click', function (e) {
             e.preventDefault();
             openProductModal();
         });
     }
-    
+
     // Cerrar modal
     if (closeModal) {
         closeModal.addEventListener('click', closeProductModal);
     }
-    
+
     if (cancelBtn) {
         cancelBtn.addEventListener('click', closeProductModal);
     }
-    
+
     // Cerrar al hacer click fuera del modal
     if (modal) {
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 closeProductModal();
             }
         });
     }
-    
+
     // Enviar formulario
     if (productForm) {
         productForm.addEventListener('submit', handleProductSubmit);
     }
-    
+
     console.log('[Dashboard] Modal de productos configurado');
-    
+
     // Configurar otros modales
     setupEditModal();
     setupDeleteModal();
-    
+
     console.log('[Dashboard] Todos los modales configurados');
-    
+
     // Inicializar sistema de notificaciones
     initNotificationSystem();
 }
 
 async function openProductModal() {
     console.log('[Dashboard] Abriendo modal de productos...');
-    
+
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
-    
+
     // Cargar categorías
     await loadProductCategories();
-    
+
     // Resetear formulario
     const form = document.getElementById('addProductForm');
     if (form) {
         form.reset();
         clearFormErrors();
     }
-    
+
     // Mostrar modal
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden'; // Prevenir scroll del body
-    
+
     // Focus en el primer input
     const firstInput = modal.querySelector('input[type="text"]');
     if (firstInput) {
@@ -334,13 +362,13 @@ async function openProductModal() {
 
 function closeProductModal() {
     console.log('[Dashboard] Cerrando modal de productos...');
-    
+
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
-    
+
     modal.style.display = 'none';
     document.body.style.overflow = ''; // Restaurar scroll del body
-    
+
     // Limpiar formulario
     const form = document.getElementById('addProductForm');
     if (form) {
@@ -351,13 +379,13 @@ function closeProductModal() {
 
 async function loadProductCategories() {
     console.log('[Dashboard] Cargando categorías de productos...');
-    
+
     const categorySelect = document.getElementById('productCategory');
     if (!categorySelect) return;
-    
+
     try {
         console.log('[Dashboard] Intentando cargar categorías desde la API...');
-        
+
         // Intentar cargar directamente sin usar authApi para evitar problemas con JWT
         let response;
         try {
@@ -374,19 +402,19 @@ async function loadProductCategories() {
             console.error('[Dashboard] Error en fetch de categorías:', fetchError);
             throw fetchError;
         }
-        
+
         if (response.ok) {
             const categories = await response.json();
             console.log('[Dashboard] Categorías cargadas desde API:', categories);
-            
+
             // La respuesta puede ser un array directo o tener results
             const categoryList = Array.isArray(categories) ? categories : (categories.results || []);
             console.log('[Dashboard] Lista de categorías procesada:', categoryList);
-            
+
             if (categoryList.length > 0) {
                 // Limpiar opciones existentes
                 categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
-                
+
                 // Agregar categorías
                 categoryList.forEach(category => {
                     const option = document.createElement('option');
@@ -395,7 +423,7 @@ async function loadProductCategories() {
                     categorySelect.appendChild(option);
                     console.log(`[Dashboard] Añadida categoría: ${category.nombre} (ID: ${category.id})`);
                 });
-                
+
                 console.log('[Dashboard] Categorías cargadas exitosamente desde la API');
                 return;
             } else {
@@ -404,7 +432,7 @@ async function loadProductCategories() {
         } else {
             console.warn(`[Dashboard] Error ${response.status} cargando categorías, usando fallback`);
         }
-        
+
         // Fallback: categorías hardcodeadas con IDs reales de la DB
         console.log('[Dashboard] Usando categorías por defecto con IDs de la DB...');
         categorySelect.innerHTML = `
@@ -416,10 +444,10 @@ async function loadProductCategories() {
             <option value="16">Tubérculos</option>
             <option value="17">Legumbres</option>
         `;
-        
+
     } catch (error) {
         console.error('[Dashboard] Error cargando categorías:', error);
-        
+
         // Usar categorías por defecto en caso de error con IDs reales de la DB
         console.log('[Dashboard] Usando categorías de fallback con IDs reales');
         categorySelect.innerHTML = `
@@ -444,7 +472,7 @@ async function createDefaultCategories() {
 // Obtener la finca principal del usuario campesino
 async function getUserFinca() {
     console.log('[Dashboard] Obteniendo finca del usuario...');
-    
+
     try {
         // Intentar obtener la finca del endpoint de fincas
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -452,20 +480,20 @@ async function getUserFinca() {
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch('/api/farms/fincas/mis_fincas/', {
             method: 'GET',
             headers: headers,
             credentials: 'include'
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('[Dashboard] Respuesta de mis_fincas:', data);
             const fincas = Array.isArray(data) ? data : (data.results || data);
-            
+
             console.log('[Dashboard] Mis fincas procesadas:', fincas);
-            
+
             if (fincas.length > 0) {
                 const miFinca = fincas[0];
                 console.log('[Dashboard] Mi finca encontrada:', miFinca);
@@ -478,7 +506,7 @@ async function getUserFinca() {
         } else {
             const responseText = await response.text();
             console.error('[Dashboard] Error obteniendo mis fincas:', response.status, response.statusText, responseText);
-            
+
             // Fallback: intentar con el endpoint general si el específico falla
             console.log('[Dashboard] Intentando fallback con endpoint general...');
             try {
@@ -487,18 +515,18 @@ async function getUserFinca() {
                     headers: headers,
                     credentials: 'include'
                 });
-                
+
                 if (fallbackResponse.ok) {
                     const fallbackData = await fallbackResponse.json();
                     const todasLasFincas = Array.isArray(fallbackData) ? fallbackData : (fallbackData.results || []);
-                    
+
                     // Filtrar solo las fincas que pertenecen al usuario actual
-                    const misFincas = todasLasFincas.filter(finca => 
+                    const misFincas = todasLasFincas.filter(finca =>
                         finca.campesino_nombre && finca.campesino_nombre.includes('Juan Carlos')
                     );
-                    
+
                     console.log('[Dashboard] Fallback - Mis fincas filtradas:', misFincas);
-                    
+
                     if (misFincas.length > 0) {
                         console.log('[Dashboard] Fallback - Finca encontrada:', misFincas[0]);
                         return misFincas[0].id;
@@ -507,7 +535,7 @@ async function getUserFinca() {
             } catch (fallbackError) {
                 console.error('[Dashboard] Error en fallback:', fallbackError);
             }
-            
+
             return null;
         }
     } catch (error) {
@@ -519,20 +547,20 @@ async function getUserFinca() {
 async function handleProductSubmit(e) {
     e.preventDefault();
     console.log('[Dashboard] Enviando formulario de producto...');
-    
+
     // Limpiar errores anteriores
     clearFormErrors();
-    
+
     // Obtener datos del formulario
     const formData = new FormData(e.target);
-    
+
     // Obtener ID de categoría desde el select
     const categorySelect = document.getElementById('productCategory');
     const selectedOption = categorySelect.options[categorySelect.selectedIndex];
     const categoryId = selectedOption ? selectedOption.value : null;
-    
+
     console.log('[Dashboard] Categoría seleccionada:', categoryId, selectedOption?.text);
-    
+
     const productData = {
         nombre: formData.get('productName'),
         categoria: parseInt(categoryId), // Debe ser un ID numérico
@@ -542,40 +570,40 @@ async function handleProductSubmit(e) {
         unidad_medida: 'kg', // Valor por defecto
         estado: 'disponible' // Valor por defecto
     };
-    
+
     console.log('[Dashboard] Datos del producto preparados (sin finca):', productData);
-    
+
     // Obtener ID de finca del usuario
     console.log('[Dashboard] Obteniendo finca del usuario...');
     const fincaId = await getUserFinca();
-    
+
     if (!fincaId) {
         showNotification('No tienes una finca registrada. Debes registrar una finca antes de agregar productos.', 'error');
         return;
     }
-    
+
     // Agregar la finca a los datos del producto
     productData.finca = fincaId;
     console.log('[Dashboard] ID de finca obtenido y agregado:', fincaId);
     console.log('[Dashboard] Datos completos del producto:', productData);
-    
+
     // Validación básica
     const validation = validateProductData(productData);
     if (!validation.isValid) {
         showFormErrors(validation.errors);
         return;
     }
-    
+
     // Mostrar loading después de todas las validaciones
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Agregando...';
     submitBtn.disabled = true;
-    
+
     try {
         // Preparar FormData para el envío (incluyendo imagen)
         const submitData = new FormData();
-        
+
         // Agregar campos de datos del producto, evitando null values
         Object.keys(productData).forEach(key => {
             const value = productData[key];
@@ -586,23 +614,23 @@ async function handleProductSubmit(e) {
                 console.warn(`[Dashboard] Campo ${key} es null/undefined:`, value);
             }
         });
-        
+
         // Agregar imagen si existe (usar el nombre correcto del campo)
         const imageFile = formData.get('productImage');
         if (imageFile && imageFile.size > 0) {
             submitData.append('imagen_principal', imageFile); // Usar el nombre correcto del campo
             console.log('[Dashboard] Imagen agregada:', imageFile.name, imageFile.size, 'bytes');
         }
-        
+
         // Obtener CSRF token
         const csrfToken = getCsrfToken();
         console.log('[Dashboard] CSRF Token:', csrfToken ? 'Encontrado' : 'No encontrado');
-        
+
         // Configurar headers base
         const headers = {
             'X-CSRFToken': csrfToken
         };
-        
+
         // Añadir autenticación JWT si está disponible
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
@@ -611,22 +639,22 @@ async function handleProductSubmit(e) {
         } else {
             console.log('[Dashboard] Usando autenticación de sesión Django');
         }
-        
+
         console.log('[Dashboard] Enviando request a /api/products/productos/');
         console.log('[Dashboard] Headers que se enviarán:', headers);
-        
+
         // Verificar estado de autenticación adicional
         const sessionInfo = document.querySelector('[data-user-authenticated]');
         if (sessionInfo) {
             console.log('[Dashboard] Usuario autenticado por sesión Django:', sessionInfo.dataset.userAuthenticated);
         }
-        
+
         // Verificar información del usuario desde el DOM
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
             console.log('[Dashboard] Nombre de usuario desde DOM:', userNameElement.textContent);
         }
-        
+
         // Verificar datos del usuario desde el contexto Django
         if (window.dashboardData) {
             console.log('[Dashboard] Datos completos del usuario:', window.dashboardData.usuario);
@@ -635,7 +663,7 @@ async function handleProductSubmit(e) {
             console.log('[Dashboard] Tiene finca:', window.dashboardData.finca.tiene_finca);
             console.log('[Dashboard] Autenticado:', window.dashboardData.usuario.is_authenticated);
         }
-        
+
         // Enviar a la API
         const response = await fetch('/api/products/productos/', {
             method: 'POST',
@@ -643,34 +671,34 @@ async function handleProductSubmit(e) {
             credentials: 'include', // Importante para cookies de sesión
             body: submitData
         });
-        
+
         console.log('[Dashboard] Respuesta del servidor:', response.status, response.statusText);
         console.log('[Dashboard] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('[Dashboard] Producto creado exitosamente:', result);
-            
+
             showNotification('¡Producto agregado exitosamente!', 'success');
             closeProductModal();
-            
+
             // Recargar la lista de productos
             await loadUserProducts();
-            
+
             // Navegar a la sección de productos para mostrar el nuevo producto
             const productsTab = document.querySelector('[data-section="products"]');
             if (productsTab) {
                 productsTab.click();
             }
-            
+
         } else {
             console.error('[Dashboard] Error - Status:', response.status, 'StatusText:', response.statusText);
-            
+
             let errorData;
             try {
                 const responseText = await response.text();
                 console.log('[Dashboard] Respuesta completa del servidor:', responseText);
-                
+
                 // Intentar parsear como JSON
                 if (responseText) {
                     try {
@@ -686,9 +714,9 @@ async function handleProductSubmit(e) {
                 console.error('[Dashboard] Error leyendo respuesta:', readError);
                 errorData = { detail: `Error de conexión (${response.status})` };
             }
-            
+
             console.error('[Dashboard] Error procesado:', errorData);
-            
+
             if (response.status === 400 && errorData) {
                 // Errores de validación del servidor
                 showFormErrors(errorData);
@@ -701,7 +729,7 @@ async function handleProductSubmit(e) {
                 showNotification(message, 'error');
             }
         }
-        
+
     } catch (error) {
         console.error('[Dashboard] Error al enviar producto:', error);
         showNotification('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'error');
@@ -714,27 +742,27 @@ async function handleProductSubmit(e) {
 
 function validateProductData(data) {
     const errors = [];
-    
+
     if (!data.nombre || data.nombre.trim().length < 2) {
         errors.push({ field: 'productName', message: 'El nombre debe tener al menos 2 caracteres' });
     }
-    
+
     if (!data.categoria || isNaN(data.categoria)) {
         errors.push({ field: 'productCategory', message: 'Selecciona una categoría válida' });
     }
-    
+
     if (!data.precio_por_kg || data.precio_por_kg <= 0) {
         errors.push({ field: 'productPrice', message: 'El precio debe ser mayor a 0' });
     }
-    
+
     if (!data.stock_disponible || data.stock_disponible <= 0) {
         errors.push({ field: 'productStock', message: 'La cantidad debe ser mayor a 0' });
     }
-    
+
     if (!data.finca) {
         errors.push({ field: 'general', message: 'No se pudo obtener la información de tu finca' });
     }
-    
+
     return {
         isValid: errors.length === 0,
         errors: errors
@@ -761,10 +789,10 @@ function showFormErrors(errors) {
 function showFieldError(fieldName, message) {
     const field = document.getElementById(fieldName);
     if (!field) return;
-    
+
     // Añadir clase de error
     field.classList.add('error');
-    
+
     // Buscar o crear elemento de error
     let errorElement = field.parentNode.querySelector('.field-error');
     if (!errorElement) {
@@ -772,7 +800,7 @@ function showFieldError(fieldName, message) {
         errorElement.className = 'field-error';
         field.parentNode.appendChild(errorElement);
     }
-    
+
     errorElement.textContent = message;
 }
 
@@ -782,7 +810,7 @@ function clearFormErrors() {
     errorFields.forEach(field => {
         field.classList.remove('error');
     });
-    
+
     // Limpiar mensajes de error
     const errorMessages = document.querySelectorAll('#addProductForm .field-error');
     errorMessages.forEach(msg => {
@@ -793,20 +821,20 @@ function clearFormErrors() {
 // Función para cargar productos del usuario
 async function loadUserProducts() {
     console.log('[Dashboard] Cargando productos del usuario...');
-    
+
     try {
         const headers = { 'X-CSRFToken': getCsrfToken() };
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch('/api/products/productos/mis_productos/', {
             method: 'GET',
             headers: headers,
             credentials: 'include'
         });
-        
+
         if (response.ok) {
             const productos = await response.json();
             console.log('[Dashboard] Productos cargados:', productos);
@@ -826,21 +854,21 @@ async function loadUserProducts() {
 function displayProducts(productos) {
     const productsGrid = document.getElementById('productsGrid');
     if (!productsGrid) return;
-    
+
     if (productos.length === 0) {
         displayNoProducts();
         return;
     }
-    
+
     let html = '';
     productos.forEach(producto => {
         html += `
             <div class="product-card">
                 <div class="product-image">
-                    ${producto.imagen_principal ? 
-                        `<img src="${producto.imagen_principal}" alt="${producto.nombre}" />` : 
-                        '<div class="no-image">📦</div>'
-                    }
+                    ${producto.imagen_principal ?
+                `<img src="${producto.imagen_principal}" alt="${producto.nombre}" />` :
+                '<div class="no-image">📦</div>'
+            }
                 </div>
                 <div class="product-info">
                     <h4 class="product-name">${producto.nombre}</h4>
@@ -862,7 +890,7 @@ function displayProducts(productos) {
             </div>
         `;
     });
-    
+
     productsGrid.innerHTML = html;
 }
 
@@ -870,7 +898,7 @@ function displayProducts(productos) {
 function displayNoProducts() {
     const productsGrid = document.getElementById('productsGrid');
     if (!productsGrid) return;
-    
+
     productsGrid.innerHTML = `
         <div class="no-products">
             <div class="no-products-icon">📦</div>
@@ -894,7 +922,7 @@ function updateProductStats(count) {
 // Funciones placeholder para acciones de productos
 async function editProduct(productId) {
     console.log('[Dashboard] Abriendo modal de edición para producto:', productId);
-    
+
     try {
         // Obtener datos del producto
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -902,23 +930,23 @@ async function editProduct(productId) {
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch(`/api/products/productos/${productId}/`, {
             method: 'GET',
             headers: headers,
             credentials: 'include'
         });
-        
+
         if (response.ok) {
             const producto = await response.json();
             console.log('[Dashboard] Datos del producto obtenidos:', producto);
-            
+
             // Cargar categorías en el modal de edición
             await loadCategoriesForEdit();
-            
+
             // Llenar el formulario con los datos actuales
             fillEditForm(producto);
-            
+
             // Mostrar el modal
             showEditModal();
         } else {
@@ -946,18 +974,18 @@ function fillEditForm(producto) {
 async function loadCategoriesForEdit() {
     const categorySelect = document.getElementById('editProductCategory');
     if (!categorySelect) return;
-    
+
     try {
         const response = await fetch('/api/products/categorias/', {
             credentials: 'include'
         });
-        
+
         if (response.ok) {
             const data = await response.json();
             const categories = Array.isArray(data) ? data : (data.results || []);
-            
+
             categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
-            
+
             categories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.id;
@@ -986,7 +1014,7 @@ function showEditModal() {
     if (modal) {
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
-        
+
         // Focus en el primer input
         const firstInput = modal.querySelector('input[type="text"]');
         if (firstInput) {
@@ -1000,7 +1028,7 @@ function hideEditModal() {
     if (modal) {
         modal.style.display = 'none';
         document.body.style.overflow = '';
-        
+
         // Limpiar formulario
         const form = document.getElementById('editProductForm');
         if (form) {
@@ -1015,23 +1043,23 @@ function setupEditModal() {
     const closeBtn = document.getElementById('closeEditModal');
     const cancelBtn = document.getElementById('cancelEditProduct');
     const form = document.getElementById('editProductForm');
-    
+
     if (closeBtn) {
         closeBtn.addEventListener('click', hideEditModal);
     }
-    
+
     if (cancelBtn) {
         cancelBtn.addEventListener('click', hideEditModal);
     }
-    
+
     if (modal) {
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 hideEditModal();
             }
         });
     }
-    
+
     if (form) {
         form.addEventListener('submit', handleEditSubmit);
     }
@@ -1041,10 +1069,10 @@ function setupEditModal() {
 async function handleEditSubmit(e) {
     e.preventDefault();
     console.log('[Dashboard] Enviando formulario de edición...');
-    
+
     const formData = new FormData(e.target);
     const productId = formData.get('productId');
-    
+
     const productData = {
         nombre: formData.get('productName'),
         categoria: parseInt(formData.get('productCategory')),
@@ -1053,15 +1081,15 @@ async function handleEditSubmit(e) {
         descripcion: formData.get('productDescription') || '',
         estado: formData.get('productStatus')
     };
-    
+
     console.log('[Dashboard] Datos de edición preparados:', productData);
-    
+
     // Mostrar loading en el botón
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Actualizando...';
     submitBtn.disabled = true;
-    
+
     try {
         const submitFormData = new FormData();
         Object.keys(productData).forEach(key => {
@@ -1069,39 +1097,39 @@ async function handleEditSubmit(e) {
                 submitFormData.append(key, productData[key]);
             }
         });
-        
+
         // Agregar imagen si se seleccionó una nueva
         const imageFile = formData.get('productImage');
         if (imageFile && imageFile.size > 0) {
             submitFormData.append('imagen_principal', imageFile);
         }
-        
+
         const headers = { 'X-CSRFToken': getCsrfToken() };
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch(`/api/products/productos/${productId}/`, {
             method: 'PATCH',
             headers: headers,
             credentials: 'include',
             body: submitFormData
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('[Dashboard] Producto actualizado exitosamente:', result);
-            
+
             showNotification('Producto actualizado exitosamente', 'success');
             hideEditModal();
-            
+
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
             console.error('[Dashboard] Error actualizando producto:', errorData);
-            
+
             if (response.status === 400) {
                 // Mostrar errores específicos si los hay
                 let errorMessage = 'Error de validación:';
@@ -1133,7 +1161,7 @@ async function handleEditSubmit(e) {
 // Mostrar modal de confirmación para eliminar
 async function deleteProduct(productId) {
     console.log('[Dashboard] Preparando eliminación de producto:', productId);
-    
+
     try {
         // Obtener datos del producto para mostrar el nombre
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -1141,13 +1169,13 @@ async function deleteProduct(productId) {
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch(`/api/products/productos/${productId}/`, {
             method: 'GET',
             headers: headers,
             credentials: 'include'
         });
-        
+
         if (response.ok) {
             const producto = await response.json();
             showDeleteModal(productId, producto.nombre);
@@ -1164,15 +1192,15 @@ async function deleteProduct(productId) {
 function showDeleteModal(productId, productName) {
     const modal = document.getElementById('confirmDeleteModal');
     const productNameElement = document.getElementById('deleteProductName');
-    
+
     if (productNameElement) {
         productNameElement.textContent = productName;
     }
-    
+
     if (modal) {
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
-        
+
         // Configurar el botón de confirmar para este producto
         const confirmBtn = document.getElementById('confirmDelete');
         if (confirmBtn) {
@@ -1193,33 +1221,33 @@ function hideDeleteModal() {
 // Confirmar eliminación del producto
 async function confirmDeleteProduct(productId) {
     console.log('[Dashboard] Confirmando eliminación de producto:', productId);
-    
+
     // Cerrar modal
     hideDeleteModal();
-    
+
     // Mostrar notificación de proceso
     const processingNotification = showNotification('Eliminando producto...', 'info', null, 10000);
-    
+
     try {
         const headers = { 'X-CSRFToken': getCsrfToken() };
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch(`/api/products/productos/${productId}/`, {
             method: 'DELETE',
             headers: headers,
             credentials: 'include'
         });
-        
+
         // Cerrar notificación de proceso
         closeNotification(processingNotification);
-        
+
         if (response.ok) {
             console.log('[Dashboard] Producto eliminado exitosamente');
             showNotification('Producto eliminado exitosamente', 'success');
-            
+
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
@@ -1239,17 +1267,17 @@ function setupDeleteModal() {
     const modal = document.getElementById('confirmDeleteModal');
     const closeBtn = document.getElementById('closeConfirmModal');
     const cancelBtn = document.getElementById('cancelDelete');
-    
+
     if (closeBtn) {
         closeBtn.addEventListener('click', hideDeleteModal);
     }
-    
+
     if (cancelBtn) {
         cancelBtn.addEventListener('click', hideDeleteModal);
     }
-    
+
     if (modal) {
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 hideDeleteModal();
             }
@@ -1260,19 +1288,19 @@ function setupDeleteModal() {
 // Función para cambiar el estado de un producto
 async function changeProductStatus(productId, newStatus) {
     console.log(`[Dashboard] Cambiando estado del producto ${productId} a ${newStatus}`);
-    
+
     const statusNames = {
         'disponible': 'disponible',
         'agotado': 'agotado',
         'inactivo': 'inactivo'
     };
-    
+
     const actionNames = {
         'disponible': 'activar',
         'agotado': 'marcar como agotado',
         'inactivo': 'desactivar'
     };
-    
+
     try {
         const headers = {
             'X-CSRFToken': getCsrfToken(),
@@ -1282,7 +1310,7 @@ async function changeProductStatus(productId, newStatus) {
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
         }
-        
+
         const response = await fetch(`/api/products/productos/${productId}/`, {
             method: 'PATCH',
             headers: headers,
@@ -1291,11 +1319,11 @@ async function changeProductStatus(productId, newStatus) {
                 estado: newStatus
             })
         });
-        
+
         if (response.ok) {
             console.log('[Dashboard] Estado del producto actualizado exitosamente');
             showNotification(`Producto ${actionNames[newStatus]} exitosamente`, 'success');
-            
+
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
@@ -1316,13 +1344,13 @@ function initNotificationSystem() {
     if (container) {
         console.log('[Dashboard] Container de notificaciones encontrado en HTML');
         console.log('[Dashboard] Container classes:', container.className);
-        
+
         // Asegurarse de que tiene la clase correcta
         if (!container.classList.contains('notification-container')) {
             console.log('[Dashboard] Añadiendo clase notification-container');
             container.classList.add('notification-container');
         }
-        
+
         // Verificar estilos
         const computedStyle = window.getComputedStyle(container);
         console.log('[Dashboard] Position:', computedStyle.position);
@@ -1337,7 +1365,7 @@ function initNotificationSystem() {
         document.body.appendChild(container);
         console.log('[Dashboard] Container creado y añadido al body');
     }
-    
+
     // Forzar estilos CSS críticos si no se están aplicando
     const computedStyle = window.getComputedStyle(container);
     if (computedStyle.position === 'static') {
@@ -1350,13 +1378,13 @@ function initNotificationSystem() {
             max-width: 400px !important;
             pointer-events: none;
         `;
-        
+
         // Permitir clicks en las notificaciones individuales
-        container.addEventListener('click', function(e) {
+        container.addEventListener('click', function (e) {
             e.target.style.pointerEvents = 'auto';
         });
     }
-    
+
     // Agregar animaciones CSS si no existen
     if (!document.querySelector('#notification-animations')) {
         const animationStyles = document.createElement('style');
@@ -1391,38 +1419,38 @@ function initNotificationSystem() {
         `;
         document.head.appendChild(animationStyles);
     }
-    
+
     console.log('[Dashboard] Sistema de notificaciones inicializado');
 }
 
 function showNotification(message, type = 'info', title = null, duration = 4000) {
     console.log(`[Dashboard] Mostrando notificación: "${message}" (${type})`);
-    
+
     // Asegurar que el contenedor existe
     let container = document.getElementById('notificationContainer');
     console.log('[Dashboard] Container encontrado:', !!container);
-    
+
     if (!container) {
         console.warn('[Dashboard] Container de notificaciones no encontrado, creando...');
         initNotificationSystem();
         container = document.getElementById('notificationContainer');
         console.log('[Dashboard] Container después de init:', !!container);
     }
-    
+
     if (!container) {
         console.error('[Dashboard] Error crítico: No se pudo crear el contenedor de notificaciones');
         // Fallback: usar alert como último recurso
         alert(`${title || type.toUpperCase()}: ${message}`);
         return null;
     }
-    
+
     console.log('[Dashboard] Container final classes:', container.className);
     console.log('[Dashboard] Container parent:', container.parentElement);
     console.log('[Dashboard] Container computed position:', window.getComputedStyle(container).position);
-    
+
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    
+
     // Forzar estilos críticos para la notificación si es necesario
     notification.style.cssText = `
         background: white;
@@ -1440,21 +1468,21 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
         pointer-events: auto;
         min-width: 300px;
     `;
-    
+
     const icons = {
         success: '✓',
         error: '✗',
         warning: '⚠️',
         info: '🛈'
     };
-    
+
     const titles = {
         success: title || '¡Éxito!',
         error: title || 'Error',
         warning: title || 'Advertencia',
         info: title || 'Información'
     };
-    
+
     notification.innerHTML = `
         <div class="notification-icon">${icons[type] || icons.info}</div>
         <div class="notification-content">
@@ -1464,9 +1492,9 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
         <button class="notification-close" onclick="closeNotification(this.parentElement)">×</button>
         <div class="notification-progress"></div>
     `;
-    
+
     container.appendChild(notification);
-    
+
     console.log('[Dashboard] Notificación creada y añadida al container');
     console.log('[Dashboard] Notification classes:', notification.className);
     console.log('[Dashboard] Notification computed styles:', {
@@ -1474,18 +1502,18 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
         display: window.getComputedStyle(notification).display,
         background: window.getComputedStyle(notification).backgroundColor
     });
-    
+
     // Auto-cerrar después del tiempo especificado
     setTimeout(() => {
         closeNotification(notification);
     }, duration);
-    
+
     return notification;
 }
 
 function closeNotification(notification) {
     if (!notification) return;
-    
+
     notification.style.animation = 'slideOutRight 0.3s ease-out';
     setTimeout(() => {
         if (notification.parentElement) {
@@ -1681,7 +1709,7 @@ if (!document.querySelector('#modal-styles')) {
             }
         }
     `;
-    
+
     document.head.appendChild(modalStyles);
 }
 
@@ -1690,21 +1718,21 @@ if (!document.querySelector('#modal-styles')) {
 // ============================================================
 
 // Inicializar dashboard cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('[Dashboard] DOM loaded, inicializando...');
-    
+
     // Verificar elementos críticos del DOM
     const productsGrid = document.getElementById('productsGrid');
     const notificationContainer = document.getElementById('notificationContainer');
     const sidebar = document.querySelector('.dashboard-sidebar');
     const navItems = document.querySelectorAll('.nav-item');
-    
+
     console.log('[Dashboard] productsGrid encontrado:', !!productsGrid);
     console.log('[Dashboard] notificationContainer encontrado:', !!notificationContainer);
     console.log('[Dashboard] sidebar encontrado:', !!sidebar);
     console.log('[Dashboard] nav items encontrados:', navItems.length);
     console.log('[Dashboard] Ancho de ventana:', window.innerWidth);
-    
+
     // Verificar si estamos en móvil
     if (window.innerWidth <= 768) {
         console.log('[Dashboard] Modo móvil detectado');
@@ -1716,11 +1744,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 display: computedStyles.display,
                 visibility: computedStyles.visibility
             });
-            
+
             // Forzar estilos de navegación móvil si no se están aplicando
             if (computedStyles.width !== '100%' || computedStyles.position !== 'sticky') {
                 console.warn('[Dashboard] CSS móvil no aplicado, forzando estilos...');
-                
+
                 // Forzar estilos del sidebar
                 sidebar.style.cssText = `
                     width: 100% !important;
@@ -1736,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     display: block !important;
                     visibility: visible !important;
                 `;
-                
+
                 // Forzar estilos de la lista de navegación
                 const navItems = sidebar.querySelector('.nav-items');
                 if (navItems) {
@@ -1749,7 +1777,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         -webkit-overflow-scrolling: touch !important;
                     `;
                 }
-                
+
                 // Forzar estilos de cada item de navegación
                 const navItemElements = sidebar.querySelectorAll('.nav-item');
                 navItemElements.forEach(item => {
@@ -1770,47 +1798,47 @@ document.addEventListener('DOMContentLoaded', function() {
                         color: #666 !important;
                         transition: all 0.3s ease !important;
                     `;
-                    
+
                     if (item.classList.contains('active')) {
                         item.style.borderBottomColor = '#2d5016';
                         item.style.background = '#f0f4ed';
                         item.style.color = '#2d5016';
                     }
                 });
-                
+
                 console.log('[Dashboard] Estilos móvil forzados aplicados');
             }
         }
     }
-    
+
     // Configurar autenticación
     setupAuthentication();
-    
+
     // Configurar navegación
     setupNavigation();
-    
+
     // Configurar modal de productos
     setupProductModal();
-    
+
     // Configurar modal de edición
     setupEditModal();
-    
+
     // Configurar modal de eliminación
     setupDeleteModal();
-    
+
     // Inicializar sistema de notificaciones
     initNotificationSystem();
-    
+
     // Probar notificación inicial y estado del sistema después de 3 segundos
     setTimeout(() => {
         console.log('[Dashboard] Probando notificación inicial...');
         showNotification('Sistema inicializado correctamente', 'success', '¡Bienvenido!');
-        
+
         // Debug adicional sobre el estado del DOM
         setTimeout(() => {
             const container = document.getElementById('notificationContainer');
             const productsGrid = document.getElementById('productsGrid');
-            
+
             console.log('[Dashboard] === DEBUG DEL ESTADO ===');
             console.log('Container de notificaciones:', container);
             console.log('Productos grid:', productsGrid);
@@ -1818,25 +1846,25 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Children del products grid:', productsGrid ? productsGrid.children.length : 'N/A');
             console.log('=================================');
         }, 1000);
-        
+
     }, 3000);
-    
+
     // Cargar datos iniciales
     loadInitialData();
-    
+
     // Aplicar navegación móvil después de un breve delay para asegurar que el DOM esté listo
     setTimeout(() => {
         applyMobileNavigation();
     }, 500);
-    
+
     // Listener para redimensionado de ventana
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         console.log('[Dashboard] Ventana redimensionada:', window.innerWidth);
         setTimeout(() => {
             applyMobileNavigation();
         }, 100);
     });
-    
+
     console.log('[Dashboard] Inicialización completa');
 });
 
@@ -1847,10 +1875,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // Configurar autenticación
 function setupAuthentication() {
     console.log('[Dashboard] Configurando autenticación...');
-    
+
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
+        logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
             // Limpiar tokens
             localStorage.removeItem('authToken');
@@ -1863,27 +1891,27 @@ function setupAuthentication() {
 // Configurar navegación
 function setupNavigation() {
     console.log('[Dashboard] Configurando navegación...');
-    
+
     const navItems = document.querySelectorAll('.nav-item[data-section]');
     navItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+        item.addEventListener('click', function (e) {
             e.preventDefault();
             const section = this.dataset.section;
             showSection(section);
         });
     });
-    
+
     // Menú de usuario
     const userMenuBtn = document.getElementById('userMenuBtn');
     const userDropdown = document.getElementById('userDropdown');
-    
+
     if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', function() {
+        userMenuBtn.addEventListener('click', function () {
             userDropdown.classList.toggle('show');
         });
-        
+
         // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!userMenuBtn.contains(e.target)) {
                 userDropdown.classList.remove('show');
             }
@@ -1894,30 +1922,30 @@ function setupNavigation() {
 // Mostrar sección
 function showSection(sectionName) {
     console.log('[Dashboard] Mostrando sección:', sectionName);
-    
+
     // Ocultar todas las secciones
     const sections = document.querySelectorAll('.content-section');
     sections.forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // Mostrar sección seleccionada
     const targetSection = document.getElementById(sectionName);
     if (targetSection) {
         targetSection.classList.add('active');
     }
-    
+
     // Actualizar navegación activa
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.classList.remove('active');
     });
-    
+
     const activeNavItem = document.querySelector(`[data-section="${sectionName}"]`);
     if (activeNavItem) {
         activeNavItem.classList.add('active');
     }
-    
+
     // Cargar contenido específico de la sección
     if (sectionName === 'products') {
         loadUserProducts();
@@ -1928,7 +1956,7 @@ function showSection(sectionName) {
 function applyMobileNavigation() {
     if (window.innerWidth <= 768) {
         console.log('[Dashboard] Aplicando navegación móvil...');
-        
+
         const sidebar = document.querySelector('.dashboard-sidebar');
         if (sidebar) {
             // Forzar estilos del sidebar
@@ -1946,7 +1974,7 @@ function applyMobileNavigation() {
                 display: block !important;
                 visibility: visible !important;
             `;
-            
+
             // Forzar estilos de la lista de navegación
             const navItems = sidebar.querySelector('.nav-items');
             if (navItems) {
@@ -1961,7 +1989,7 @@ function applyMobileNavigation() {
                     margin: 0 !important;
                 `;
             }
-            
+
             // Forzar estilos de cada item de navegación
             const navItemElements = sidebar.querySelectorAll('.nav-item');
             navItemElements.forEach(item => {
@@ -1984,13 +2012,13 @@ function applyMobileNavigation() {
                     transition: all 0.3s ease !important;
                     background: transparent !important;
                 `;
-                
+
                 if (item.classList.contains('active')) {
                     item.style.borderBottomColor = '#2d5016 !important';
                     item.style.background = '#f0f4ed !important';
                     item.style.color = '#2d5016 !important';
                 }
-                
+
                 // Asegurar que el icono esté visible
                 const icon = item.querySelector('.nav-icon');
                 if (icon) {
@@ -2003,7 +2031,7 @@ function applyMobileNavigation() {
                     `;
                 }
             });
-            
+
             console.log('[Dashboard] Navegación móvil aplicada exitosamente');
         }
     }
@@ -2012,12 +2040,506 @@ function applyMobileNavigation() {
 // Cargar datos iniciales
 function loadInitialData() {
     console.log('[Dashboard] Cargando datos iniciales...');
-    
+
     // Aplicar navegación móvil
     applyMobileNavigation();
-    
+
     // Cargar datos del usuario
     if (window.dashboardData && window.dashboardData.usuario.is_authenticated) {
         loadUserProducts();
     }
 }
+
+// ============================================================
+// GESTIÓN DE PEDIDOS DEL CAMPESINO
+// ============================================================
+
+function setupOrderTabsCampesino() {
+    const tabBtns = document.querySelectorAll('.order-tabs .tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadCampesinoOrders();
+        });
+    });
+}
+
+function updatePendingCount(count) {
+    const pc = document.getElementById('pendingCount');
+    const pc2 = document.getElementById('pendingOrders'); // in stats dashboard
+    if (pc) pc.textContent = count;
+    if (pc2) pc2.textContent = count;
+}
+
+async function loadCampesinoOrders() {
+    const list = document.getElementById('ordersList');
+    if (!list) return;
+
+    const activeTabObj = document.querySelector('.order-tabs .tab-btn.active');
+    const activeTab = activeTabObj ? activeTabObj.dataset.tab : 'pending';
+
+    list.innerHTML = '<div style="text-align:center; padding: 2rem;">Cargando pedidos...</div>';
+
+    try {
+        const response = await orderApi.getMisVentas();
+        const pedidos = response.results || response || [];
+
+        // Count pending for badge
+        const pendingOrders = pedidos.filter(p => ['pending', 'confirmed', 'preparing', 'ready'].includes(p.estado));
+        updatePendingCount(pendingOrders.length);
+
+        let filtered = [];
+        if (activeTab === 'pending') {
+            filtered = pendingOrders;
+        } else if (activeTab === 'completed') {
+            filtered = pedidos.filter(p => p.estado === 'completed');
+        } else if (activeTab === 'cancelled') {
+            filtered = pedidos.filter(p => p.estado === 'cancelled');
+        }
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding: 2rem; color: #666;">No hay pedidos en esta categoría.</div>`;
+            return;
+        }
+
+        const statusColors = {
+            'pending': '#ffc107',
+            'confirmed': '#17a2b8',
+            'preparing': '#fd7e14',
+            'ready': '#28a745',
+            'completed': '#2d5016',
+            'cancelled': '#dc3545'
+        };
+        const statusLabels = {
+            'pending': 'Pendiente',
+            'confirmed': 'Confirmado',
+            'preparing': 'En Preparación',
+            'ready': 'Para Entrega',
+            'completed': 'Completado',
+            'cancelled': 'Cancelado'
+        };
+
+        list.innerHTML = filtered.map(pedido => {
+            const dateObj = new Date(pedido.fecha_pedido);
+            const date = dateObj.toLocaleDateString('es-CO');
+            const time = dateObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const statusColor = statusColors[pedido.estado] || '#666';
+            const statusLabel = statusLabels[pedido.estado] || pedido.estado;
+
+            let detailsHtml = '';
+            let pedidoDescriptLabel = 'Varios productos';
+            if (pedido.detalles && pedido.detalles.length > 0) {
+                pedidoDescriptLabel = pedido.detalles[0].producto_nombre || 'Producto';
+                detailsHtml = '<ul style="margin: 5px 0 0 0; padding-left: 20px; font-size: 0.9rem; color: #555;">';
+                pedido.detalles.forEach(d => {
+                    const nombreProd = d.producto_nombre || d.nombre_producto_snapshot || 'Producto';
+                    detailsHtml += `<li>${d.cantidad}x ${nombreProd} ($${parseFloat(d.precio_unitario).toLocaleString()})</li>`;
+                });
+                detailsHtml += '</ul>';
+            }
+
+            // Generar los botones de acción dependiendo del estado del pedido
+            let actionButtons = '';
+            if (pedido.estado === 'pending') {
+                actionButtons = `
+                    <button onclick="changeOrderStatus('${pedido.id}', 'confirmed')" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: #28a745; border: none; border-radius: 4px; color: white;">Aceptar Pedido</button>
+                    <button onclick="changeOrderStatus('${pedido.id}', 'cancelled')" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; border: none; border-radius: 4px; color: white;">Rechazar</button>
+                 `;
+            } else if (pedido.estado === 'confirmed') {
+                actionButtons = `
+                    <button onclick="changeOrderStatus('${pedido.id}', 'preparing')" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: #fd7e14; border: none; border-radius: 4px; color: white;">Marcar En Preparación</button>
+                    <button onclick="changeOrderStatus('${pedido.id}', 'cancelled')" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; background: #dc3545; border: none; border-radius: 4px; color: white; margin-top:5px;">Cancelar Venta</button>
+                 `;
+            } else if (pedido.estado === 'preparing') {
+                actionButtons = `
+                    <button onclick="changeOrderStatus('${pedido.id}', 'ready')" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: #17a2b8; border: none; border-radius: 4px; color: white;">Marcar Listo</button>
+                 `;
+            } else if (pedido.estado === 'ready') {
+                actionButtons = `
+                    <button onclick="changeOrderStatus('${pedido.id}', 'completed')" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: #2d5016; border: none; border-radius: 4px; color: white;">Entregado / Completado</button>
+                 `;
+            }
+
+            return `
+             <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px;">
+                     <div><strong style="font-size: 1.1em;">Pedido #${pedido.id}</strong> <span style="color:#777; font-size: 0.85rem; margin-left:10px;">🕒 ${date} ${time}</span></div>
+                     <div style="background-color: ${statusColor}; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">
+                         ${statusLabel}
+                     </div>
+                 </div>
+                 <div style="display: flex; justify-content: space-between;">
+                     <div style="flex: 1;">
+                         <p style="margin: 0 0 5px 0;"><strong>Productos:</strong></p>
+                         ${detailsHtml}
+                         <p style="margin: 10px 0 0 0; font-size: 0.9rem;"><strong>Cliente:</strong> ${pedido.comprador_nombre || 'No registrado'}</p>
+                         <p style="margin: 5px 0 0 0; font-size: 0.9rem;"><strong>Teléfono:</strong> ${pedido.telefono_contacto || 'No especificado'}</p>
+                         <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #17a2b8;"><strong>Dirección de Envío:</strong> ${pedido.direccion_entrega || 'No especificada'}</p>
+                     </div>
+                     <div style="text-align: right; min-width: 150px; display: flex; flex-direction: column; justify-content: space-between;">
+                         <p style="margin: 0 0 10px 0; font-size: 1.1rem; color: #2d5016;"><strong>Total: $${parseFloat(pedido.total || 0).toLocaleString()}</strong></p>
+                         <div style="display: flex; flex-direction: column; gap: 5px;">
+                             ${actionButtons}
+                         </div>
+                     </div>
+                 </div>
+             </div>`;
+        }).join('');
+
+    } catch (error) {
+        console.error("Error fetching campesino orders:", error);
+        list.innerHTML = '<div style="color:red; text-align:center;">Error al cargar tus pedidos de la base de datos.</div>';
+    }
+}
+
+// Hacer la función global para que los onclick puedan invocarla
+window.changeOrderStatus = async function (orderId, newStatus) {
+    try {
+        await orderApi.updateOrderStatus(orderId, newStatus);
+
+        // Recargar la UI
+        loadCampesinoOrders();
+
+        // Notificar
+        const msgs = {
+            'confirmed': 'Pedido aceptado y guardado.',
+            'cancelled': 'Pedido rechazado/cancelado.',
+            'preparing': 'Pedido marcado en preparación.',
+            'ready': 'Pedido marcado como listo para el comprador.',
+            'completed': 'Venta completada exitosamente.'
+        };
+
+        if (typeof showNotification === 'function') {
+            showNotification(msgs[newStatus] || 'Estado actualizado', 'success');
+        } else {
+            alert(msgs[newStatus] || 'Estado actualizado');
+        }
+
+    } catch (error) {
+        console.error("Error changing order status:", error);
+
+        // Mejor manejo para mostrar la causa raíz al usuario
+        let msgDetalle = error.message;
+        if (error.details) {
+            try { msgDetalle += " - " + JSON.stringify(error.details); } catch (e) { }
+        }
+
+        if (typeof showNotification === 'function') {
+            showNotification('Error: ' + msgDetalle, 'error');
+        } else {
+            alert('Falla al intentar cambiar el estado del pedido:\n\n' + msgDetalle);
+        }
+    }
+}
+
+// ----------------------------------------------------
+// MI PERFIL Y CONFIGURACIÓN
+// ----------------------------------------------------
+async function loadProfileData() {
+    try {
+        const profile = await authApi.getProfile();
+        if (profile) {
+            document.getElementById('profileNombre').value = profile.nombre || '';
+            document.getElementById('profileApellido').value = profile.apellido || '';
+            document.getElementById('profileTelefono').value = profile.telefono || '';
+            document.getElementById('profileEmail').value = profile.email || '';
+            document.getElementById('profileFechaNacimiento').value = profile.fecha_nacimiento || '';
+            
+            const fincaField = document.getElementById('profileNombreFinca');
+            if (fincaField) {
+                fincaField.value = profile.nombre_finca || '';
+            }
+        }
+    } catch (error) {
+        console.error("Error al cargar perfil:", error);
+    }
+}
+
+document.getElementById('profileForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const profileData = {
+        nombre: document.getElementById('profileNombre').value.trim(),
+        apellido: document.getElementById('profileApellido').value.trim(),
+        telefono: document.getElementById('profileTelefono').value.trim(),
+        email: document.getElementById('profileEmail').value.trim()
+    };
+    
+    const fecha = document.getElementById('profileFechaNacimiento').value;
+    if (fecha) {
+        profileData.fecha_nacimiento = fecha;
+    }
+    
+    const fincaField = document.getElementById('profileNombreFinca');
+    if (fincaField && fincaField.value.trim() !== '') {
+        profileData.nombre_finca = fincaField.value.trim();
+    }
+
+    try {
+        await authApi.updateProfile(profileData);
+        if (typeof showNotification === 'function') {
+            showNotification('Perfil actualizado exitosamente', 'success');
+        } else {
+            alert('Perfil actualizado exitosamente');
+        }
+
+        // Actualizar UI
+        const userNameElement = document.getElementById('userName');
+        if (userNameElement) userNameElement.textContent = profileData.nombre + ' ' + profileData.apellido;
+
+    } catch (error) {
+        console.error("Error al guardar perfil:", error);
+        if (typeof showNotification === 'function') {
+            showNotification('Error al guardar el perfil: ' + error.message, 'error');
+        } else {
+            alert('Error al guardar el perfil: ' + error.message);
+        }
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar Cambios';
+    }
+});
+
+// Manejo del Cambio de Contraseña
+document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    
+    const cp = document.getElementById('currentPassword').value;
+    const np = document.getElementById('newPassword').value;
+    const npc = document.getElementById('newPasswordConfirm').value;
+    
+    if (np !== npc) {
+        if (typeof showNotification === 'function') showNotification('Las nuevas contraseñas no coinciden', 'error');
+        else alert('Las nuevas contraseñas no coinciden');
+        return;
+    }
+    
+    const btn = document.getElementById('changePasswordBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+        await authApi.changePassword({
+            current_password: cp,
+            new_password: np,
+            new_password_confirm: npc
+        });
+        
+        if (typeof showNotification === 'function') showNotification('Contraseña actualizada con éxito', 'success');
+        else alert('Contraseña actualizada con éxito');
+        
+        document.getElementById('changePasswordForm').reset();
+    } catch (error) {
+        console.error("Error cambiando contraseña:", error);
+        let msgDetalle = error.message;
+        if (error.details) {
+            try { msgDetalle += " - " + JSON.stringify(error.details); } catch (ex) { }
+        }
+        if (typeof showNotification === 'function') showNotification('Error al cambiar contraseña: ' + msgDetalle, 'error');
+        else alert('Error al cambiar contraseña:\n' + msgDetalle);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔑 Cambiar Contraseña';
+    }
+});
+
+// ==========================================================================
+// MÓDULO DE CHAT (ANTI-INTERMEDIARIOS)
+// ==========================================================================
+let activeConversationId = null;
+let chatPollingInterval = null;
+let myChatUserId = null; // Guardará nuestro ID numérico usando los datos de las conversaciones
+
+async function loadConversations() {
+    try {
+        const response = await chatApi.getConversations();
+        renderConversations(response.results || response);
+    } catch (error) {
+        console.error("Error cargando conversaciones:", error);
+        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
+    }
+}
+
+function renderConversations(conversations) {
+    const listEl = document.getElementById('chatContactsList');
+    listEl.innerHTML = '';
+    
+    if (!conversations || conversations.length === 0) {
+        listEl.innerHTML = `<li style="padding: 20px; text-align: center; color: #888;">No hay chats iniciados. Cuando realicen compras aparecerán aquí.</li>`;
+        return;
+    }
+
+    const isCampesino = window.location.pathname.includes('dashboard') && !window.location.pathname.includes('comprador');
+
+    conversations.forEach(conv => {
+        // Almacenamos nuestra propia ID para saber qué burbujas pintar verde/blanco luego
+        if (!myChatUserId) {
+            myChatUserId = isCampesino ? conv.campesino : conv.comprador;
+        }
+
+        const li = document.createElement('li');
+        li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
+        
+        // Identificar nombre de la contraparte a renderizar
+        let counterPartName = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
+        let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
+        let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
+        
+        li.innerHTML = `
+            <div class="chat-avatar">${counterPartName.charAt(0).toUpperCase()}</div>
+            <div class="chat-contact-info">
+                <h4 class="chat-contact-name">${counterPartName}</h4>
+                <p class="chat-contact-preview">${lastMsg}</p>
+            </div>
+            ${unreadBadge}
+        `;
+        
+        li.addEventListener('click', () => {
+             // Actualizar UI del chat activo
+             document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
+             li.classList.add('active');
+             
+             if(conv.mensajes_no_leidos > 0) {
+                 li.querySelector('span')?.remove(); // quita el badge al clickear
+             }
+             
+             openChat(conv.id, counterPartName);
+        });
+        
+        listEl.appendChild(li);
+    });
+}
+
+function openChat(convId, counterPartName) {
+    activeConversationId = convId;
+    
+    // Cambiar vistas
+    document.getElementById('chatEmptyState').style.display = 'none';
+    document.getElementById('chatMainArea').style.display = 'flex';
+    document.getElementById('activeChatName').textContent = counterPartName;
+    document.getElementById('activeChatAvatar').textContent = counterPartName.charAt(0).toUpperCase();
+    
+    // Ajuste móvil
+    if(window.innerWidth <= 768) {
+        document.querySelector('.chat-sidebar').style.display = 'none';
+        document.getElementById('chatMobileBackBtn').style.display = 'block';
+    }
+    
+    // Carga inicial 
+    loadMessages(convId);
+    
+    // Iniciar el Polling por si responden en vivo (cada 4 segundos)
+    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    chatPollingInterval = setInterval(() => loadMessages(convId, true), 4000);
+}
+
+document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
+    document.querySelector('.chat-sidebar').style.display = 'flex';
+    document.getElementById('chatMainArea').style.display = 'none';
+    document.getElementById('chatMobileBackBtn').style.display = 'none';
+    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    activeConversationId = null;
+    loadConversations();
+});
+
+async function loadMessages(convId, isPolling = false) {
+    try {
+        const messages = await chatApi.getMessages(convId);
+        renderMessages(messages);
+        
+        if (!isPolling || document.visibilityState === 'visible') {
+            await chatApi.markAsRead(convId);
+        }
+    } catch (error) {
+        console.error("Error al cargar mensajes:", error);
+    }
+}
+
+function renderMessages(messages) {
+    const area = document.getElementById('chatMessagesArea');
+    
+    // Optimización muy básica de DOM para evitar flickers en el polling
+    const newLength = messages.length;
+    let oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
+    if (newLength === oldLength && newLength > 0) return; 
+    
+    area.innerHTML = '';
+    area.dataset.msgCount = newLength;
+
+    if (!messages || messages.length === 0) {
+        area.innerHTML = '<p style="text-align:center; color:#888; margin-top: 2rem;">Inicio de la conversación.</p>';
+        return;
+    }
+
+    messages.forEach(msg => {
+        const div = document.createElement('div');
+        
+        let msgType = 'received';
+        if (msg.tipo_mensaje === 'sistema') {
+            // El mensaje sistema o autogenerado por el backend lo tratamos con estilo neutral si quieres, o si decidimos mandarlo como 'texto' (como hicimos en serializers.py) se pintará verde/blanco segun remitente.
+            msgType = 'system';
+        } else if (msg.remitente === myChatUserId) {
+            msgType = 'sent';
+        }
+        
+        div.className = `chat-bubble-wrapper ${msgType}`;
+        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        div.innerHTML = `
+            <div class="chat-bubble">
+                <span style="white-space: pre-wrap;">${msg.contenido}</span>
+                <span class="chat-time">${timeStr}</span>
+            </div>
+        `;
+        area.appendChild(div);
+    });
+    
+    // Auto-scroll the chat
+    area.scrollTop = area.scrollHeight;
+}
+
+document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!activeConversationId) return;
+    
+    const input = document.getElementById('chatInputMessage');
+    const txt = input.value.trim();
+    if(!txt) return;
+    
+    input.value = '';
+    input.disabled = true;
+    
+    try {
+        await chatApi.sendMessage(activeConversationId, {
+            tipo_mensaje: 'texto',
+            contenido: txt
+        });
+        
+        loadMessages(activeConversationId);
+        loadConversations();
+    } catch(err) {
+        console.error(err);
+        alert('Error enviando mensaje.');
+        input.value = txt; 
+    } finally {
+        input.disabled = false;
+        input.focus();
+    }
+});
+
+// Listener extra para refrescar chats a demanda cuando se abre la ventana (al darle a Navegación -> Mensajes)
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        if(e.currentTarget.getAttribute('data-section') === 'messages') {
+            loadConversations();
+        } else {
+            // Si nos vamos a otra tab, apagamos el polling para optimizar red
+            if(chatPollingInterval) clearInterval(chatPollingInterval);
+        }
+    });
+});
+

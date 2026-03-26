@@ -1,0 +1,16 @@
+WIP: Avances en Integración SIPSA, Calificaciones y Flujo de Órdenes
+
+Implementaciones y cambios importantes:
+- Integración de WebService DANE SIPSA para validación de precios en tiempo real y métricas de ahorro.
+- Creación de comando de comando de Django `sync_sipsa.py` para sincronización diaria de precios.
+- Implementación base del sistema de calificaciones mutuas (comprador/productor).
+- Corrección de errores de permisos en la API de calificaciones.
+- Estabilización del flujo de procesamiento de órdenes.
+- Eliminación de límites restrictivos de ventas.
+- Ajustes en modelos, vistas y serializers de `products`, `farms` y `orders`.
+- Actualización inicial de dashboards de comprador para reflejar estos cambios.
+
+Por hacer (Pendientes):
+- Depurar el flujo que falló al final de la sesión (revisar endpoints y lógica que "aún no funcionó").
+- Realizar pruebas exhaustivas del ciclo de vida de la orden.
+- Validar el correcto funcionamiento completo de las calificaciones en producción.

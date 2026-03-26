@@ -33,7 +33,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = [
             'email', 'password', 'password_confirm',
             'nombre', 'apellido', 'telefono', 'fecha_nacimiento',
-            'tipo_usuario', 'nombre_finca'
+            'tipo_usuario', 'nombre_finca', 'direccion'
         ]
 
     def validate(self, attrs):
@@ -111,14 +111,15 @@ class UsuarioSerializer(serializers.ModelSerializer):
     Serializer básico para información del usuario
     """
     full_name = serializers.SerializerMethodField()
+    nombre_finca = serializers.SerializerMethodField()
     
     class Meta:
         model = Usuario
         fields = [
             'id', 'email', 'nombre', 'apellido', 'full_name',
-            'telefono', 'tipo_usuario', 'fecha_nacimiento',
+            'telefono', 'direccion', 'tipo_usuario', 'fecha_nacimiento',
             'estado', 'fecha_registro', 'calificacion_promedio',
-            'total_calificaciones', 'avatar'
+            'total_calificaciones', 'avatar', 'nombre_finca'
         ]
         read_only_fields = [
             'id', 'fecha_registro', 'calificacion_promedio',
@@ -127,21 +128,55 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+        
+    def get_nombre_finca(self, obj):
+        finca = obj.get_finca_principal()
+        return finca.nombre_finca if finca else ""
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer para actualizar perfil de usuario
     """
+    nombre_finca = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = Usuario
-        fields = ['nombre', 'apellido', 'telefono']
+        fields = ['nombre', 'apellido', 'telefono', 'email', 'direccion', 'fecha_nacimiento', 'nombre_finca']
         
     def validate_telefono(self, value):
         """Validar formato del teléfono"""
-        # El modelo ya tiene validación RegexValidator, pero podemos agregar lógica adicional
         return value
+        
+    def validate_email(self, value):
+        """Validar unicidad de email si se cambia"""
+        user = self.instance
+        if Usuario.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError("Este email ya está en uso.")
+        return value
+
+    def update(self, instance, validated_data):
+        nombre_finca = validated_data.pop('nombre_finca', None)
+        
+        # update basic user fields
+        instance = super().update(instance, validated_data)
+        
+        # update finca if campesino
+        if nombre_finca is not None and instance.tipo_usuario == 'campesino':
+            finca = instance.fincas.first()
+            if finca:
+                finca.nombre_finca = nombre_finca
+                finca.save()
+            else:
+                from farms.models import Finca
+                Finca.objects.create(
+                    usuario=instance,
+                    nombre_finca=nombre_finca,
+                    ubicacion_departamento='Por definir',
+                    ubicacion_municipio='Por definir',
+                    area_hectareas=0
+                )
+        return instance
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -258,8 +293,22 @@ class UserDashboardSerializer(serializers.ModelSerializer):
             # Campesinos favoritos (estimación)
             campesinos_favoritos = obj.pedidos_comprador.values('campesino').distinct().count()
             
-            # Ahorro estimado (15% vs precios de mercado)
-            ahorro_estimado = total_gastado * Decimal('0.15')
+            # Ahorro total real vs precios de mercado SIPSA
+            from products.models import SipsaPrecio
+            from decimal import Decimal
+            ahorro_estimado = Decimal('0')
+            pedidos_ahorro = obj.pedidos_comprador.filter(
+                estado__in=['completed', 'ready']
+            ).prefetch_related('detalles__producto')
+            
+            for pedido in pedidos_ahorro:
+                for detalle in pedido.detalles.all():
+                    nombre = detalle.producto.nombre
+                    # Podríamos afinar para que cruce con el municipio del campesino,
+                    # pero como ahorro generalizado tomamos el promedio más general que exista.
+                    sipsa_val = SipsaPrecio.objects.filter(producto__icontains=nombre).first()
+                    if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
+                        ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
             
             # Pedidos activos
             pedidos_activos = obj.pedidos_comprador.filter(

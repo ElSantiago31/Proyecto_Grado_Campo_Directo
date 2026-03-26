@@ -230,13 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // EVENT LISTENERS ADICIONALES
     // ============================================================
     
-    // Forgot password handler
-    document.querySelector('.forgot-password').addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Show modal or redirect to password reset
-        showNotification('Funcionalidad de recuperación de contraseña estará disponible próximamente.\n\nPuedes usar los usuarios de prueba del sistema.', 'info');
-    });
+
     
     // ============================================================
     // UTILIDADES

@@ -4,6 +4,7 @@ Serializers para funcionalidades anti-intermediarios
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from decimal import Decimal
 from .models import Conversacion, Mensaje, TransparenciaPrecios, ReporteImpacto
 from users.serializers import UsuarioSerializer
 
@@ -38,6 +39,10 @@ class MensajeCreateSerializer(serializers.ModelSerializer):
             'conversacion', 'tipo_mensaje', 'contenido', 
             'precio_ofertado', 'cantidad_ofertada'
         ]
+        # 'conversacion' se asigna desde la vista, no se requiere en el payload
+        extra_kwargs = {
+            'conversacion': {'required': False, 'allow_null': True},
+        }
     
     def validate(self, attrs):
         """Validaciones para mensajes"""
@@ -83,7 +88,7 @@ class ConversacionListSerializer(serializers.ModelSerializer):
         if mensaje:
             return {
                 'contenido': mensaje.contenido[:100] + '...' if len(mensaje.contenido) > 100 else mensaje.contenido,
-                'fecha_envio': mensaje.fecha_envio,
+                'fecha_envio': mensaje.fecha_envio.isoformat() if mensaje.fecha_envio else None,
                 'remitente': mensaje.remitente.get_full_name()
             }
         return None
@@ -202,7 +207,7 @@ class CalculadoraAhorrosSerializer(serializers.Serializer):
     Serializer para calculadora de ahorros
     """
     producto_id = serializers.IntegerField()
-    cantidad = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=0.01)
+    cantidad = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal('0.01'))
     
     def validate_producto_id(self, value):
         """Validar que el producto existe"""

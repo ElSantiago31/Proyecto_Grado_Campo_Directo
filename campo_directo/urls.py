@@ -76,7 +76,9 @@ urlpatterns = [
 # Servir archivos de media en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Servir directamente desde la carpeta fuente 'static/' en desarrollo
+    # Esto evita la necesidad de ejecutar collectstatic en cada cambio
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 
 # Personalizar admin
 admin.site.site_header = "Campo Directo Admin"

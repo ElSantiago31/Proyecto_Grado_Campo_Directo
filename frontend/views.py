@@ -26,13 +26,6 @@ def login_page(request):
     """
     Página de inicio de sesión
     """
-    # Si el usuario ya está autenticado, redirigir al dashboard correspondiente
-    if request.user.is_authenticated:
-        if request.user.is_comprador:
-            return redirect('frontend:dashboard-comprador')
-        else:
-            return redirect('frontend:dashboard')
-    
     context = {
         'page_title': 'Iniciar Sesión - Campo Directo'
     }
@@ -44,13 +37,6 @@ def register_page(request):
     """
     Página de registro
     """
-    # Si el usuario ya está autenticado, redirigir al dashboard correspondiente
-    if request.user.is_authenticated:
-        if request.user.is_comprador:
-            return redirect('frontend:dashboard-comprador')
-        else:
-            return redirect('frontend:dashboard')
-    
     context = {
         'page_title': 'Registrarse - Campo Directo'
     }
@@ -180,13 +166,6 @@ def login_comprador(request):
     """
     Página de inicio de sesión para compradores
     """
-    # Si el usuario ya está autenticado, redirigir al dashboard correspondiente
-    if request.user.is_authenticated:
-        if request.user.tipo_usuario == 'comprador':
-            return redirect('frontend:dashboard-comprador')
-        else:
-            return redirect('frontend:dashboard')
-    
     context = {
         'page_title': 'Iniciar Sesión Comprador - Campo Directo'
     }
@@ -240,9 +219,19 @@ def render_comprador_dashboard_with_data(request):
         total_pedidos=Count('id')
     ).count()
     
-    # Ahorro total estimado (simulado - diferencia vs precios de mercado)
-    # Este es un cálculo estimado - en producción se tendría una tabla de precios de mercado
-    ahorro_estimado = total_gastado * Decimal('0.15')  # Estimamos 15% de ahorro
+    # Ahorro total real vs precios de mercado SIPSA
+    from products.models import SipsaPrecio
+    ahorro_estimado = Decimal('0')
+    pedidos_ahorro = usuario.pedidos_comprador.filter(
+        estado__in=['completed', 'ready']
+    ).prefetch_related('detalles__producto')
+    
+    for pedido in pedidos_ahorro:
+        for detalle in pedido.detalles.all():
+            nombre = detalle.producto.nombre
+            sipsa_val = SipsaPrecio.objects.filter(producto__icontains=nombre).first()
+            if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
+                ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
     
     # Pedidos activos (no completados)
     pedidos_activos = usuario.pedidos_comprador.filter(
@@ -302,11 +291,12 @@ def dashboard_redirect(request):
 
 def logout_view(request):
     """
-    Vista de logout que limpia la sesión
+    Vista de logout que limpia la sesión de Django
     """
     from django.contrib.auth import logout
     logout(request)
-    return redirect('frontend:home')
+    # Redirigir al home con un parámetro de URL especial para que el frontend limpie sus tokens locales
+    return redirect('/?logout=true')
 
 
 @require_http_methods(["GET"])

@@ -64,13 +64,16 @@ class PedidoListSerializer(serializers.ModelSerializer):
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     estado_color = serializers.ReadOnlyField(source='estado_display_color')
     total_items = serializers.SerializerMethodField()
+    detalles = DetallePedidoSerializer(many=True, read_only=True)
     
     class Meta:
         model = Pedido
         fields = [
             'id', 'comprador_nombre', 'campesino_nombre', 'total',
             'estado', 'estado_display', 'estado_color', 'fecha_pedido',
-            'fecha_entrega_programada', 'total_items', 'codigo_seguimiento'
+            'fecha_entrega_programada', 'total_items', 'codigo_seguimiento', 'detalles',
+            'direccion_entrega', 'telefono_contacto', 'calificacion_comprador',
+            'calificacion_campesino'
         ]
     
     def get_total_items(self, obj):
@@ -201,6 +204,45 @@ class PedidoCreateSerializer(serializers.ModelSerializer):
         # Actualizar total del pedido
         pedido.total = total
         pedido.save()
+        
+        # --- CÓDIGO NUEVO ESTILO OPTIMIZADO: CREAR CONVERSACION AL PROCESAR ORDEN ---
+        try:
+            from anti_intermediarios.models import Conversacion, Mensaje
+            
+            # Buscar si ya existe una conversación base entre los dos usuarios
+            conversacion = Conversacion.objects.filter(
+                campesino=pedido.campesino,
+                comprador=pedido.comprador,
+                producto__isnull=True
+            ).first()
+            
+            if not conversacion:
+                conversacion = Conversacion.objects.create(
+                    campesino=pedido.campesino,
+                    comprador=pedido.comprador,
+                    producto=None
+                )
+            
+            # Formatear el mensaje autogenerado por el sistema, usando como remitente al comprador
+            mensaje_texto = f"📦 ¡Hola! He realizado el pedido {pedido.id} por un total de ${pedido.total:,.0f} COP.\n\n"
+            if pedido.direccion_entrega:
+                mensaje_texto += f"🏠 Dirección de envío: {pedido.direccion_entrega}\n"
+            if pedido.telefono_contacto:
+                mensaje_texto += f"📞 Teléfono: {pedido.telefono_contacto}\n"
+            mensaje_texto += "\n¡Quedo atento a la confirmación!"
+                
+            Mensaje.objects.create(
+                conversacion=conversacion,
+                remitente=pedido.comprador,
+                tipo_mensaje='texto',  # Usamos texto en lugar de sistema temporalmente para simplificar la GUI
+                contenido=mensaje_texto
+            )
+            
+            # Actualizamos el update time de la conversacion para que suba en el listado
+            conversacion.save()
+        except Exception as e:
+            import logging
+            logging.error(f"Error instanciando el chat de la orden: {str(e)}")
         
         return pedido
 

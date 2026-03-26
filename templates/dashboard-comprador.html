@@ -5,42 +5,7 @@
 {% block description %}Panel de control para compradores - Campo Directo{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<style>
-/* Estilos específicos para compradores */
-.dashboard-header {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
-.dashboard-title {
-    color: white;
-}
-
-.nav-icon {
-    filter: brightness(0) invert(1);
-}
-
-.nav-item.active {
-    background-color: #007bff;
-    color: white;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
-.stat-card {
-    border-left: 4px solid #007bff;
-}
-
-.user-greeting {
-    color: white;
-}
-
-.user-avatar {
-    background: #0056b3;
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v={% now 'U' %}">
 {% endblock %}
 
 {% block body_class %}dashboard-body{% endblock %}
@@ -62,8 +27,7 @@
                             <span class="user-avatar">🛒</span>
                         </button>
                         <div class="user-dropdown" id="userDropdown">
-                            <a href="#" id="profileLink">Mi Perfil</a>
-                            <a href="#" id="settingsLink">Configuración</a>
+                            <a href="#" id="profileLink">Mi Perfil y Seguridad</a>
                             <hr>
                             <a href="#" id="logoutBtn">Cerrar Sesión</a>
                         </div>
@@ -104,9 +68,16 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#messages" class="nav-item" data-section="messages">
+                        <a href="#messages" class="nav-item" data-section="messages" id="navMessagesLink">
                             <span class="nav-icon">💬</span>
                             Mensajes
+                            <span id="msgNavBadge" style="display:none; background:#e74c3c; color:#fff; border-radius:50%; font-size:0.7rem; padding:1px 6px; margin-left:auto; font-weight:700;">0</span>
+                        </a>
+                    </li>
+                    <li style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+                        <a href="#profile" class="nav-item" data-section="profile" onclick="document.getElementById('profileLink').click()">
+                            <span class="nav-icon">👤</span>
+                            Mi Perfil y Seguridad
                         </a>
                     </li>
                 </ul>
@@ -141,10 +112,10 @@
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon">🌾</div>
+                        <div class="stat-icon">❤️</div>
                         <div class="stat-content">
-                            <h3>Campesinos Favoritos</h3>
-                            <div class="stat-number" id="favoriteFarmers">{{ estadisticas.campesinos_favoritos }}</div>
+                            <h3>Productos Favoritos</h3>
+                            <div class="stat-number" id="favoriteProducts">{{ estadisticas.productos_favoritos|default:0 }}</div>
                         </div>
                     </div>
                     
@@ -161,27 +132,29 @@
                 <div class="recent-activity">
                     <h3>Actividad Reciente</h3>
                     <div class="activity-list" id="recentActivityList">
+                        {% for actividad in actividad_reciente %}
                         <div class="activity-item">
-                            <span class="activity-icon">✅</span>
+                            <span class="activity-icon">
+                                {% if actividad.estado == 'completed' %}✅
+                                {% elif actividad.estado == 'pending' %}🕰️
+                                {% elif actividad.estado == 'confirmed' %}📝
+                                {% elif actividad.estado == 'ready' %}🎁
+                                {% else %}🛒{% endif %}
+                            </span>
                             <div class="activity-content">
-                                <p><strong>Pedido recibido</strong> - Tomates orgánicos de Finca San José</p>
-                                <small>Hace 1 día</small>
+                                <p><strong>{{ actividad.descripcion }}</strong></p>
+                                <small>{{ actividad.tiempo }} - Total: ${{ actividad.total|floatformat:0 }}</small>
                             </div>
                         </div>
+                        {% empty %}
                         <div class="activity-item">
-                            <span class="activity-icon">🛒</span>
+                            <span class="activity-icon">📉</span>
                             <div class="activity-content">
-                                <p><strong>Nueva compra</strong> - Lechugas hidropónicas (3 unidades)</p>
-                                <small>Hace 2 días</small>
+                                <p><strong>No hay actividad reciente</strong></p>
+                                <small>Tus próximas compras aparecerán aquí</small>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">💬</span>
-                            <div class="activity-content">
-                                <p><strong>Mensaje enviado</strong> - Consulta sobre disponibilidad de fresas</p>
-                                <small>Hace 3 días</small>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </section>
@@ -194,10 +167,10 @@
                         <input type="text" placeholder="Buscar productos..." class="search-input" id="productSearch">
                         <select class="filter-select" id="categoryFilter">
                             <option value="">Todas las categorías</option>
-                            <option value="vegetales">Vegetales</option>
+                            <option value="vegetales">Vegetales y Hortalizas</option>
                             <option value="frutas">Frutas</option>
-                            <option value="granos">Granos</option>
-                            <option value="hierbas">Hierbas</option>
+                            <option value="granos">Granos y Cereales</option>
+                            <option value="hierbas">Hierbas Aromáticas</option>
                         </select>
                         <select class="filter-select" id="locationFilter">
                             <option value="">Todas las ubicaciones</option>
@@ -209,53 +182,66 @@
                 </div>
 
                 <!-- Grid de productos -->
-                <div class="products-marketplace" id="marketplaceGrid">
-                    <!-- Los productos se generarán dinámicamente con JavaScript -->
-                    <div class="product-card">
-                        <img src="{% static 'images/logo.png' %}" alt="Producto" class="product-image">
-                        <div class="product-info">
-                            <h4>Tomates Cherry Orgánicos</h4>
-                            <p class="product-farmer">Finca San José - Cundinamarca</p>
-                            <p class="product-price">$8,000 /kg</p>
-                            <p class="product-stock">25kg disponibles</p>
-                            <div class="product-actions">
-                                <button class="btn btn-primary btn-small">Agregar al Carrito</button>
-                                <button class="btn btn-secondary btn-small">💬 Contactar</button>
-                            </div>
-                        </div>
+                <div class="products-grid" id="marketplaceGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                    <!-- Los productos se generarán dinámicamente con JavaScript desde la API backend -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                         <p>Cargando productos de los campesinos...</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Sección Mis Pedidos -->
+            <!-- Modal para Seleccionar Cantidad al Agregar al Carrito -->
+            <div id="quantityModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
+                    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                        <h3>Agregar al Carrito</h3>
+                        <button class="modal-close" id="closeQuantityModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding-top: 1rem;">
+                        <p id="quantityProductName" style="font-weight: bold; margin-bottom: 0.5rem;"></p>
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Stock disponible: <span id="quantityMaxStock">0</span> <span id="quantityUnit"></span></p>
+                        
+                        <div class="form-group">
+                            <label for="quantityInput">Cantidad a comprar:</label>
+                            <input type="number" id="quantityInput" min="1" value="1" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                            <input type="hidden" id="quantityProductId">
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button type="button" class="btn btn-secondary" id="cancelQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;">Agregar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Mis Pedidos y Carrito -->
             <section id="my-orders" class="content-section">
                 <div class="section-header">
-                    <h2>Mis Pedidos</h2>
+                    <h2>Mis Pedidos y Carrito</h2>
                     <div class="order-tabs">
-                        <button class="tab-btn active" data-tab="active">Activos (<span id="activeOrdersCount">2</span>)</button>
-                        <button class="tab-btn" data-tab="completed">Completados</button>
-                        <button class="tab-btn" data-tab="cancelled">Cancelados</button>
+                        <button class="tab-btn active" data-tab="cart">Carrito (<span id="cartCountBadge">0</span>)</button>
+                        <button class="tab-btn" data-tab="active">En Curso (<span id="activeOrdersCount">0</span>)</button>
+                        <button class="tab-btn" data-tab="completed">Historial</button>
                     </div>
                 </div>
 
                 <div class="orders-list" id="buyerOrdersList">
-                    <!-- Los pedidos se generarán dinámicamente -->
-                    <div class="order-card">
-                        <div class="order-header">
-                            <span class="order-id">ORD-001</span>
-                            <span class="order-status status-pending">En Proceso</span>
-                        </div>
-                        <div class="order-content">
-                            <p><strong>Campesino:</strong> Juan Pérez - Finca San José</p>
-                            <p><strong>Productos:</strong> Tomates Cherry (3kg), Lechugas (2 unidades)</p>
-                            <p><strong>Total:</strong> $41,500</p>
-                            <p><strong>Fecha:</strong> 06 Oct 2024</p>
-                        </div>
-                        <div class="order-actions">
-                            <button class="btn btn-secondary">Ver Detalles</button>
-                            <button class="btn btn-primary">💬 Contactar Campesino</button>
+                    <!-- Los pedidos o carrito se generarán dinámicamente -->
+                    <div class="activity-item" style="text-align:center; padding: 20px;">
+                        <span class="activity-icon">🛒</span>
+                        <div class="activity-content">
+                            <p><strong>Cargando...</strong></p>
                         </div>
                     </div>
+                </div>
+
+                <div id="cartActionsContainer" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: right;">
+                    <div style="margin-bottom: 15px; font-size: 1.2rem;">
+                        <strong>Total Estimado: </strong> <span id="cartTotalAmount">$0</span>
+                    </div>
+                    <button id="processPurchaseBtn" class="btn btn-primary" style="padding: 10px 20px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Procesar Compra
+                    </button>
                 </div>
             </section>
 
@@ -268,18 +254,10 @@
 
                 <div class="favorites-grid" id="favoritesGrid">
                     <!-- Los favoritos se generarán dinámicamente -->
-                    <div class="favorite-card">
-                        <div class="favorite-farmer">
-                            <img src="{% static 'images/campesino.png' %}" alt="Campesino" class="farmer-avatar">
-                            <div class="farmer-info">
-                                <h4>Juan Pérez</h4>
-                                <p>Finca San José - Cundinamarca</p>
-                                <p>⭐ 4.8 (23 reseñas)</p>
-                            </div>
-                        </div>
-                        <div class="favorite-actions">
-                            <button class="btn btn-primary">Ver Productos</button>
-                            <button class="btn btn-secondary">💬 Contactar</button>
+                    <div class="activity-item" style="grid-column: 1 / -1; text-align:center; padding: 20px;">
+                        <span class="activity-icon">📉</span>
+                        <div class="activity-content">
+                            <p><strong>No tienes favoritos agregados actualmente.</strong></p>
                         </div>
                     </div>
                 </div>
@@ -292,28 +270,160 @@
                     <p>Conversaciones con campesinos</p>
                 </div>
 
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Las conversaciones se generarán dinámicamente -->
-                    <div class="conversation-card">
-                        <div class="conversation-header">
-                            <img src="{% static 'images/campesino.png' %}" alt="Campesino" class="conversation-avatar">
-                            <div class="conversation-info">
-                                <h4>Juan Pérez</h4>
-                                <p class="last-message">Hola, los tomates estarán listos mañana...</p>
-                                <small>Hace 2 horas</small>
+                <div class="chat-wrapper" id="chatWrapper">
+                    <!-- Barra lateral de contactos -->
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">
+                            <h3>Mis Conversaciones</h3>
+                        </div>
+                        <ul class="chat-contacts-list" id="chatContactsList">
+                            <li style="padding: 20px; text-align: center; color: #888;">Cargando conversaciones...</li>
+                        </ul>
+                    </div>
+
+                    <!-- Área principal de chat -->
+                    <div class="chat-main" id="chatMainArea" style="display: none;">
+                        <div class="chat-header">
+                            <!-- Flecha para volver en móvil -->
+                            <button id="chatMobileBackBtn" style="display:none; background:none; border:none; font-size:1.5rem; margin-right:10px; cursor:pointer;">⬅️</button>
+                            <div class="chat-avatar" id="activeChatAvatar">?</div>
+                            <div>
+                                <h3 id="activeChatName">Cargando...</h3>
+                                <small style="color: #666;">Campesino</small>
                             </div>
                         </div>
-                        <div class="conversation-actions">
-                            <button class="btn btn-primary">Abrir Chat</button>
+                        
+                        <div class="chat-messages-area" id="chatMessagesArea">
+                            <!-- Los mensajes se inyectarán dinámicamente aquí -->
+                        </div>
+                        
+                        <form class="chat-input-area" id="chatForm">
+                            <input type="text" id="chatInputMessage" placeholder="Escribe un mensaje..." required autocomplete="off">
+                            <button type="submit" class="chat-btn-send">Enviar</button>
+                        </form>
+                    </div>
+
+                    <!-- Estado vacío cuando no hay chat seleccionado -->
+                    <div class="chat-main" id="chatEmptyState">
+                        <div class="chat-empty-state">
+                            <span style="font-size: 3rem; margin-bottom: 1rem;">💬</span>
+                            <h3>Tus mensajes</h3>
+                            <p>Selecciona una conversación a la izquierda para empezar a chatear.</p>
                         </div>
                     </div>
                 </div>
             </section>
+
+            <!-- Sección Mi Perfil -->
+            <section id="profile" class="content-section">
+                <div class="section-header">
+                    <h2>Mi Perfil</h2>
+                    <p>Gestiona tus datos personales y de contacto</p>
+                </div>
+                
+                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <form id="profileForm">
+                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileNombre" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre</label>
+                                <input type="text" id="profileNombre" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileApellido" style="display: block; margin-bottom: 8px; font-weight: 500;">Apellido</label>
+                                <input type="text" id="profileApellido" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="profileEmail" style="display: block; margin-bottom: 8px; font-weight: 500;">Correo Electrónico</label>
+                            <input type="email" id="profileEmail" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileTelefono" style="display: block; margin-bottom: 8px; font-weight: 500;">Teléfono</label>
+                                <input type="tel" id="profileTelefono" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileFechaNacimiento" style="display: block; margin-bottom: 8px; font-weight: 500;">Fecha de Nacimiento</label>
+                                <input type="date" id="profileFechaNacimiento" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="profileDireccion" style="display: block; margin-bottom: 8px; font-weight: 500;">Dirección (Principal)</label>
+                            <input type="text" id="profileDireccion" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            💾 Guardar Cambios Personales
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="section-header" style="margin-top: 40px;">
+                    <h2>Seguridad</h2>
+                    <p>Gestiona tu contraseña de acceso</p>
+                </div>
+                
+                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <form id="changePasswordForm">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="currentPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Contraseña Actual</label>
+                            <input type="password" id="currentPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="newPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Nueva Contraseña</label>
+                            <input type="password" id="newPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="newPasswordConfirm" style="display: block; margin-bottom: 8px; font-weight: 500;">Confirmar Nueva Contraseña</label>
+                            <input type="password" id="newPasswordConfirm" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="changePasswordBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            🔑 Cambiar Contraseña
+                        </button>
+                    </form>
+                </div>
+            </section>
+    <!-- Modal para Calificar Pedido -->
+    <div id="ratingModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h3>Calificar a <span id="ratingTargetName">Campesino</span></h3>
+                <button class="modal-close" id="closeRatingModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem; text-align: center;">
+                <p style="margin-bottom: 1rem; color: #666;">Selecciona una cantidad de estrellas para tu experiencia.</p>
+                
+                <div class="rating-stars" id="ratingStars" style="font-size: 2.5rem; color: #ccc; cursor: pointer; display: flex; justify-content: center; gap: 5px; margin-bottom: 1.5rem;">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                
+                <div class="form-group" style="text-align: left;">
+                    <label for="ratingComment">Comentario (Opcional):</label>
+                    <textarea id="ratingComment" rows="3" style="width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: none;" placeholder="Escribe tu opinión sobre el pedido..."></textarea>
+                </div>
+                
+                <input type="hidden" id="ratingOrderId">
+                <input type="hidden" id="ratingScore" value="0">
+            </div>
+            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" id="cancelRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="submitRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;" disabled>Enviar Calificación</button>
+            </div>
         </div>
-    </main>
+    </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/dashboard-comprador.js' %}"></script>
+<script src="{% static 'js/dashboard-comprador.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

@@ -7,24 +7,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const campesinField = document.querySelector('.campesino-field');
     const nombreFincaInput = document.getElementById('nombreFinca');
 
-    // Manejar la visibilidad del campo "Nombre de Finca"
-    function toggleFincaField() {
+    const compradorField = document.querySelector('.comprador-field');
+    const direccionInput = document.getElementById('direccion');
+
+    // Manejar la visibilidad del campo "Nombre de Finca" y "Dirección"
+    function toggleFields() {
         if (campesinRadio.checked) {
             campesinField.classList.remove('hidden');
             nombreFincaInput.required = true;
+            
+            compradorField.classList.add('hidden');
+            direccionInput.required = false;
+            direccionInput.value = '';
         } else {
             campesinField.classList.add('hidden');
             nombreFincaInput.required = false;
             nombreFincaInput.value = '';
+            
+            compradorField.classList.remove('hidden');
+            direccionInput.required = true;
         }
     }
 
     // Event listeners para los radio buttons
-    campesinRadio.addEventListener('change', toggleFincaField);
-    compradorRadio.addEventListener('change', toggleFincaField);
+    campesinRadio.addEventListener('change', toggleFields);
+    compradorRadio.addEventListener('change', toggleFields);
 
     // Configuración inicial
-    toggleFincaField();
+    toggleFields();
 
     // Validación y envío del formulario
     form.addEventListener('submit', async function(e) {
@@ -40,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tipoUsuario: formData.get('tipoUsuario'),
             fechaNacimiento: formData.get('fechaNacimiento'),
             nombreFinca: formData.get('nombreFinca') || null,
+            direccion: formData.get('direccion') || null,
             password: formData.get('password'),
             passwordConfirm: formData.get('passwordConfirm')
         };
@@ -61,7 +72,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fecha_nacimiento: toISODate(data.fechaNacimiento),
                 password: data.password,
                 password_confirm: data.passwordConfirm,
-                ...(data.nombreFinca ? { nombre_finca: data.nombreFinca } : {})
+                ...(data.nombreFinca ? { nombre_finca: data.nombreFinca } : {}),
+                ...(data.direccion ? { direccion: data.direccion } : {})
             };
 
             // Usar cliente API con BASE_URL (evita problemas cuando se sirve por 127.0.0.1:5500)
@@ -131,6 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validar nombre de finca para campesinos
         if (data.tipoUsuario === 'campesino' && (!data.nombreFinca || data.nombreFinca.length < 2)) {
             errors.push('El nombre de la finca es obligatorio para campesinos');
+            isValid = false;
+        }
+
+        // Validar dirección para compradores
+        if (data.tipoUsuario === 'comprador' && (!data.direccion || data.direccion.trim().length < 5)) {
+            errors.push('La dirección de envío es obligatoria y debe ser válida para poder enviarle el pedido.');
             isValid = false;
         }
 
