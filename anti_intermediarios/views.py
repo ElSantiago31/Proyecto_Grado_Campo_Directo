@@ -199,9 +199,7 @@ class TransparenciaPreciosViewSet(viewsets.ModelViewSet):
             
             # Buscar comparación de precios más reciente
             try:
-                transparencia = self.get_queryset().filter(
-                    producto_id=producto_id
-                ).latest('fecha_registro')
+                transparencia = self.get_queryset().filter(producto_id=producto_id).latest('fecha_registro')
                 
                 # Calcular ahorros
                 ahorro_total = transparencia.calcular_ahorro_por_cantidad(cantidad)

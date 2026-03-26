@@ -5,7 +5,7 @@
 {% block description %}Panel de control para campesinos - Campo Directo{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v={% now 'U' %}">
 {% endblock %}
 
 {% block body_class %}dashboard-body{% endblock %}
@@ -27,8 +27,7 @@
                             <span class="user-avatar">🌱</span>
                         </button>
                         <div class="user-dropdown" id="userDropdown">
-                            <a href="#" id="profileLink">Mi Perfil</a>
-                            <a href="#" id="settingsLink">Configuración</a>
+                            <a href="#" id="profileLink">Mi Perfil y Seguridad</a>
                             <hr>
                             <a href="#" id="logoutBtn">Cerrar Sesión</a>
                         </div>
@@ -60,6 +59,13 @@
                         <a href="#orders" class="nav-item" data-section="orders">
                             <span class="nav-icon">📦</span>
                             Pedidos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#messages" class="nav-item" data-section="messages" id="navMessagesLink">
+                            <span class="nav-icon">💬</span>
+                            Mensajes
+                            <span id="msgNavBadge" style="display:none; background:#e74c3c; color:#fff; border-radius:50%; font-size:0.7rem; padding:1px 6px; margin-left:auto; font-weight:700;">0</span>
                         </a>
                     </li>
                     <li>
@@ -275,7 +281,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico placeholder -->
+            <!-- Gráfico placeholder -->
                 <div class="chart-container">
                     <h3>Ventas por Día</h3>
                     <div class="chart-placeholder">
@@ -283,7 +289,166 @@
                         <small>Funcionalidad de gráficos disponible próximamente</small>
                     </div>
                 </div>
+                </div>
             </section>
+
+            <!-- Sección Mensajes -->
+            <section id="messages" class="content-section">
+                <div class="section-header">
+                    <h2>Mensajes</h2>
+                    <p>Habla con los compradores que han solicitado tus pedidos</p>
+                </div>
+
+                <div class="chat-wrapper" id="chatWrapper">
+                    <!-- Barra lateral de contactos -->
+                    <div class="chat-sidebar">
+                        <div class="chat-sidebar-header">
+                            <h3>Ventas / Chats</h3>
+                        </div>
+                        <ul class="chat-contacts-list" id="chatContactsList">
+                            <li style="padding: 20px; text-align: center; color: #888;">Cargando conversaciones...</li>
+                        </ul>
+                    </div>
+
+                    <!-- Área principal de chat -->
+                    <div class="chat-main" id="chatMainArea" style="display: none;">
+                        <div class="chat-header">
+                            <button id="chatMobileBackBtn" style="display:none; background:none; border:none; font-size:1.5rem; margin-right:10px; cursor:pointer;">⬅️</button>
+                            <div class="chat-avatar" id="activeChatAvatar">?</div>
+                            <div>
+                                <h3 id="activeChatName">Cargando...</h3>
+                                <small style="color: #666;">Comprador</small>
+                            </div>
+                        </div>
+                        
+                        <div class="chat-messages-area" id="chatMessagesArea">
+                            <!-- Los mensajes se inyectarán dinámicamente aquí -->
+                        </div>
+                        
+                        <form class="chat-input-area" id="chatForm">
+                            <input type="text" id="chatInputMessage" placeholder="Escribe un mensaje..." required autocomplete="off">
+                            <button type="submit" class="chat-btn-send">Enviar</button>
+                        </form>
+                    </div>
+
+                    <!-- Estado vacío cuando no hay chat seleccionado -->
+                    <div class="chat-main" id="chatEmptyState">
+                        <div class="chat-empty-state">
+                            <span style="font-size: 3rem; margin-bottom: 1rem;">💬</span>
+                            <h3>Bandeja de Entrada</h3>
+                            <p>Selecciona una conversación a la izquierda para empezar a chatear con tu cliente.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Mi Perfil -->
+            <section id="profile" class="content-section">
+                <div class="section-header">
+                    <h2>Mi Perfil</h2>
+                    <p>Gestiona tus datos personales y de contacto</p>
+                </div>
+                
+                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <form id="profileForm">
+                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileNombre" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre</label>
+                                <input type="text" id="profileNombre" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileApellido" style="display: block; margin-bottom: 8px; font-weight: 500;">Apellido</label>
+                                <input type="text" id="profileApellido" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="profileEmail" style="display: block; margin-bottom: 8px; font-weight: 500;">Correo Electrónico</label>
+                            <input type="email" id="profileEmail" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+
+                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileTelefono" style="display: block; margin-bottom: 8px; font-weight: 500;">Teléfono</label>
+                                <input type="tel" id="profileTelefono" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="profileFechaNacimiento" style="display: block; margin-bottom: 8px; font-weight: 500;">Fecha de Nacimiento</label>
+                                <input type="date" id="profileFechaNacimiento" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="fincaFieldGroup" style="margin-bottom: 20px;">
+                            <label for="profileNombreFinca" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre de tu Finca</label>
+                            <input type="text" id="profileNombreFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            💾 Guardar Cambios Personales
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="section-header" style="margin-top: 40px;">
+                    <h2>Seguridad</h2>
+                    <p>Gestiona tu contraseña de acceso</p>
+                </div>
+                
+                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <form id="changePasswordForm">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="currentPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Contraseña Actual</label>
+                            <input type="password" id="currentPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="newPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Nueva Contraseña</label>
+                            <input type="password" id="newPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="newPasswordConfirm" style="display: block; margin-bottom: 8px; font-weight: 500;">Confirmar Nueva Contraseña</label>
+                            <input type="password" id="newPasswordConfirm" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="changePasswordBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            🔑 Cambiar Contraseña
+                        </button>
+                    </form>
+                </div>
+            </section>
+    <!-- Modal para Calificar Pedido -->
+    <div id="ratingModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h3>Calificar a <span id="ratingTargetName">Comprador</span></h3>
+                <button class="modal-close" id="closeRatingModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem; text-align: center;">
+                <p style="margin-bottom: 1rem; color: #666;">Selecciona una cantidad de estrellas para tu calificación.</p>
+                
+                <div class="rating-stars" id="ratingStars" style="font-size: 2.5rem; color: #ccc; cursor: pointer; display: flex; justify-content: center; gap: 5px; margin-bottom: 1.5rem;">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                
+                <div class="form-group" style="text-align: left;">
+                    <label for="ratingComment">Comentario (Opcional):</label>
+                    <textarea id="ratingComment" rows="3" style="width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: none;" placeholder="Escribe tu opinión sobre el comprador..."></textarea>
+                </div>
+                
+                <input type="hidden" id="ratingOrderId">
+                <input type="hidden" id="ratingScore" value="0">
+            </div>
+            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" id="cancelRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="submitRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;" disabled>Enviar Calificación</button>
+            </div>
+        </div>
+    </div>
         </div>
     </main>
 
@@ -432,5 +597,6 @@
     
     console.log('[Dashboard Template] Datos del usuario:', window.dashboardData);
 </script>
-<script src="{% static 'js/dashboard.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

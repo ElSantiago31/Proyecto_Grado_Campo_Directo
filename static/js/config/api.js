@@ -68,7 +68,7 @@ class ApiClient {
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
-        
+
         const config = {
             method: options.method || 'GET',
             headers: this.buildHeaders(options.headers),
@@ -82,7 +82,7 @@ class ApiClient {
 
         try {
             const response = await this.fetchWithTimeout(url, config);
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new ApiError(
@@ -120,7 +120,7 @@ class ApiClient {
                 ...options,
                 signal: controller.signal
             });
-            
+
             clearTimeout(timeoutId);
             return response;
         } catch (error) {
@@ -142,6 +142,10 @@ class ApiClient {
 
     put(endpoint, data, options = {}) {
         return this.request(endpoint, { ...options, method: 'PUT', data });
+    }
+
+    patch(endpoint, data, options = {}) {
+        return this.request(endpoint, { ...options, method: 'PATCH', data });
     }
 
     delete(endpoint, options = {}) {
@@ -207,10 +211,9 @@ const authApi = {
     },
 
     async logout() {
-        const response = await api.post('/auth/logout/');
         api.setAuthToken(null);
         localStorage.removeItem('refreshToken');
-        return response;
+        return { success: true };
     },
 
     async getProfile() {
@@ -234,15 +237,15 @@ const authApi = {
         if (!refreshToken) {
             throw new ApiError('No refresh token available', 401);
         }
-        
+
         const response = await api.post('/auth/token/refresh/', {
             refresh: refreshToken
         });
-        
+
         if (response.access) {
             api.setAuthToken(response.access);
         }
-        
+
         return response;
     }
 };
@@ -275,11 +278,11 @@ const userApi = {
 const productApi = {
     async getProducts(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return await api.get(`/products/?${queryString}`);
+        return await api.get(`/products/productos/?${queryString}`);
     },
 
     async getProduct(id) {
-        return await api.get(`/products/${id}/`);
+        return await api.get(`/products/productos/${id}/`);
     },
 
     async createProduct(productData) {
@@ -322,11 +325,29 @@ const dashboardApi = {
 const orderApi = {
     async getOrders(params = {}) {
         const queryString = new URLSearchParams(params).toString();
-        return await api.get(`/orders?${queryString}`);
+        return await api.get(`/orders/pedidos/?${queryString}`);
+    },
+
+    async getMisCompras(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return await api.get(`/orders/pedidos/mis_compras/?${queryString}`);
+    },
+
+    async getMisVentas(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return await api.get(`/orders/pedidos/mis_ventas/?${queryString}`);
+    },
+
+    async createOrder(orderData) {
+        return await api.post('/orders/pedidos/', orderData);
     },
 
     async updateOrderStatus(orderId, status) {
-        return await api.put(`/orders/${orderId}/status`, { estado: status });
+        return await api.patch(`/orders/pedidos/${orderId}/actualizar_estado/`, { nuevo_estado: status });
+    },
+
+    async calificar(orderId, ratingData) {
+        return await api.post(`/orders/pedidos/${orderId}/calificar/`, ratingData);
     }
 };
 
@@ -340,6 +361,33 @@ const farmApi = {
 
     async updateMyFarm(farmData) {
         return await api.put('/farms/my-farm', farmData);
+    }
+};
+
+/**
+ * APIs de Chat (Anti-Intermediarios)
+ */
+const chatApi = {
+    async getConversations(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        const endpoint = queryString ? `/anti-intermediarios/conversaciones/?${queryString}` : '/anti-intermediarios/conversaciones/';
+        return await api.get(endpoint);
+    },
+
+    async getConversationDetails(id) {
+        return await api.get(`/anti-intermediarios/conversaciones/${id}/`);
+    },
+
+    async getMessages(conversacionId) {
+        return await api.get(`/anti-intermediarios/conversaciones/${conversacionId}/mensajes/`);
+    },
+
+    async sendMessage(conversacionId, messageData) {
+        return await api.post(`/anti-intermediarios/conversaciones/${conversacionId}/enviar_mensaje/`, messageData);
+    },
+
+    async markAsRead(conversacionId) {
+        return await api.patch(`/anti-intermediarios/conversaciones/${conversacionId}/marcar_como_leidos/`);
     }
 };
 
@@ -360,12 +408,12 @@ function isAuthenticated() {
 function handleAuthError() {
     api.setAuthToken(null);
     localStorage.removeItem('refreshToken');
-    
+
     // Redirigir al login si no estamos ya ahí
     const currentPath = window.location.pathname;
     if (!currentPath.includes('login') && !currentPath.includes('registro')) {
         console.log('Token inválido, redirigiendo al login');
-        
+
         // Detectar si el usuario debe ir al login de comprador o campesino
         if (currentPath.includes('comprador') || currentPath.includes('/dashboard-comprador/')) {
             console.log('Redirigiendo al login de compradores');
@@ -384,7 +432,7 @@ let isRefreshingToken = false;
 let refreshPromise = null;
 
 const originalRequest = api.request;
-api.request = async function(endpoint, options = {}) {
+api.request = async function (endpoint, options = {}) {
     try {
         return await originalRequest.call(this, endpoint, options);
     } catch (error) {
@@ -394,9 +442,9 @@ api.request = async function(endpoint, options = {}) {
                 console.log(`[API] Error de auth en ${endpoint}, no interceptando`);
                 throw error;
             }
-            
+
             console.log(`[API] Error de autenticación interceptado en ${endpoint}`);
-            
+
             // Si ya estamos renovando el token, esperar
             if (isRefreshingToken && refreshPromise) {
                 try {
@@ -410,19 +458,19 @@ api.request = async function(endpoint, options = {}) {
                     throw error;
                 }
             }
-            
+
             // Intentar renovar el token automáticamente
             const refreshToken = localStorage.getItem('refreshToken');
             if (refreshToken && !isRefreshingToken) {
                 console.log('[API] Intentando renovar token...');
                 isRefreshingToken = true;
                 refreshPromise = authApi.refreshToken();
-                
+
                 try {
                     await refreshPromise;
                     isRefreshingToken = false;
                     refreshPromise = null;
-                    
+
                     console.log('[API] Token renovado exitosamente, reintentando petición');
                     // Reintentar la petición original con el nuevo token
                     options._isRetry = true;
@@ -454,5 +502,6 @@ window.productApi = productApi;
 window.dashboardApi = dashboardApi;
 window.orderApi = orderApi;
 window.farmApi = farmApi;
+window.chatApi = chatApi;
 window.ApiError = ApiError;
 window.isAuthenticated = isAuthenticated;

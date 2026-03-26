@@ -11,7 +11,7 @@
 /* Header del Dashboard */
 .dashboard-header {
     background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -92,7 +92,7 @@
     top: 100%;
     right: 0;
     background: white;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     border-radius: 8px;
     min-width: 150px;
     opacity: 0;
@@ -231,7 +231,7 @@
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
     gap: 1.5rem;
@@ -240,7 +240,7 @@
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .stat-icon {
@@ -275,7 +275,7 @@
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .recent-activity h3 {
@@ -348,7 +348,7 @@
 .product-card {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     transition: transform 0.3s ease;
 }
@@ -442,7 +442,7 @@
     background: white;
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     margin-bottom: 1rem;
 }
 
@@ -487,7 +487,7 @@
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .farm-card h3 {
@@ -543,7 +543,7 @@
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     text-align: center;
 }
 
@@ -587,7 +587,7 @@
     background: white;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .chart-container h3 {
@@ -612,7 +612,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal.show {
@@ -755,7 +755,7 @@
     .dashboard-nav {
         padding: 1rem 3rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(4, 1fr);
     }
@@ -766,7 +766,7 @@
     .dashboard-main {
         flex-direction: column;
     }
-    
+
     .dashboard-sidebar {
         width: 100%;
         position: static;
@@ -775,11 +775,11 @@
         padding: 1rem 0;
         order: 2;
     }
-    
+
     .dashboard-content {
         order: 1;
     }
-    
+
     .sidebar-nav .nav-items {
         display: flex;
         overflow-x: auto;
@@ -788,20 +788,20 @@
         scrollbar-width: thin;
         scrollbar-color: #2d5016 transparent;
     }
-    
+
     .sidebar-nav .nav-items::-webkit-scrollbar {
         height: 4px;
     }
-    
+
     .sidebar-nav .nav-items::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     .sidebar-nav .nav-items::-webkit-scrollbar-thumb {
         background: #2d5016;
         border-radius: 2px;
     }
-    
+
     .nav-item {
         white-space: nowrap;
         border-right: none;
@@ -809,13 +809,13 @@
         padding: 0.75rem 1rem;
         min-width: fit-content;
     }
-    
+
     .nav-item:hover,
     .nav-item.active {
         border-bottom-color: #2d5016;
         border-right-color: transparent;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
@@ -827,42 +827,42 @@
     .dashboard-nav {
         padding: 1rem 1.5rem;
     }
-    
+
     .nav-left {
         gap: 0.75rem;
     }
-    
+
     .dashboard-logo {
         height: 45px;
     }
-    
+
     .dashboard-title {
         font-size: 1.3rem;
     }
-    
+
     .user-greeting {
         display: none;
     }
-    
+
     .section-header h2 {
         font-size: 1.5rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .stat-card {
         padding: 1.5rem;
         gap: 1rem;
     }
-    
+
     .stat-icon {
         width: 60px;
         height: 60px;
         font-size: 2.5rem;
     }
-    
+
     .order-header {
         flex-direction: column;
         gap: 1rem;
@@ -878,22 +878,22 @@
         gap: 1rem;
         text-align: center;
     }
-    
+
     .nav-left {
         flex-direction: column;
         gap: 0.5rem;
         align-items: center;
     }
-    
+
     .dashboard-title {
         font-size: 1.2rem;
     }
-    
+
     /* Convertir layout principal a columna en móvil */
     .dashboard-main {
         flex-direction: column;
     }
-    
+
     /* Convertir sidebar en navegación horizontal sticky */
     .dashboard-sidebar {
         width: 100%;
@@ -904,10 +904,10 @@
         border-right: none;
         border-bottom: 1px solid #e9ecef;
         padding: 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         margin-bottom: 1rem;
     }
-    
+
     /* Hacer la navegación horizontal scrollable */
     .sidebar-nav .nav-items {
         display: flex;
@@ -916,15 +916,17 @@
         padding: 0.5rem 0;
         gap: 0;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* Internet Explorer 10+ */
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* Internet Explorer 10+ */
     }
-    
+
     /* Ocultar scrollbar en webkit browsers */
     .sidebar-nav .nav-items::-webkit-scrollbar {
         display: none;
     }
-    
+
     .nav-item {
         flex: 0 0 auto;
         min-width: 120px;
@@ -937,76 +939,76 @@
         gap: 0.5rem;
         flex-direction: column;
     }
-    
+
     .nav-item.active {
         border-right-color: transparent;
         border-bottom-color: #2d5016;
         background: #f0f4ed;
     }
-    
+
     .nav-item:hover {
         border-right-color: transparent;
         border-bottom-color: #2d5016;
     }
-    
+
     .nav-icon {
         font-size: 1.1rem;
         width: auto;
         text-align: center;
         margin-bottom: 0.25rem;
     }
-    
+
     .dashboard-content {
         padding: 1rem;
     }
-    
+
     .section-header {
         flex-direction: column;
         gap: 1rem;
         align-items: stretch;
         text-align: center;
     }
-    
+
     .section-header h2 {
         font-size: 1.5rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .stat-card {
         padding: 1.5rem;
         flex-direction: column;
         text-align: center;
         gap: 1rem;
     }
-    
+
     .stat-icon {
         width: 80px;
         height: 80px;
         font-size: 3rem;
         margin: 0 auto;
     }
-    
+
     .stat-number {
         font-size: 2rem;
     }
-    
+
     .products-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .product-actions {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .farm-info {
         grid-template-columns: 1fr;
     }
-    
+
     .info-row {
         flex-direction: column;
         gap: 0.25rem;
@@ -1014,57 +1016,57 @@
         border-bottom: 1px solid #f0f0f0;
         padding: 1rem 0;
     }
-    
+
     .info-row label {
         font-size: 0.9rem;
         color: #888;
     }
-    
+
     .info-row span {
         font-size: 1rem;
         font-weight: 600;
         color: #2d5016;
     }
-    
+
     .sales-summary {
         grid-template-columns: 1fr;
     }
-    
+
     .summary-amount {
         font-size: 2rem;
     }
-    
+
     .filters {
         flex-direction: column;
         gap: 0.75rem;
     }
-    
+
     .filter-select {
         min-width: auto;
         width: 100%;
     }
-    
+
     .order-tabs {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .tab-btn {
         text-align: center;
         padding: 1rem;
         font-size: 1rem;
     }
-    
+
     .order-card {
         padding: 1rem;
     }
-    
+
     .order-header {
         flex-direction: column;
         gap: 0.75rem;
         align-items: flex-start;
     }
-    
+
     .order-actions {
         display: flex;
         flex-direction: column;
@@ -1072,27 +1074,27 @@
         width: 100%;
         margin-top: 1rem;
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 1rem;
     }
-    
+
     .modal-actions {
         flex-direction: column;
     }
-    
+
     .recent-activity {
         padding: 1rem;
     }
-    
+
     .activity-item {
         padding: 0.75rem;
         flex-direction: column;
         align-items: flex-start;
         text-align: left;
     }
-    
+
     .activity-icon {
         align-self: flex-start;
         margin-bottom: 0.5rem;
@@ -1104,84 +1106,84 @@
     .dashboard-nav {
         padding: 0.75rem;
     }
-    
+
     .dashboard-logo {
         height: 35px;
     }
-    
+
     .dashboard-title {
         font-size: 1.1rem;
     }
-    
+
     .user-menu-btn {
         width: 35px;
         height: 35px;
     }
-    
+
     .user-avatar {
         font-size: 1rem;
     }
-    
+
     .dashboard-content {
         padding: 0.75rem;
     }
-    
+
     .section-header {
         padding-bottom: 0.75rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .section-header h2 {
         font-size: 1.3rem;
     }
-    
+
     .stats-grid {
         gap: 0.75rem;
     }
-    
+
     .stat-card {
         padding: 1rem;
     }
-    
+
     .stat-icon {
         width: 60px;
         height: 60px;
         font-size: 2rem;
     }
-    
+
     .stat-number {
         font-size: 1.5rem;
     }
-    
+
     .stat-content h3 {
         font-size: 0.8rem;
     }
-    
+
     .product-card,
     .order-card,
     .farm-card {
         margin-bottom: 0.75rem;
     }
-    
+
     .modal-header {
         padding: 1rem;
     }
-    
+
     .modal-form {
         padding: 1rem;
     }
-    
+
     /* Optimizar navegación para móviles pequeños */
     .sidebar-nav .nav-items {
         padding: 0 0.5rem;
     }
-    
+
     .nav-item {
         min-width: 100px;
         padding: 0.6rem 0.75rem;
         font-size: 0.8rem;
     }
-    
+
     .nav-icon {
         font-size: 1rem;
         margin-bottom: 0.2rem;
@@ -1193,29 +1195,29 @@
     .dashboard-nav {
         padding: 0.5rem;
     }
-    
+
     .dashboard-title {
         font-size: 1rem;
     }
-    
+
     .dashboard-content {
         padding: 0.5rem;
     }
-    
+
     .stat-card {
         padding: 0.75rem;
     }
-    
+
     .stat-icon {
         width: 50px;
         height: 50px;
         font-size: 1.5rem;
     }
-    
+
     .stat-number {
         font-size: 1.3rem;
     }
-    
+
     /* Navegación ultra compacta */
     .nav-item {
         min-width: 85px;
@@ -1223,21 +1225,21 @@
         font-size: 0.75rem;
         gap: 0.3rem;
     }
-    
+
     .nav-icon {
         font-size: 0.9rem;
         margin-bottom: 0.1rem;
     }
-    
+
     .sidebar-nav .nav-items {
         padding: 0 0.25rem;
     }
-    
+
     .btn {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
-    
+
     .tab-btn {
         padding: 0.75rem;
         font-size: 0.9rem;
@@ -1249,6 +1251,7 @@
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1337,8 +1340,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Mejoras para actividades recientes */
@@ -1369,9 +1377,12 @@
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.7;
         transform: scale(1.02);
@@ -1522,8 +1533,6 @@
     margin-bottom: 1.5rem;
 }
 
-}
-
 /* === MODALES ADICIONALES === */
 .modal-small {
     max-width: 400px;
@@ -1670,6 +1679,7 @@
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -1681,6 +1691,7 @@
         transform: translateX(0);
         opacity: 1;
     }
+
     to {
         transform: translateX(100%);
         opacity: 0;
@@ -1691,6 +1702,7 @@
     from {
         width: 100%;
     }
+
     to {
         width: 0%;
     }
@@ -1704,7 +1716,7 @@
         left: 10px;
         max-width: none;
     }
-    
+
     .notification {
         padding: 0.875rem 1rem;
         font-size: 0.9rem;
@@ -1724,29 +1736,29 @@
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .product-card {
         margin-bottom: 1rem;
         max-width: 100%;
     }
-    
+
     .product-image {
         height: 120px;
     }
-    
+
     .product-info {
         padding: 0.875rem;
     }
-    
+
     .product-name {
         font-size: 1rem;
     }
-    
+
     .product-actions {
         padding: 0.875rem;
         gap: 0.375rem;
     }
-    
+
     .btn-sm {
         padding: 0.5rem 0.75rem;
         font-size: 0.8rem;
@@ -1757,26 +1769,26 @@
     .products-grid {
         margin-top: 0.5rem;
     }
-    
+
     .product-card {
         border-radius: 8px;
     }
-    
+
     .product-image {
         height: 100px;
     }
-    
+
     .product-info {
         padding: 0.75rem;
     }
-    
+
     .product-actions {
         padding: 0.75rem;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
-    
+
     .btn-sm {
         padding: 0.6rem 0.5rem;
         font-size: 0.75rem;
@@ -1785,6 +1797,7 @@
         overflow: hidden;
     }
 }
+
 .product-card.out-of-stock {
     opacity: 0.7;
     border-left: 4px solid #dc3545;
@@ -1803,12 +1816,12 @@
     .contact-options {
         grid-template-columns: 1fr;
     }
-    
+
     .contact-option-btn {
         padding: 1rem;
         font-size: 0.9rem;
     }
-    
+
     .contact-icon {
         font-size: 1.3rem;
     }
@@ -1819,17 +1832,343 @@
         padding: 0.75rem;
         margin-bottom: 1rem;
     }
-    
+
     .customer-info h4 {
         font-size: 1.1rem;
     }
-    
+
     .contact-modal-body {
         padding: 1rem;
     }
-    
+
     .contact-option-btn {
         padding: 0.75rem;
         gap: 0.75rem;
+    }
+}
+
+/* Específico para Marketplace del Comprador (2 columnas) */
+.products-marketplace {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .products-marketplace {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Chat Interface (Anti-Intermediarios) - Premium Design
+   ========================================================================== */
+
+.chat-wrapper {
+    display: flex;
+    height: 72vh;
+    min-height: 520px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+    overflow: hidden;
+    border: 1px solid #e8ede4;
+    margin-top: 1rem;
+}
+
+/* ---- Sidebar ---- */
+.chat-sidebar {
+    width: 300px;
+    min-width: 240px;
+    background: #1e3a0f;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.chat-sidebar-header {
+    padding: 1.2rem 1.2rem 1rem;
+    background: #163009;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.chat-sidebar-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #b8d9a0;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.chat-contacts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.chat-contact {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    gap: 12px;
+}
+
+.chat-contact:hover {
+    background-color: rgba(255,255,255,0.07);
+}
+
+.chat-contact.active {
+    background-color: rgba(255,255,255,0.13);
+    border-left: 3px solid #7fc35a;
+}
+
+/* ---- Avatars ---- */
+.chat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5a9e2f, #2d5016);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* ---- Contact Info ---- */
+.chat-contact-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-contact-name {
+    margin: 0 0 0.2rem 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #e8f5e2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-contact-preview {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Main Chat Area ---- */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f5f7f3;
+    min-width: 0;
+}
+
+/* ---- Chat Header ---- */
+.chat-header {
+    padding: 0.9rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e8ede4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.chat-header h3 {
+    margin: 0;
+    color: #2d5016;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* ---- Messages Area ---- */
+.chat-messages-area {
+    flex: 1;
+    padding: 1.2rem 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f5f7f3;
+    background-image: radial-gradient(circle at 100% 0%, rgba(45,80,22,0.04) 0%, transparent 60%);
+    scrollbar-width: thin;
+    scrollbar-color: #c5d9b8 transparent;
+}
+
+/* ---- Bubble Wrappers ---- */
+.chat-bubble-wrapper {
+    display: flex;
+    width: 100%;
+    animation: fadeSlide 0.2s ease;
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.chat-bubble-wrapper.sent     { justify-content: flex-end; }
+.chat-bubble-wrapper.received { justify-content: flex-start; }
+.chat-bubble-wrapper.system   { justify-content: center; }
+
+/* ---- Bubble Styles ---- */
+.chat-bubble {
+    max-width: 68%;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    position: relative;
+    word-break: break-word;
+}
+
+.chat-bubble-wrapper.sent .chat-bubble {
+    background: linear-gradient(135deg, #3d6b1e, #2d5016);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 8px rgba(45,80,22,0.25);
+}
+
+.chat-bubble-wrapper.received .chat-bubble {
+    background: #fff;
+    color: #2d3a24;
+    border: 1px solid #e2ebda;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* System message (first auto message from order) */
+.chat-bubble-wrapper.system .chat-bubble {
+    background: #fffde7;
+    color: #5a4a00;
+    border: 1px dashed #e0c840;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    max-width: 85%;
+    text-align: center;
+    box-shadow: none;
+    padding: 0.6rem 1rem;
+}
+
+.chat-time {
+    display: block;
+    font-size: 0.68rem;
+    margin-top: 4px;
+    opacity: 0.65;
+    text-align: right;
+}
+
+/* ---- Input Area ---- */
+.chat-input-area {
+    padding: 0.9rem 1.5rem;
+    background: #fff;
+    border-top: 1px solid #e8ede4;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input-area input {
+    flex: 1;
+    padding: 0.7rem 1.1rem;
+    border: 1.5px solid #d4e6c3;
+    border-radius: 24px;
+    outline: none;
+    font-size: 0.93rem;
+    background: #f8fbf5;
+    color: #2d3a24;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-input-area input:focus {
+    border-color: #5a9e2f;
+    box-shadow: 0 0 0 3px rgba(90,158,47,0.12);
+    background: #fff;
+}
+
+.chat-btn-send {
+    background: linear-gradient(135deg, #5a9e2f, #2d5016);
+    color: white;
+    font-weight: 700;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: transform 0.12s, box-shadow 0.2s;
+    box-shadow: 0 3px 10px rgba(45,80,22,0.3);
+    white-space: nowrap;
+}
+
+.chat-btn-send:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(45,80,22,0.35);
+}
+
+.chat-btn-send:active {
+    transform: scale(0.96);
+    box-shadow: none;
+}
+
+/* ---- Empty State ---- */
+.chat-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9cb88a;
+    gap: 0.8rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.chat-empty-state h3 {
+    color: #4a7a28;
+    margin: 0;
+}
+
+.chat-empty-state p {
+    color: #8aaa78;
+    font-size: 0.9rem;
+    max-width: 300px;
+    margin: 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .chat-wrapper {
+        flex-direction: column;
+        height: 80vh;
+        border-radius: 10px;
+    }
+    .chat-sidebar {
+        width: 100%;
+        min-width: unset;
+        height: 45%;
+        flex-shrink: 0;
+    }
+    .chat-main {
+        height: 55%;
+    }
+    .chat-bubble {
+        max-width: 85%;
     }
 }

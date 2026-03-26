@@ -7,7 +7,31 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 import json
+from users.models import Usuario
 from utils.file_handlers import image_upload_handler, validate_image_file
+
+class SipsaPrecio(models.Model):
+    """
+    Caché local de precios oficiales del Mercado Mayorista SIPSA del DANE.
+    Se actualiza periódicamente vía comando cron.
+    """
+    ciudad = models.CharField(max_length=150)
+    producto = models.CharField(max_length=200)
+    precio_promedio = models.DecimalField(max_digits=12, decimal_places=2)
+    fecha_captura = models.DateTimeField(null=True, blank=True)
+    ultima_sincronizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Precio SIPSA'
+        verbose_name_plural = 'Precios SIPSA'
+        indexes = [
+            models.Index(fields=['producto']),
+            models.Index(fields=['ciudad']),
+        ]
+        unique_together = ('ciudad', 'producto')
+
+    def __str__(self):
+        return f"{self.producto} en {self.ciudad} - ${self.precio_promedio}"
 
 Usuario = get_user_model()
 
@@ -250,8 +274,8 @@ class Producto(models.Model):
         if cantidad < self.peso_minimo_venta:
             return False, f"Cantidad mínima: {self.peso_minimo_venta} {self.unidad_medida}"
         
-        if cantidad > self.peso_maximo_venta:
-            return False, f"Cantidad máxima: {self.peso_maximo_venta} {self.unidad_medida}"
+        # Omitimos el límite de venta máximo para permitir pedidos al por mayor
+        # siempre y cuando el stock lo resista.
         
         if cantidad > self.stock_disponible:
             return False, f"Stock insuficiente. Disponible: {self.stock_disponible} {self.unidad_medida}"

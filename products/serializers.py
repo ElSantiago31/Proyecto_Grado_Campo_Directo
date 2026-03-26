@@ -4,7 +4,8 @@ Serializers para productos y categorías
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import CategoriaProducto, Producto
+from decimal import Decimal
+from .models import CategoriaProducto, Producto, SipsaPrecio
 
 Usuario = get_user_model()
 
@@ -32,6 +33,7 @@ class ProductoListSerializer(serializers.ModelSerializer):
     """
     Serializer para lista de productos (vista resumida)
     """
+    campesino = serializers.IntegerField(source='usuario.id', read_only=True)
     campesino_nombre = serializers.CharField(source='usuario.get_full_name', read_only=True)
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     categoria_icono = serializers.CharField(source='categoria.icono', read_only=True)
@@ -47,7 +49,7 @@ class ProductoListSerializer(serializers.ModelSerializer):
             'id', 'nombre', 'descripcion', 'precio_por_kg', 'precio_formateado',
             'stock_disponible', 'unidad_medida', 'estado', 'is_disponible',
             'imagen_principal', 'calidad', 'fecha_cosecha', 'disponible_entrega_inmediata',
-            'campesino_nombre', 'categoria_nombre', 'categoria_icono', 
+            'campesino', 'campesino_nombre', 'categoria_nombre', 'categoria_icono', 
             'finca_nombre', 'ubicacion', 'tags_list'
         ]
     
@@ -147,6 +149,31 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "El peso mínimo debe ser menor que el peso máximo"
             )
+            
+        # Validación de Límite SIPSA-DANE (130% máx del referencial local/nacional)
+        precio = attrs.get('precio_por_kg')
+        nombre = attrs.get('nombre')
+        finca = attrs.get('finca')
+        
+        if precio and nombre:
+            # Primero buscamos coincidencias parciales del nombre de producto
+            sipsa_qs = SipsaPrecio.objects.filter(producto__icontains=nombre)
+            
+            sipsa_val = None
+            if finca and finca.ubicacion_municipio:
+                sipsa_val = sipsa_qs.filter(ciudad__icontains=finca.ubicacion_municipio).first()
+            
+            # Si no hay en el municipio, o no hay finca, buscar promedio nacional genérico
+            if not sipsa_val:
+                sipsa_val = sipsa_qs.first()
+                
+            if sipsa_val:
+                # El precio máximo permitido será un 130% (x1.3) del valor SIPSA
+                limite_maximo = sipsa_val.precio_promedio * Decimal('1.30')
+                if precio > limite_maximo:
+                    raise serializers.ValidationError({
+                        'precio_por_kg': f'El precio que intentas asignar excede el máximo ético permitido. Según el SIPSA-DANE, el promedio de {sipsa_val.producto} en tu área es ${sipsa_val.precio_promedio:,.0f} COP. El máximo permitido en la plataforma es ${limite_maximo:,.0f} COP.'
+                    })
         
         return attrs
     

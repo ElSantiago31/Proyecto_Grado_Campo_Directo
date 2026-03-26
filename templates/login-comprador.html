@@ -271,7 +271,7 @@
                         type="text" 
                         id="username" 
                         name="username" 
-                        placeholder="Usuario / correo" 
+                        placeholder="Correo" 
                         class="form-input"
                         required
                     >
@@ -297,7 +297,7 @@
                         Recordar mi sesión
                     </label>
                     
-                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                    <a href="{% url 'frontend:password_reset' %}" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
                 
                 <button type="submit" class="login-button">
@@ -315,5 +315,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/login-comprador.js' %}"></script>
+<script src="{% static 'js/login-comprador.js' %}?v=3"></script>
 {% endblock %}

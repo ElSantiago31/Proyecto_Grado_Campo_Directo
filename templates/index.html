@@ -72,4 +72,19 @@
             </div>
         </div>
     </footer>
+    
+    <!-- Script para limpiar tokens del cliente tras logout del servidor -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('logout') === 'true') {
+                console.log('🗑️ Ejecutando limpieza profunda de sesión local...');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('rememberedUser');
+                // Limpiar parámetro de la URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
 {% endblock %}

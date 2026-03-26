@@ -11,6 +11,6 @@ class DisableCSRFForAPIMiddleware(MiddlewareMixin):
     """
     def process_request(self, request):
         if request.path.startswith('/api/'):
-            print(f"🔧 [MIDDLEWARE] Disabling CSRF for API path: {request.path}")
+            print(f"[MIDDLEWARE] Deshabilitando CSRF para la ruta: {request.path}")
             setattr(request, '_dont_enforce_csrf_checks', True)
         return None

@@ -82,6 +82,13 @@ class Usuario(AbstractUser):
         default='campesino'
     )
     
+    # Campo de dirección agregado posterior para los compradores principalmente
+    direccion = models.CharField(
+        max_length=255, 
+        blank=True, 
+        help_text='Dirección obligatoria para compradores (Opcional para Campesinos)'
+    )
+    
     fecha_nacimiento = models.DateField()
     
     estado = models.CharField(

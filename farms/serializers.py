@@ -4,26 +4,9 @@ Serializers para fincas y certificaciones
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Finca, Certificacion
+from .models import Finca
 
 Usuario = get_user_model()
-
-
-class CertificacionSerializer(serializers.ModelSerializer):
-    """
-    Serializer para certificaciones
-    """
-    is_vigente = serializers.ReadOnlyField()
-    dias_para_vencer = serializers.ReadOnlyField()
-    
-    class Meta:
-        model = Certificacion
-        fields = [
-            'id', 'nombre', 'descripcion', 'entidad_certificadora',
-            'fecha_obtencion', 'fecha_vencimiento', 'estado', 'is_vigente',
-            'dias_para_vencer', 'archivo_certificado', 'fecha_creacion'
-        ]
-        read_only_fields = ['id', 'fecha_creacion']
 
 
 class FincaListSerializer(serializers.ModelSerializer):
@@ -33,21 +16,17 @@ class FincaListSerializer(serializers.ModelSerializer):
     campesino_nombre = serializers.CharField(source='usuario.get_full_name', read_only=True)
     ubicacion_completa = serializers.ReadOnlyField()
     productos_count = serializers.SerializerMethodField()
-    certificaciones_vigentes = serializers.SerializerMethodField()
     
     class Meta:
         model = Finca
         fields = [
             'id', 'nombre_finca', 'campesino_nombre', 'ubicacion_completa',
             'area_hectareas', 'tipo_cultivo', 'estado', 'productos_count',
-            'certificaciones_vigentes', 'fecha_creacion'
+            'fecha_creacion'
         ]
     
     def get_productos_count(self, obj):
         return obj.productos_count()
-    
-    def get_certificaciones_vigentes(self, obj):
-        return obj.certificaciones.filter(estado='vigente').count()
 
 
 class FincaDetailSerializer(serializers.ModelSerializer):
@@ -57,7 +36,6 @@ class FincaDetailSerializer(serializers.ModelSerializer):
     campesino = serializers.SerializerMethodField()
     ubicacion_completa = serializers.ReadOnlyField()
     tiene_coordenadas = serializers.ReadOnlyField()
-    certificaciones = CertificacionSerializer(many=True, read_only=True)
     productos_count = serializers.SerializerMethodField()
     productos_disponibles_count = serializers.SerializerMethodField()
     
@@ -67,7 +45,7 @@ class FincaDetailSerializer(serializers.ModelSerializer):
             'id', 'nombre_finca', 'ubicacion_departamento', 'ubicacion_municipio',
             'ubicacion_completa', 'direccion', 'area_hectareas', 'tipo_cultivo',
             'descripcion', 'latitud', 'longitud', 'tiene_coordenadas', 'estado',
-            'fecha_creacion', 'fecha_actualizacion', 'campesino', 'certificaciones',
+            'fecha_creacion', 'fecha_actualizacion', 'campesino',
             'productos_count', 'productos_disponibles_count'
         ]
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
@@ -140,39 +118,3 @@ class FincaCreateUpdateSerializer(serializers.ModelSerializer):
         validated_data['usuario'] = self.context['request'].user
         return Finca.objects.create(**validated_data)
 
-
-class CertificacionCreateUpdateSerializer(serializers.ModelSerializer):
-    """
-    Serializer para crear/actualizar certificaciones
-    """
-    
-    class Meta:
-        model = Certificacion
-        fields = [
-            'finca', 'nombre', 'descripcion', 'entidad_certificadora',
-            'fecha_obtencion', 'fecha_vencimiento', 'estado', 'archivo_certificado'
-        ]
-    
-    def validate_finca(self, value):
-        """Validar que la finca pertenece al usuario autenticado"""
-        user = self.context['request'].user
-        if not user.is_campesino:
-            raise serializers.ValidationError("Solo los campesinos pueden crear certificaciones")
-        
-        if value.usuario != user:
-            raise serializers.ValidationError("La finca debe pertenecerte")
-        
-        return value
-    
-    def validate(self, attrs):
-        """Validaciones adicionales"""
-        fecha_obtencion = attrs.get('fecha_obtencion')
-        fecha_vencimiento = attrs.get('fecha_vencimiento')
-        
-        if fecha_vencimiento and fecha_obtencion:
-            if fecha_vencimiento <= fecha_obtencion:
-                raise serializers.ValidationError(
-                    "La fecha de vencimiento debe ser posterior a la fecha de obtención"
-                )
-        
-        return attrs

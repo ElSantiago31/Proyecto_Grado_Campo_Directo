@@ -80,7 +80,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
         """Optimizar consultas y filtros"""
         queryset = Producto.objects.select_related(
             'usuario', 'finca', 'categoria'
-        ).prefetch_related('finca__certificaciones')
+        )
         
         # Filtros personalizados
         if self.action == 'list':

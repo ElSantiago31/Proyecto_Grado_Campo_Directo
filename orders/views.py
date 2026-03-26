@@ -25,7 +25,12 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         # Permisos de lectura para comprador y campesino del pedido
         if request.method in permissions.SAFE_METHODS:
             return obj.comprador == request.user or obj.campesino == request.user
-        # Permisos de escritura solo para el campesino (cambiar estado)
+            
+        # Acciones específicas permitidas para AMBOS (comprador y campesino)
+        if getattr(view, 'action', '') in ['calificar', 'cancelar']:
+            return obj.comprador == request.user or obj.campesino == request.user
+            
+        # Permisos de escritura generales (cambiar estado) solo para el campesino
         return obj.campesino == request.user
 
 
