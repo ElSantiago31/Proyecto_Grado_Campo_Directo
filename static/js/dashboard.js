@@ -787,8 +787,24 @@ function showFormErrors(errors) {
 }
 
 function showFieldError(fieldName, message) {
-    const field = document.getElementById(fieldName);
-    if (!field) return;
+    // Mapeo especial para cuando DRF devuelve los keys del modelo Python
+    const fieldMap = {
+        'precio_por_kg': 'productPrice',
+        'nombre': 'productName',
+        'categoria': 'productCategory',
+        'stock_disponible': 'productStock',
+        'descripcion': 'productDescription'
+    };
+    
+    // Si el nombre viene del Python, intentar pasarlo a ID del HTML
+    const finalId = fieldMap[fieldName] || fieldName;
+    const field = document.getElementById(finalId);
+    
+    if (!field) {
+        // En caso de que sea un error general y no encaje en un ID, mostramos una alerta flotante obligatoria
+        showNotification(message, 'error');
+        return;
+    }
 
     // Añadir clase de error
     field.classList.add('error');
@@ -2358,6 +2374,55 @@ async function loadProfileData() {
             if (fincaField) {
                 fincaField.value = profile.nombre_finca || '';
             }
+
+            if (profile.tipo_usuario === 'campesino') {
+                const deptoSelect = document.getElementById('profileDepartamentoFinca');
+                const muniSelect = document.getElementById('profileMunicipioFinca');
+                
+                if (typeof colombiaData !== 'undefined' && deptoSelect && muniSelect) {
+                    deptoSelect.innerHTML = '<option value="">Selecciona Departamento</option>';
+                    colombiaData.forEach(d => {
+                        const option = document.createElement('option');
+                        option.value = d.departamento;
+                        option.textContent = d.departamento;
+                        deptoSelect.appendChild(option);
+                    });
+
+                    deptoSelect.addEventListener('change', function() {
+                        muniSelect.innerHTML = '<option value="">Selecciona Municipio</option>';
+                        if (this.value) {
+                            const deptoData = colombiaData.find(d => d.departamento === this.value);
+                            if (deptoData) {
+                                deptoData.ciudades.forEach(c => {
+                                    const option = document.createElement('option');
+                                    option.value = c;
+                                    option.textContent = c;
+                                    muniSelect.appendChild(option);
+                                });
+                                muniSelect.disabled = false;
+                            }
+                        } else {
+                            muniSelect.disabled = true;
+                        }
+                    });
+                }
+
+                document.getElementById('profileNombreFinca').value = profile.nombre_finca || '';
+                
+                // Set default values after building the options
+                if (profile.departamento_finca) {
+                    deptoSelect.value = profile.departamento_finca;
+                    // Trigger change to load cities
+                    deptoSelect.dispatchEvent(new Event('change'));
+                    if (profile.municipio_finca) {
+                        muniSelect.value = profile.municipio_finca;
+                    }
+                }
+                
+                document.getElementById('fincaFieldGroup').style.display = 'block';
+            } else {
+                document.getElementById('fincaFieldGroup').style.display = 'none';
+            }
         }
     } catch (error) {
         console.error("Error al cargar perfil:", error);
@@ -2382,10 +2447,16 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         profileData.fecha_nacimiento = fecha;
     }
     
-    const fincaField = document.getElementById('profileNombreFinca');
-    if (fincaField && fincaField.value.trim() !== '') {
-        profileData.nombre_finca = fincaField.value.trim();
-    }
+    const fincaName = document.getElementById('profileNombreFinca').value;
+    if(fincaName) profileData.nombre_finca = fincaName;
+    
+    const depto = document.getElementById('profileDepartamentoFinca').value;
+    if(depto) profileData.departamento_finca = depto;
+    
+    const muni = document.getElementById('profileMunicipioFinca').value;
+    if(muni) profileData.municipio_finca = muni;
+
+    profileData.direccion = undefined;
 
     try {
         await authApi.updateProfile(profileData);

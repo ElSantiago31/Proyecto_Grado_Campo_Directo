@@ -42,8 +42,12 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const response = await authApi.getProfile();
                 if (response && response.id) {
-                    // Usuario ya autenticado, redirigir al dashboard
-                    window.location.href = '/dashboard/';
+                    // Usuario ya autenticado, redirigir al dashboard correcto
+                    if (response.tipo_usuario === 'comprador') {
+                        window.location.href = '/dashboard-comprador/';
+                    } else {
+                        window.location.href = '/dashboard/';
+                    }
                     return;
                 }
             } catch (error) {
@@ -91,7 +95,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Redirect to dashboard after short delay
                 setTimeout(() => {
-                    window.location.href = '/dashboard/';
+                    if (response.user && response.user.tipo_usuario === 'comprador') {
+                        window.location.href = '/dashboard-comprador/';
+                    } else {
+                        window.location.href = '/dashboard/';
+                    }
                 }, 2000);
             } else {
                 throw new ApiError('Respuesta de login inválida', 400);

@@ -27,13 +27,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         allow_blank=True,
         help_text='Solo para campesinos: nombre de la finca inicial'
     )
+    departamento_finca = serializers.CharField(
+        required=False, allow_blank=True
+    )
+    municipio_finca = serializers.CharField(
+        required=False, allow_blank=True
+    )
 
     class Meta:
         model = Usuario
         fields = [
             'email', 'password', 'password_confirm',
             'nombre', 'apellido', 'telefono', 'fecha_nacimiento',
-            'tipo_usuario', 'nombre_finca', 'direccion'
+            'tipo_usuario', 'nombre_finca', 'direccion',
+            'departamento_finca', 'municipio_finca'
         ]
 
     def validate(self, attrs):
@@ -52,6 +59,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         validated_data.pop('password_confirm')
         nombre_finca = validated_data.pop('nombre_finca', None)
+        departamento_finca = validated_data.pop('departamento_finca', None)
+        municipio_finca = validated_data.pop('municipio_finca', None)
         
         # Crear usuario
         user = Usuario.objects.create_user(password=password, **validated_data)
@@ -60,11 +69,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         if user.tipo_usuario == 'campesino' and nombre_finca:
             from farms.models import Finca
             Finca.objects.create(
-                usuario=user,
+                campesino=user,
                 nombre_finca=nombre_finca,
-                ubicacion_departamento='Por definir',
-                ubicacion_municipio='Por definir',
-                area_hectareas=0
+                ubicacion_departamento=departamento_finca or '',
+                ubicacion_municipio=municipio_finca or ''
             )
         
         return user
@@ -112,6 +120,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
     """
     full_name = serializers.SerializerMethodField()
     nombre_finca = serializers.SerializerMethodField()
+    departamento_finca = serializers.SerializerMethodField()
+    municipio_finca = serializers.SerializerMethodField()
     
     class Meta:
         model = Usuario
@@ -119,7 +129,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'id', 'email', 'nombre', 'apellido', 'full_name',
             'telefono', 'direccion', 'tipo_usuario', 'fecha_nacimiento',
             'estado', 'fecha_registro', 'calificacion_promedio',
-            'total_calificaciones', 'avatar', 'nombre_finca'
+            'total_calificaciones', 'avatar', 'nombre_finca',
+            'departamento_finca', 'municipio_finca'
         ]
         read_only_fields = [
             'id', 'fecha_registro', 'calificacion_promedio',
@@ -132,6 +143,14 @@ class UsuarioSerializer(serializers.ModelSerializer):
     def get_nombre_finca(self, obj):
         finca = obj.get_finca_principal()
         return finca.nombre_finca if finca else ""
+        
+    def get_departamento_finca(self, obj):
+        finca = obj.get_finca_principal()
+        return finca.ubicacion_departamento if finca else ""
+        
+    def get_municipio_finca(self, obj):
+        finca = obj.get_finca_principal()
+        return finca.ubicacion_municipio if finca else ""
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -139,10 +158,12 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     Serializer para actualizar perfil de usuario
     """
     nombre_finca = serializers.CharField(required=False, allow_blank=True)
+    departamento_finca = serializers.CharField(required=False, allow_blank=True)
+    municipio_finca = serializers.CharField(required=False, allow_blank=True)
     
     class Meta:
         model = Usuario
-        fields = ['nombre', 'apellido', 'telefono', 'email', 'direccion', 'fecha_nacimiento', 'nombre_finca']
+        fields = ['nombre', 'apellido', 'telefono', 'email', 'direccion', 'fecha_nacimiento', 'nombre_finca', 'departamento_finca', 'municipio_finca']
         
     def validate_telefono(self, value):
         """Validar formato del teléfono"""
@@ -157,25 +178,33 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         nombre_finca = validated_data.pop('nombre_finca', None)
+        departamento_finca = validated_data.pop('departamento_finca', None)
+        municipio_finca = validated_data.pop('municipio_finca', None)
         
         # update basic user fields
         instance = super().update(instance, validated_data)
         
         # update finca if campesino
-        if nombre_finca is not None and instance.tipo_usuario == 'campesino':
-            finca = instance.fincas.first()
-            if finca:
-                finca.nombre_finca = nombre_finca
+        if instance.tipo_usuario == 'campesino' and (nombre_finca is not None or departamento_finca is not None or municipio_finca is not None):
+            from farms.models import Finca
+            fincas = Finca.objects.filter(campesino=instance)
+            if fincas.exists():
+                finca = fincas.first()
+                if nombre_finca is not None:
+                    finca.nombre_finca = nombre_finca
+                if departamento_finca is not None:
+                    finca.ubicacion_departamento = departamento_finca
+                if municipio_finca is not None:
+                    finca.ubicacion_municipio = municipio_finca
                 finca.save()
-            else:
-                from farms.models import Finca
+            elif nombre_finca:
                 Finca.objects.create(
-                    usuario=instance,
+                    campesino=instance, 
                     nombre_finca=nombre_finca,
-                    ubicacion_departamento='Por definir',
-                    ubicacion_municipio='Por definir',
-                    area_hectareas=0
+                    ubicacion_departamento=departamento_finca or '',
+                    ubicacion_municipio=municipio_finca or ''
                 )
+                
         return instance
 
 
@@ -304,9 +333,24 @@ class UserDashboardSerializer(serializers.ModelSerializer):
             for pedido in pedidos_ahorro:
                 for detalle in pedido.detalles.all():
                     nombre = detalle.producto.nombre
-                    # Podríamos afinar para que cruce con el municipio del campesino,
-                    # pero como ahorro generalizado tomamos el promedio más general que exista.
-                    sipsa_val = SipsaPrecio.objects.filter(producto__icontains=nombre).first()
+                    palabra_clave = nombre.split()[0].strip() if nombre else ''
+                    
+                    sipsa_val = None
+                    if palabra_clave:
+                        qs = SipsaPrecio.objects.filter(producto__icontains=palabra_clave)
+                        if qs.exists():
+                            import re
+                            palabra_lower = palabra_clave.lower()
+                            matches_validos = []
+                            for s in qs:
+                                if palabra_lower in re.findall(r'\w+', s.producto.lower()):
+                                    matches_validos.append(s)
+                            if matches_validos:
+                                matches_exactos = [s for s in matches_validos if s.producto.replace('*', '').strip().lower() in nombre.lower()]
+                                if matches_exactos:
+                                    sipsa_val = matches_exactos[0]
+                                else:
+                                    sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
                     if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
                         ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
             

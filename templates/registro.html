@@ -80,7 +80,16 @@
                     
                     <!-- Campo específico para campesinos -->
                     <div class="form-group campesino-field">
-                        <input type="text" id="nombreFinca" name="nombreFinca" placeholder="Nombre de Finca">
+                        <input type="text" id="nombreFinca" name="nombreFinca" placeholder="Nombre de Finca" required>
+                    </div>
+                    
+                    <div class="form-group campesino-field date-group" style="display: flex; gap: 10px;">
+                        <select id="departamentoFinca" name="departamentoFinca" style="width: 50%;">
+                            <option value="">Departamento</option>
+                        </select>
+                        <select id="municipioFinca" name="municipioFinca" style="width: 50%;" disabled>
+                            <option value="">Municipio</option>
+                        </select>
                     </div>
                     
                     <!-- Campo específico para compradores -->
@@ -114,6 +123,7 @@
 // Hacer el CSRF token disponible para JavaScript
 window.csrfToken = '{{ csrf_token }}';
 </script>
+<script src="{% static 'js/colombia.js' %}?v={% now 'U' %}"></script>
 <script src="{% static 'js/config/api.js' %}?v={% now 'U' %}"></script>
 <script src="{% static 'js/registro.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

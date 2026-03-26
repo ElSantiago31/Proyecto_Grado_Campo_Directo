@@ -9,7 +9,17 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.db.models import Sum, Count, Q, Avg
+from django.utils import timezone
+from django.contrib.auth import logout
+from datetime import datetime, timedelta
+from decimal import Decimal
+import re
 
+# Modelos locales
+from products.models import Producto, SipsaPrecio
+from orders.models import Pedido
+from farms.models import Finca
 
 def home(request):
     """
@@ -60,14 +70,6 @@ def render_dashboard_with_data(request):
     """
     Renderiza el dashboard con datos reales del usuario autenticado
     """
-    from django.db.models import Sum, Count, Q, Avg
-    from django.utils import timezone
-    from datetime import datetime, timedelta
-    from decimal import Decimal
-    from products.models import Producto
-    from orders.models import Pedido
-    from farms.models import Finca
-    
     # Obtener datos del campesino
     usuario = request.user
     
@@ -189,13 +191,6 @@ def render_comprador_dashboard_with_data(request):
     """
     Renderiza el dashboard del comprador con datos reales
     """
-    from django.db.models import Sum, Count, Q, Avg
-    from django.utils import timezone
-    from datetime import datetime, timedelta
-    from decimal import Decimal
-    from products.models import Producto
-    from orders.models import Pedido
-    
     # Obtener datos del comprador
     usuario = request.user
     
@@ -220,7 +215,6 @@ def render_comprador_dashboard_with_data(request):
     ).count()
     
     # Ahorro total real vs precios de mercado SIPSA
-    from products.models import SipsaPrecio
     ahorro_estimado = Decimal('0')
     pedidos_ahorro = usuario.pedidos_comprador.filter(
         estado__in=['completed', 'ready']
@@ -229,7 +223,24 @@ def render_comprador_dashboard_with_data(request):
     for pedido in pedidos_ahorro:
         for detalle in pedido.detalles.all():
             nombre = detalle.producto.nombre
-            sipsa_val = SipsaPrecio.objects.filter(producto__icontains=nombre).first()
+            palabra_clave = nombre.split()[0].strip() if nombre else ''
+            
+            sipsa_val = None
+            if palabra_clave:
+                qs = SipsaPrecio.objects.filter(producto__icontains=palabra_clave)
+                if qs.exists():
+                    palabra_lower = palabra_clave.lower()
+                    matches_validos = []
+                    for s in qs:
+                        if palabra_lower in re.findall(r'\w+', s.producto.lower()):
+                            matches_validos.append(s)
+                    if matches_validos:
+                        matches_exactos = [s for s in matches_validos if s.producto.replace('*', '').strip().lower() in nombre.lower()]
+                        if matches_exactos:
+                            sipsa_val = matches_exactos[0]
+                        else:
+                            sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
+                            
             if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
                 ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
     
@@ -293,7 +304,6 @@ def logout_view(request):
     """
     Vista de logout que limpia la sesión de Django
     """
-    from django.contrib.auth import logout
     logout(request)
     # Redirigir al home con un parámetro de URL especial para que el frontend limpie sus tokens locales
     return redirect('/?logout=true')
