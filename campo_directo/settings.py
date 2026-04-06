@@ -83,41 +83,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'campo_directo.wsgi.application'
 
 # Database Configuration
-# Base de datos principal (desarrollo/testing) - Solo SQLite en DEBUG
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# Configuracion simplificada: Usamos SQLite tanto en local como en produccion (PythonAnywhere free tier)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': config('DB_NAME', default='campo_directo'),
-            'USER': config('DB_USER', default='root'),
-            'PASSWORD': config('DB_PASSWORD', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            }
-        },
-        'production': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': config('PROD_DB_NAME', default='campo_directo_production'),
-            'USER': config('PROD_DB_USER', default='root'),
-            'PASSWORD': config('PROD_DB_PASSWORD', default=''),
-            'HOST': config('PROD_DB_HOST', default='localhost'),
-            'PORT': config('PROD_DB_PORT', default='3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            }
-        }
-    }
+}
+
 
 # Database router para manejar múltiples bases de datos (temporalmente deshabilitado)
 # DATABASE_ROUTERS = ['campo_directo.routers.DatabaseRouter']
