@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const payload = {
                 nombre: data.nombre,
                 apellido: data.apellido,
-                email: data.correo.trim(),
+                email: data.correo.trim().toLowerCase(),
                 telefono: (data.contacto || '').replace(/\s+/g, ''),
                 tipo_usuario: data.tipoUsuario,
                 fecha_nacimiento: toISODate(data.fechaNacimiento),
