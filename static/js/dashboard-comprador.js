@@ -20,13 +20,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         const profile = await authApi.getProfile();
         console.log('[Dashboard Comprador] Perfil obtenido:', profile);
 
-        if (!profile || profile.tipo_usuario !== 'comprador') {
-            console.log('[Dashboard Comprador] ❌ Usuario no es comprador, tipo:', profile?.tipo_usuario);
+        if (!profile || (profile.tipo_usuario !== 'comprador' && profile.tipo_usuario !== 'campesino')) {
+            console.log('[Dashboard Comprador] ❌ Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario);
             window.location.href = '/login-comprador/';
             return;
         }
 
-        console.log(`[Dashboard Comprador] ✅ Usuario comprador autenticado: ${profile.nombre} ${profile.apellido}`);
+        console.log(`[Dashboard Comprador] ✅ Usuario autenticado (${profile.tipo_usuario}): ${profile.nombre} ${profile.apellido}`);
 
         // Actualizar nombre en la UI
         const userNameElement = document.getElementById('userName');
@@ -262,6 +262,9 @@ function setupMarketplaceFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
     const locationFilter = document.getElementById('locationFilter');
 
+    // Poblar el filtro de ubicación dinámicamente si existe colombiaData
+    populateLocationFilter();
+
     // Función que aplica todos los filtros activos a la vez
     const applyFilters = () => {
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -347,25 +350,50 @@ function openQuantityModal(productId) {
     const modal = document.getElementById('quantityModal');
     if (!modal) return;
 
+    // 1. Inyectar datos base
     document.getElementById('quantityProductName').textContent = product.nombre;
     const maxStock = product.stock_disponible || product.cantidad_disponible || 0;
-
     const stockSpan = document.getElementById('quantityMaxStock');
     if (stockSpan) stockSpan.textContent = maxStock;
-
     const unitSpan = document.getElementById('quantityUnit');
     if (unitSpan) unitSpan.textContent = product.unidad_medida || 'unidades';
 
+    // 2. Extraer precio base
+    const priceVal = product.precio_por_kg || product.precio_base || 0;
+    document.getElementById('quantityUnitPrice').textContent = priceVal.toLocaleString();
+    document.getElementById('quantityUnitType').textContent = product.unidad_medida || 'unidad';
+
+    // 3. Resetear inputs
     const input = document.getElementById('quantityInput');
+    const typeSelect = document.getElementById('purchaseType');
+    const priceDisplay = document.getElementById('quantityTotalPrice');
+    
     if (input) {
         input.value = 1;
         input.max = maxStock;
     }
+    if (typeSelect) typeSelect.value = 'unidad';
 
     const idInput = document.getElementById('quantityProductId');
     if (idInput) idInput.value = productId;
 
-    modal.style.display = 'block';
+    // 4. Lógica de cálculo reactivo abstracto
+    const calculateTotal = () => {
+        let qty = parseFloat(input.value) || 0;
+        // Si eligió por peso pero el precio es por Kg, se asume 1:1, etc.
+        let total = qty * priceVal;
+        priceDisplay.textContent = total.toLocaleString();
+    };
+
+    // Escuchar tipeo vivo
+    input.removeEventListener('input', calculateTotal);
+    typeSelect.removeEventListener('change', calculateTotal);
+    input.addEventListener('input', calculateTotal);
+    typeSelect.addEventListener('change', calculateTotal);
+
+    // Calcular render inicial
+    calculateTotal();
+    modal.style.display = 'flex';
 }
 
 function closeQuantityModal() {
@@ -375,7 +403,8 @@ function closeQuantityModal() {
 
 function confirmQuantitySelection() {
     const productId = parseInt(document.getElementById('quantityProductId').value);
-    const quantity = parseInt(document.getElementById('quantityInput').value);
+    const quantity = parseFloat(document.getElementById('quantityInput').value);
+    const method = document.getElementById('purchaseType').value;
     const product = allMarketplaceProducts.find(p => p.id === productId);
 
     if (!product) return;
@@ -391,6 +420,7 @@ function confirmQuantitySelection() {
     const defaultImage = '/static/images/logo.png';
     const imageUrl = product.imagen_principal || defaultImage;
     const priceVal = product.precio_por_kg || product.precio_base || 0;
+
 
     // Verificar si el item ya esta en el carrito
     const existingIndex = cart.findIndex(item => item.id === productId);
@@ -688,6 +718,8 @@ async function fetchRealOrders(type) {
             }
 
             let ratingBtnHtml = '';
+            let cancelBtnHtml = '';
+
             if (pedido.estado === 'completed') {
                 if (pedido.calificacion_comprador == null) {
                     // Limpieza del nombre de campesino para html
@@ -697,6 +729,8 @@ async function fetchRealOrders(type) {
                     const stars = '★'.repeat(pedido.calificacion_comprador) + '☆'.repeat(5 - pedido.calificacion_comprador);
                     ratingBtnHtml = `<p style="margin: 10px 0 0 0; font-size: 0.9rem; color: #ffab00;">Tu calificación: <span style="font-size: 1.1rem;">${stars}</span></p>`;
                 }
+            } else if (pedido.estado === 'pending' || pedido.estado === 'confirmed') {
+                cancelBtnHtml = `<button class="btn" style="margin-top: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; cursor: pointer;" onclick="openCancelOrderModal('${pedido.id}')">🚫 Cancelar Pedido</button>`;
             }
 
             return `
@@ -715,6 +749,7 @@ async function fetchRealOrders(type) {
                      <div style="text-align: right; min-width: 120px; display: flex; flex-direction: column; justify-content: flex-end;">
                          <p style="margin: 0 0 5px 0; font-size: 1.1rem; color: #2d5016;"><strong>Total: $${parseFloat(pedido.total || 0).toLocaleString()}</strong></p>
                          ${ratingBtnHtml}
+                         ${cancelBtnHtml}
                      </div>
                  </div>
              </div>`;
@@ -725,6 +760,61 @@ async function fetchRealOrders(type) {
         list.innerHTML = '<div style="color:red; text-align:center;">Error al cargar los pedidos desde el servidor.</div>';
     }
 }
+
+// ----------------------------------------------------
+// CANCELACIÓN DE PEDIDOS (COMPRADOR)
+// ----------------------------------------------------
+window.openCancelOrderModal = function(orderId) {
+    const modal = document.getElementById('cancelOrderModal');
+    if (!modal) return;
+    
+    document.getElementById('cancelOrderIdDisplay').textContent = `#${orderId}`;
+    document.getElementById('cancelOrderIdHidden').value = orderId;
+    
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+};
+
+window.closeCancelOrderModal = function() {
+    const modal = document.getElementById('cancelOrderModal');
+    if (modal) modal.style.display = 'none';
+};
+
+// Configurar eventos del modal de cancelación
+document.addEventListener('DOMContentLoaded', function() {
+    const closeBtn = document.getElementById('closeCancelOrderModal');
+    const declineBtn = document.getElementById('declineCancelBtn');
+    const confirmBtn = document.getElementById('confirmCancelBtn');
+
+    if (closeBtn) closeBtn.addEventListener('click', closeCancelOrderModal);
+    if (declineBtn) declineBtn.addEventListener('click', closeCancelOrderModal);
+    
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async function() {
+            const orderId = document.getElementById('cancelOrderIdHidden').value;
+            if (!orderId) return;
+
+            this.disabled = true;
+            this.textContent = 'Cancelando...';
+
+            try {
+                // Llamada a la API para cancelar
+                await orderApi.cancelar(orderId);
+                
+                showNotification(`Pedido ${orderId} cancelado correctamente`, 'success');
+                closeCancelOrderModal();
+                loadOrders(); // Recarga la pestaña actual de pedidos
+            } catch (error) {
+                console.error("Error al cancelar pedido:", error);
+                showNotification(error.message || 'No se pudo cancelar el pedido', 'error');
+            } finally {
+                this.disabled = false;
+                this.textContent = 'Sí, cancelar';
+            }
+        });
+    }
+});
 
 function setupOrderTabs() {
     const tabBtns = document.querySelectorAll('.order-tabs .tab-btn');
@@ -892,9 +982,144 @@ async function loadProfileData() {
             document.getElementById('profileEmail').value = profile.email || '';
             document.getElementById('profileFechaNacimiento').value = profile.fecha_nacimiento || '';
             document.getElementById('profileDireccion').value = profile.direccion || '';
+
+            // Cargar imagen de perfil si existe
+            if (profile.avatar) {
+                const avatarImg = document.getElementById('profileAvatarImg');
+                const headerAvatarImg = document.getElementById('headerAvatarImg');
+                const placeholder = document.getElementById('profileAvatarPlaceholder');
+                const headerPlaceholder = document.getElementById('headerAvatarContainer');
+                
+                if (avatarImg) avatarImg.src = profile.avatar;
+                else if (placeholder) {
+                    const container = document.getElementById('profileAvatarLarge');
+                    if (container) {
+                        container.innerHTML = `<img src="${profile.avatar}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    }
+                }
+                
+                if (headerAvatarImg) headerAvatarImg.src = profile.avatar;
+                else if (headerPlaceholder) {
+                    headerPlaceholder.innerHTML = `<img src="${profile.avatar}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                }
+            }
+
+            // Actualizar visibilidad del botón de eliminar foto
+            const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = profile.avatar ? 'inline-block' : 'none';
+            }
         }
+        
+        // Configurar listener para la foto de perfil (solo una vez)
+        setupProfilePhotoUpload();
     } catch (error) {
         console.error("Error al cargar perfil:", error);
+    }
+}
+
+function setupProfilePhotoUpload() {
+    const photoInput = document.getElementById('profilePhotoInput');
+    const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
+    
+    if (!photoInput || photoInput.dataset.initialized) return;
+    photoInput.dataset.initialized = 'true';
+    
+    photoInput.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        // Validar tipo (solo fotos, nada de gif o video)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Solo se permiten fotos (JPG, PNG). No se admiten GIFs ni videos.', 'error');
+            this.value = '';
+            return;
+        }
+        
+        // Validar tamaño (máx 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('La imagen es demasiado grande. Máximo 5MB.', 'error');
+            return;
+        }
+        
+        // Mostrar previsualización inmediata y loading
+        const avatarLarge = document.getElementById('profileAvatarLarge');
+        const originalContent = avatarLarge.innerHTML;
+        avatarLarge.style.opacity = '0.5';
+        
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        try {
+            console.log('[Dashboard Comprador] Subiendo foto de perfil...');
+            const response = await authApi.updateProfile(formData);
+            console.log('[Dashboard Comprador] Foto de perfil actualizada:', response);
+            
+            const userData = response.user || response;
+            if (userData && userData.avatar) {
+                // Actualizar todas las imágenes en la UI
+                const newAvatarUrl = userData.avatar;
+                
+                // Avatar grande
+                avatarLarge.innerHTML = `<img src="${newAvatarUrl}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                
+                // Avatar en el header
+                const headerAvatarContainer = document.getElementById('headerAvatarContainer');
+                if (headerAvatarContainer) {
+                    headerAvatarContainer.innerHTML = `<img src="${newAvatarUrl}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                }
+                
+                // Mostrar botón eliminar
+                if (deleteBtn) deleteBtn.style.display = 'inline-block';
+                
+                showNotification('¡Foto de perfil actualizada!', 'success');
+            }
+        } catch (error) {
+            console.error('[Dashboard Comprador] Error subiendo foto:', error);
+            avatarLarge.innerHTML = originalContent;
+            showNotification('Error al subir la foto: ' + error.message, 'error');
+        } finally {
+            avatarLarge.style.opacity = '1';
+            // Resetear input
+            photoInput.value = '';
+        }
+    });
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+            if (!confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) return;
+            
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = 'Eliminando...';
+            
+            try {
+                // Enviar null para eliminar la foto
+                const response = await authApi.updateProfile({ avatar: null });
+                console.log('[Dashboard Comprador] Foto de perfil eliminada:', response);
+                
+                // Actualizar UI al estado predeterminado
+                const avatarLarge = document.getElementById('profileAvatarLarge');
+                if (avatarLarge) {
+                    avatarLarge.innerHTML = '<span id="profileAvatarPlaceholder">🛒</span>';
+                }
+                
+                const headerAvatarContainer = document.getElementById('headerAvatarContainer');
+                if (headerAvatarContainer) {
+                    // Restaurar avatar predeterminado
+                    headerAvatarContainer.innerHTML = '🛒';
+                }
+                
+                this.style.display = 'none';
+                showNotification('Foto de perfil eliminada', 'success');
+            } catch (error) {
+                console.error('[Dashboard Comprador] Error eliminando foto:', error);
+                showNotification('Error al eliminar la foto', 'error');
+                this.textContent = originalText;
+                this.disabled = false;
+            }
+        });
     }
 }
 
@@ -1248,3 +1473,45 @@ setTimeout(() => {
     pollUnreadMessages();
     _globalMsgPoller = setInterval(pollUnreadMessages, 10000);
 }, 5000);
+
+function populateLocationFilter() {
+    const locationFilter = document.getElementById('locationFilter');
+    if (!locationFilter || !window.colombiaData) {
+        console.warn('[Marketplace] No se pudo cargar colombiaData o no se encontró el selector de ubicación.');
+        return;
+    }
+
+    // Limpiar opciones previas excepto la primera (id="")
+    while (locationFilter.options.length > 1) {
+        locationFilter.remove(1);
+    }
+
+    // Ordenar departamentos alfabéticamente
+    const sortedData = [...window.colombiaData].sort((a, b) => 
+        a.departamento.localeCompare(b.departamento)
+    );
+
+    sortedData.forEach(item => {
+        const option = document.createElement('option');
+        // Usamos el nombre del departamento en minúsculas como valor para el filtro JS
+        option.value = item.departamento.toLowerCase();
+        
+        // Asignar emoji temático según la región
+        let emoji = '📍';
+        const d = item.departamento.toLowerCase();
+        if (d.includes('cundinamarca') || d.includes('bogot')) emoji = '🏔️';
+        else if (d.includes('antioquia') || d.includes('boyac')) emoji = '⛰️';
+        else if (d.includes('atl') || d.includes('bol') || d.includes('magdalena') || d.includes('guajira')) emoji = '🌊';
+        else if (d.includes('valle')) emoji = '💃';
+        else if (d.includes('meta') || d.includes('casanare') || d.includes('vichada')) emoji = '🐎';
+        else if (d.includes('santander')) emoji = '🧗';
+        else if (d.includes('huila') || d.includes('tolima')) emoji = '🏜️';
+        else if (d.includes('quind') || d.includes('risaralda') || d.includes('caldas')) emoji = '☕';
+        else if (d.includes('nar') || d.includes('cauca') || d.includes('putumayo')) emoji = '🌋';
+        else if (d.includes('amazonas') || d.includes('guain') || d.includes('vaup')) emoji = '🌳';
+        
+        option.textContent = `${emoji} ${item.departamento}`;
+        locationFilter.appendChild(option);
+    });
+    console.log(`[Marketplace] Filtro de ubicación poblado con ${sortedData.length} departamentos colombianos.`);
+}

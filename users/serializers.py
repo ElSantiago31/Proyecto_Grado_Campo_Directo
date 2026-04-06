@@ -33,6 +33,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     municipio_finca = serializers.CharField(
         required=False, allow_blank=True
     )
+    imagen_2fa = serializers.CharField(
+        required=True,
+        help_text='Emoji obligatorio para doble factor'
+    )
 
     class Meta:
         model = Usuario
@@ -40,7 +44,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'email', 'password', 'password_confirm',
             'nombre', 'apellido', 'telefono', 'fecha_nacimiento',
             'tipo_usuario', 'nombre_finca', 'direccion',
-            'departamento_finca', 'municipio_finca'
+            'departamento_finca', 'municipio_finca', 'imagen_2fa'
         ]
 
     def validate(self, attrs):
@@ -61,18 +65,21 @@ class RegisterSerializer(serializers.ModelSerializer):
         nombre_finca = validated_data.pop('nombre_finca', None)
         departamento_finca = validated_data.pop('departamento_finca', None)
         municipio_finca = validated_data.pop('municipio_finca', None)
+        imagen_2fa = validated_data.pop('imagen_2fa', None)
         
         # Crear usuario
-        user = Usuario.objects.create_user(password=password, **validated_data)
+        user = Usuario.objects.create_user(password=password, imagen_2fa=imagen_2fa, **validated_data)
         
         # Si es campesino y tiene nombre de finca, crear finca
         if user.tipo_usuario == 'campesino' and nombre_finca:
             from farms.models import Finca
             Finca.objects.create(
-                campesino=user,
+                usuario=user,
                 nombre_finca=nombre_finca,
                 ubicacion_departamento=departamento_finca or '',
-                ubicacion_municipio=municipio_finca or ''
+                ubicacion_municipio=municipio_finca or '',
+                area_hectareas=0,
+                tipo_cultivo='tradicional'
             )
         
         return user
@@ -84,12 +91,31 @@ class LoginSerializer(serializers.Serializer):
     """
     email = serializers.EmailField()
     password = serializers.CharField(style={'input_type': 'password'})
+    imagen_2fa = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
+        imagen_2fa = attrs.get('imagen_2fa')
 
         if email and password:
+            from django.utils import timezone as tz
+            from datetime import timedelta
+
+            # --- BLOQUEO POR CONTRASEÑA: verificar antes de autenticar ---
+            MAX_PWD = 5
+            BLOQUEO_PWD_MIN = 10
+            try:
+                candidate = Usuario.objects.get(email=email)
+                if candidate.bloqueado_password_hasta and tz.now() < candidate.bloqueado_password_hasta:
+                    seg = int((candidate.bloqueado_password_hasta - tz.now()).total_seconds())
+                    raise serializers.ValidationError(
+                        f'Cuenta bloqueada por demasiados intentos de contraseña. Espera {seg} segundos.',
+                        code='password_bloqueado'
+                    )
+            except Usuario.DoesNotExist:
+                candidate = None
+
             user = authenticate(
                 request=self.context.get('request'),
                 email=email,
@@ -97,9 +123,72 @@ class LoginSerializer(serializers.Serializer):
             )
 
             if not user:
+                # Contabilizar intento fallido de contraseña
+                if candidate:
+                    candidate.intentos_password_fallidos += 1
+                    if candidate.intentos_password_fallidos >= MAX_PWD:
+                        candidate.bloqueado_password_hasta = tz.now() + timedelta(minutes=BLOQUEO_PWD_MIN)
+                        candidate.intentos_password_fallidos = 0
+                        candidate.save(update_fields=['intentos_password_fallidos', 'bloqueado_password_hasta'])
+                        raise serializers.ValidationError(
+                            f'Demasiados intentos fallidos. Cuenta bloqueada {BLOQUEO_PWD_MIN} minutos.',
+                            code='password_bloqueado'
+                        )
+                    restantes = MAX_PWD - candidate.intentos_password_fallidos
+                    candidate.save(update_fields=['intentos_password_fallidos'])
+                    raise serializers.ValidationError(
+                        f'Contraseña incorrecta. Te quedan {restantes} intento(s) antes del bloqueo.'
+                    )
                 raise serializers.ValidationError(
                     'No se pudo autenticar con las credenciales proporcionadas'
                 )
+
+            # Contraseña correcta: resetear contador
+            user.intentos_password_fallidos = 0
+            user.bloqueado_password_hasta = None
+            user.save(update_fields=['intentos_password_fallidos', 'bloqueado_password_hasta'])
+
+            # --- BLOQUEO POR INTENTOS FALLIDOS DEL 2FA VISUAL ---
+            MAX_INTENTOS = 3
+            BLOQUEO_MINUTOS = 5
+
+            # Validación 2FA Visual si el usuario lo tiene configurado
+            if getattr(user, 'imagen_2fa', None):
+                
+                # 1. Comprobar si está bloqueado temporalmente
+                from django.utils import timezone as tz
+                if user.bloqueado_2fa_hasta and tz.now() < user.bloqueado_2fa_hasta:
+                    segundos_restantes = int((user.bloqueado_2fa_hasta - tz.now()).total_seconds())
+                    raise serializers.ValidationError(
+                        f'Código visual bloqueado. Espera {segundos_restantes} segundos e inténtalo de nuevo.',
+                        code='visual_2fa_bloqueado'
+                    )
+
+                # 2. Verificar el PIN Visual
+                if not imagen_2fa or user.imagen_2fa != imagen_2fa:
+                    user.intentos_2fa_fallidos += 1
+                    
+                    if user.intentos_2fa_fallidos >= MAX_INTENTOS:
+                        from datetime import timedelta
+                        user.bloqueado_2fa_hasta = tz.now() + timedelta(minutes=BLOQUEO_MINUTOS)
+                        user.intentos_2fa_fallidos = 0  # resetear para próximo ciclo
+                        user.save(update_fields=['intentos_2fa_fallidos', 'bloqueado_2fa_hasta'])
+                        raise serializers.ValidationError(
+                            f'Demasiados intentos fallidos. Cuenta bloqueada por {BLOQUEO_MINUTOS} minutos.',
+                            code='visual_2fa_bloqueado'
+                        )
+                    
+                    user.save(update_fields=['intentos_2fa_fallidos'])
+                    restantes = MAX_INTENTOS - user.intentos_2fa_fallidos
+                    raise serializers.ValidationError(
+                        f'PIN Visual incorrecto. Te quedan {restantes} intento(s) antes del bloqueo.',
+                        code='visual_2fa_failed'
+                    )
+                
+                # 3. PIN correcto: resetear contador
+                user.intentos_2fa_fallidos = 0
+                user.bloqueado_2fa_hasta = None
+                user.save(update_fields=['intentos_2fa_fallidos', 'bloqueado_2fa_hasta'])
 
             if not user.is_activo:
                 raise serializers.ValidationError(
@@ -163,7 +252,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Usuario
-        fields = ['nombre', 'apellido', 'telefono', 'email', 'direccion', 'fecha_nacimiento', 'nombre_finca', 'departamento_finca', 'municipio_finca']
+        fields = [
+            'nombre', 'apellido', 'telefono', 'email', 'direccion', 
+            'fecha_nacimiento', 'nombre_finca', 'departamento_finca', 
+            'municipio_finca', 'avatar'
+        ]
         
     def validate_telefono(self, value):
         """Validar formato del teléfono"""
@@ -187,7 +280,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         # update finca if campesino
         if instance.tipo_usuario == 'campesino' and (nombre_finca is not None or departamento_finca is not None or municipio_finca is not None):
             from farms.models import Finca
-            fincas = Finca.objects.filter(campesino=instance)
+            fincas = Finca.objects.filter(usuario=instance)
             if fincas.exists():
                 finca = fincas.first()
                 if nombre_finca is not None:
@@ -199,10 +292,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
                 finca.save()
             elif nombre_finca:
                 Finca.objects.create(
-                    campesino=instance, 
+                    usuario=instance, 
                     nombre_finca=nombre_finca,
                     ubicacion_departamento=departamento_finca or '',
-                    ubicacion_municipio=municipio_finca or ''
+                    ubicacion_municipio=municipio_finca or '',
+                    area_hectareas=0.0  # El modelo exige este valor
                 )
                 
         return instance
@@ -257,6 +351,7 @@ class UserDashboardSerializer(serializers.ModelSerializer):
     def get_estadisticas(self, obj):
         """Obtener estadísticas completas del usuario para el dashboard"""
         from django.db.models import Sum, Count
+        from django.db.models.functions import TruncDate
         from django.utils import timezone
         from datetime import timedelta
         from decimal import Decimal
@@ -272,26 +367,85 @@ class UserDashboardSerializer(serializers.ModelSerializer):
                 estado__in=['pending', 'confirmed', 'preparing']
             ).count()
             
-            # Ventas del mes actual
-            inicio_mes = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            fin_mes = (inicio_mes + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+            period = self.context.get('period', 'month')
+            ahora = timezone.now()
+            
+            if period == 'week':
+                inicio_stats = (ahora - timedelta(days=ahora.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+                fin_stats = ahora
+                inicio_grafico = (ahora - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+                rango_grafico = 7
+            elif period == 'year':
+                inicio_stats = ahora.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+                fin_stats = ahora
+                inicio_grafico = inicio_stats
+                rango_grafico = 12
+            else: # month default
+                inicio_stats = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                # Fin de mes puede ser hasta el presente para stats normales, o el fin exacto. Dejamos ahora
+                fin_stats = ahora
+                inicio_grafico = (ahora - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
+                rango_grafico = 30
             
             ventas_mes = obj.pedidos_campesino.filter(
-                fecha_pedido__range=[inicio_mes, fin_mes],
+                fecha_pedido__range=[inicio_stats, fin_stats],
                 estado='completed'
             ).aggregate(total=Sum('total'))['total'] or Decimal('0')
             
-            # Productos vendidos en el mes
-            productos_vendidos = obj.pedidos_campesino.filter(
-                fecha_pedido__range=[inicio_mes, fin_mes],
-                estado='completed'
-            ).aggregate(total=Sum('detalles__cantidad'))['total'] or 0
+            # Productos vendidos en el periodo (explicit query)
+            from orders.models import DetallePedido
+            productos_vendidos = DetallePedido.objects.filter(
+                pedido__campesino=obj,
+                pedido__fecha_pedido__range=[inicio_stats, fin_stats],
+                pedido__estado='completed'
+            ).aggregate(total=Sum('cantidad'))['total'] or 0
             
-            # Clientes únicos en el mes
+            # Clientes únicos (explicit query)
             clientes_unicos = obj.pedidos_campesino.filter(
-                fecha_pedido__range=[inicio_mes, fin_mes]
+                fecha_pedido__range=[inicio_stats, fin_stats],
+                estado='completed'
             ).values('comprador').distinct().count()
             
+            labels = []
+            data_puntos = []
+            
+            if period == 'year':
+                from django.db.models.functions import TruncMonth
+                ventas_agrupadas = obj.pedidos_campesino.filter(
+                    fecha_pedido__gte=inicio_grafico,
+                    estado='completed'
+                ).annotate(
+                    mes=TruncMonth('fecha_pedido')
+                ).values('mes').annotate(
+                    total=Sum('total')
+                ).order_by('mes')
+                
+                ventas_map = {v['mes'].strftime('%Y-%m'): float(v['total']) for v in ventas_agrupadas}
+                meses_es = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+                
+                for i in range(1, 13):
+                    fecha = ahora.replace(month=i, day=1)
+                    fecha_str = fecha.strftime('%Y-%m')
+                    labels.append(meses_es[i-1])
+                    data_puntos.append(ventas_map.get(fecha_str, 0.0))
+            else:
+                ventas_diarias = obj.pedidos_campesino.filter(
+                    fecha_pedido__gte=inicio_grafico,
+                    estado='completed'
+                ).annotate(
+                    dia=TruncDate('fecha_pedido')
+                ).values('dia').annotate(
+                    total=Sum('total')
+                ).order_by('dia')
+                
+                ventas_map = {v['dia'].strftime('%Y-%m-%d'): float(v['total']) for v in ventas_diarias}
+                
+                for i in range(rango_grafico - 1, -1, -1):
+                    fecha = (ahora - timedelta(days=i)).date()
+                    fecha_str = fecha.strftime('%Y-%m-%d')
+                    labels.append(fecha.strftime('%d %b'))
+                    data_puntos.append(ventas_map.get(fecha_str, 0.0))
+
             stats.update({
                 'productos_activos': productos_activos,
                 'pedidos_pendientes': pedidos_pendientes,
@@ -301,6 +455,10 @@ class UserDashboardSerializer(serializers.ModelSerializer):
                 'clientes_unicos': clientes_unicos,
                 'total_fincas': obj.fincas.count(),
                 'fincas_activas': obj.fincas.filter(estado='activa').count(),
+                'ventas_grafico': {
+                    'labels': labels,
+                    'data': data_puntos
+                }
             })
             
         elif obj.is_comprador:
@@ -351,8 +509,11 @@ class UserDashboardSerializer(serializers.ModelSerializer):
                                     sipsa_val = matches_exactos[0]
                                 else:
                                     sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
-                    if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
-                        ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
+                    # Precio estimado supermercado = SIPSA mayorista × 1.5
+                    if sipsa_val:
+                        precio_supermercado = sipsa_val.precio_promedio * Decimal('1.5')
+                        if precio_supermercado > detalle.precio_unitario:
+                            ahorro_estimado += (precio_supermercado - detalle.precio_unitario) * detalle.cantidad
             
             # Pedidos activos
             pedidos_activos = obj.pedidos_comprador.filter(

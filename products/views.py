@@ -129,6 +129,36 @@ class ProductoViewSet(viewsets.ModelViewSet):
         
         serializer.save(usuario=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        """Eliminar producto con soft-delete inteligente"""
+        from django.db.models.deletion import ProtectedError
+        producto = self.get_object()
+
+        # Verificar propiedad
+        if producto.usuario != request.user:
+            return Response(
+                {'error': 'No tienes permisos para eliminar este producto'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            producto.delete()
+            return Response(
+                {'message': 'Producto eliminado correctamente'},
+                status=status.HTTP_200_OK
+            )
+        except ProtectedError:
+            # El producto tiene pedidos → marcarlo inactivo (soft delete)
+            producto.estado = 'inactivo'
+            producto.save(update_fields=['estado'])
+            return Response(
+                {
+                    'message': 'El producto tiene pedidos asociados y no puede eliminarse. Fue marcado como inactivo y ya no aparecerá en el catálogo.',
+                    'estado': 'inactivo'
+                },
+                status=status.HTTP_200_OK
+            )
+
     @swagger_auto_schema(
         operation_description="Actualizar stock de un producto",
         request_body=ProductoStockUpdateSerializer,
@@ -190,7 +220,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        productos = self.get_queryset().filter(usuario=request.user)
+        productos = self.get_queryset().filter(usuario=request.user).exclude(estado='inactivo')
         serializer = ProductoListSerializer(productos, many=True)
         return Response(serializer.data)
 

@@ -97,6 +97,32 @@ class Usuario(AbstractUser):
         default='activo'
     )
     
+    # Campo 2FA Visual inclusivo
+    imagen_2fa = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text='Emoji secreto para Autenticación Basada en Reconocimiento (2FA)'
+    )
+    intentos_2fa_fallidos = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Contador de intentos fallidos del PIN Visual'
+    )
+    bloqueado_2fa_hasta = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha/hora hasta la que está bloqueado el 2FA por intentos excesivos'
+    )
+    intentos_password_fallidos = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Contador de intentos fallidos de contraseña'
+    )
+    bloqueado_password_hasta = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha/hora hasta la que está bloqueada la cuenta por contraseña incorrecta repetida'
+    )
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     ultimo_login = models.DateTimeField(null=True, blank=True)

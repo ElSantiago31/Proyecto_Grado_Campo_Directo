@@ -24,7 +24,13 @@
                     <span class="user-greeting">¡Hola, <span id="userName">{{ usuario.nombre }}</span>!</span>
                     <div class="user-menu">
                         <button class="user-menu-btn" id="userMenuBtn">
-                            <span class="user-avatar">🛒</span>
+                            <span class="user-avatar" id="headerAvatarContainer">
+                                {% if usuario.avatar %}
+                                    <img src="{{ usuario.avatar.url }}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                    🛒
+                                {% endif %}
+                            </span>
                         </button>
                         <div class="user-dropdown" id="userDropdown">
                             <a href="#" id="profileLink">Mi Perfil y Seguridad</a>
@@ -52,7 +58,7 @@
                     <li>
                         <a href="#marketplace" class="nav-item" data-section="marketplace">
                             <span class="nav-icon">🛒</span>
-                            Marketplace
+                            Mercado
                         </a>
                     </li>
                     <li>
@@ -80,6 +86,14 @@
                             Mi Perfil y Seguridad
                         </a>
                     </li>
+                    {% if usuario.tipo_usuario == 'campesino' %}
+                    <li style="margin-top: 1rem;">
+                        <a href="/dashboard/" class="nav-link-external" style="display: flex; align-items: center; padding: 0.8rem 1rem; color: #2d5016; text-decoration: none; border-radius: 8px; background: #f0f7ed; font-weight: bold; transition: all 0.3s; border: 1px solid #2d501633;">
+                            <span class="nav-icon" style="margin-right: 10px; font-size: 1.2rem;">🚜</span>
+                            Volver a mi Finca
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </nav>
         </aside>
@@ -122,8 +136,11 @@
                     <div class="stat-card">
                         <div class="stat-icon">💚</div>
                         <div class="stat-content">
-                            <h3>Ahorro Total</h3>
+                            <h3>Ahorro Estimado
+                                <span title="Estimado vs precio de supermercado (referencia DANE SIPSA × 1.5)" style="font-size:0.75rem; color:#888; cursor:help;">ℹ️</span>
+                            </h3>
                             <div class="stat-number">$<span id="totalSavings">{{ estadisticas.ahorro_total|floatformat:0 }}</span></div>
+                            <small style="color:#6c757d; font-size:0.7rem;">vs supermercado estimado</small>
                         </div>
                     </div>
                 </div>
@@ -161,24 +178,26 @@
 
             <!-- Sección Marketplace -->
             <section id="marketplace" class="content-section">
-                <div class="section-header">
-                    <h2>Marketplace - Productos Disponibles</h2>
-                    <div class="search-filters">
-                        <input type="text" placeholder="Buscar productos..." class="search-input" id="productSearch">
-                        <select class="filter-select" id="categoryFilter">
-                            <option value="">Todas las categorías</option>
-                            <option value="vegetales">Vegetales y Hortalizas</option>
-                            <option value="frutas">Frutas</option>
-                            <option value="granos">Granos y Cereales</option>
-                            <option value="hierbas">Hierbas Aromáticas</option>
-                        </select>
-                        <select class="filter-select" id="locationFilter">
-                            <option value="">Todas las ubicaciones</option>
-                            <option value="cundinamarca">Cundinamarca</option>
-                            <option value="boyaca">Boyacá</option>
-                            <option value="antioquia">Antioquia</option>
-                        </select>
+                <div class="section-header" style="border-bottom: none; margin-bottom: 0.5rem; padding-bottom: 0;">
+                    <h2>Mercado de Productos</h2>
+                </div>
+                
+                <div class="search-filters">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon-hint">🔍</span>
+                        <input type="text" placeholder="¿Qué estás buscando hoy?" class="search-input" id="productSearch">
                     </div>
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">📂 Todas las categorías</option>
+                        <option value="vegetales">🥦 Vegetales y Hortalizas</option>
+                        <option value="frutas">🍎 Frutas</option>
+                        <option value="granos">🌾 Granos y Cereales</option>
+                        <option value="hierbas">🌿 Hierbas Aromáticas</option>
+                    </select>
+                    <select class="filter-select" id="locationFilter">
+                        <option value="">📍 Todas las ubicaciones</option>
+                        <!-- Se poblará dinámicamente desde colombia.js -->
+                    </select>
                 </div>
 
                 <!-- Grid de productos -->
@@ -191,25 +210,41 @@
             </section>
 
             <!-- Modal para Seleccionar Cantidad al Agregar al Carrito -->
-            <div id="quantityModal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
-                    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                        <h3>Agregar al Carrito</h3>
-                        <button class="modal-close" id="closeQuantityModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <div id="quantityModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div class="modal-content" style="background: white; max-width: 400px; width: 90%; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <div class="modal-header" style="border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; color: #2d5016;">Agregar al Carrito</h3>
+                        <button class="modal-close" id="closeQuantityModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
                     </div>
-                    <div class="modal-body" style="padding-top: 1rem;">
-                        <p id="quantityProductName" style="font-weight: bold; margin-bottom: 0.5rem;"></p>
-                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Stock disponible: <span id="quantityMaxStock">0</span> <span id="quantityUnit"></span></p>
+                    
+                    <div class="modal-body">
+                        <p id="quantityProductName" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem;"></p>
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Disponibilidad: <span id="quantityMaxStock">0</span> <span id="quantityUnit"></span></p>
+                        <p style="font-size: 0.95rem; font-weight: bold; color: #2d5016; margin-bottom: 1rem;">Precio: $<span id="quantityUnitPrice">0</span> / <span id="quantityUnitType">Unidad</span></p>
                         
-                        <div class="form-group">
-                            <label for="quantityInput">Cantidad a comprar:</label>
-                            <input type="number" id="quantityInput" min="1" value="1" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="purchaseType" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Método de Compra:</label>
+                            <select id="purchaseType" class="form-control" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                                <option value="unidad">Por Cantidad (Unidades/Cajas)</option>
+                                <option value="peso">Por Peso (Kilogramos/Libras)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label id="quantityLabel" for="quantityInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Unidades a ordenar:</label>
+                            <input type="number" id="quantityInput" min="0.1" step="0.1" value="1" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1.1rem;">
                             <input type="hidden" id="quantityProductId">
                         </div>
+
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-top: 1rem; text-align: center; border: 1px dashed #2d5016;">
+                            <span style="font-size: 0.9rem; color: #666;">Total a Pagar Estimado:</span><br>
+                            <span style="font-size: 1.5rem; font-weight: bold; color: #2d5016;">$<span id="quantityTotalPrice">0</span></span>
+                        </div>
                     </div>
+                    
                     <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                        <button type="button" class="btn btn-secondary" id="cancelQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
-                        <button type="button" class="btn btn-primary" id="confirmQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;">Agregar</button>
+                        <button type="button" class="btn btn-secondary" id="cancelQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #e0e0e0; cursor: pointer; color: #333; font-weight: bold;">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirmQuantityBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer; font-weight: bold;">🛒 Añadir al Carrito</button>
                     </div>
                 </div>
             </div>
@@ -322,6 +357,25 @@
                 </div>
                 
                 <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div class="profile-photo-selection" style="text-align: center; margin-bottom: 30px; position: relative;">
+                        <div class="profile-avatar-large" id="profileAvatarLarge" style="width: 120px; height: 120px; border-radius: 50%; background: #f0f0f0; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 3px solid #2d5016; overflow: hidden; position: relative;">
+                            {% if usuario.avatar %}
+                                <img src="{{ usuario.avatar.url }}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <span id="profileAvatarPlaceholder">🛒</span>
+                            {% endif %}
+                        </div>
+                        <input type="file" id="profilePhotoInput" accept="image/jpeg, image/png, image/jpg" style="display: none;">
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('profilePhotoInput').click()" style="padding: 5px 15px; font-size: 0.9rem; background: #f8f9fa; border: 1px solid #000000ff; border-radius: 4px; cursor: pointer; color: #000000ff;">
+                                📸 Cambiar Foto
+                            </button>
+                            <button type="button" id="deleteProfilePhotoBtn" class="btn btn-danger btn-sm" style="display: {% if usuario.avatar %}inline-block{% else %}none{% endif %}; padding: 5px 15px; font-size: 0.9rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer;">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    
                     <form id="profileForm">
                         <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
                             <div class="form-group" style="flex: 1;">
@@ -389,9 +443,11 @@
                     </form>
                 </div>
             </section>
+        </div>
+    </main>
     <!-- Modal para Calificar Pedido -->
     <div id="ratingModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
+        <div class="modal-content" style="width: 90%; max-width: 400px; padding: 1.5rem; border-radius: 8px;">
             <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
                 <h3>Calificar a <span id="ratingTargetName">Campesino</span></h3>
                 <button class="modal-close" id="closeRatingModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
@@ -415,9 +471,30 @@
                 <input type="hidden" id="ratingOrderId">
                 <input type="hidden" id="ratingScore" value="0">
             </div>
-            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                <button type="button" class="btn btn-secondary" id="cancelRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="submitRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;" disabled>Enviar Calificación</button>
+            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" id="cancelRatingBtn" style="padding: 0.7rem 1.5rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer; flex: 1; min-width: 120px;">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="submitRatingBtn" style="padding: 0.7rem 1.5rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer; flex: 1; min-width: 120px;" disabled>Enviar Calificación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cancelar Pedido -->
+    <div id="cancelOrderModal" class="modal" style="display: none;">
+        <div class="modal-content" style="width: 90%; max-width: 450px; padding: 1.5rem; border-radius: 8px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0; display: flex; justify-content: space-between; align-items: flex-start;">
+                <h3 style="color: #dc3545; margin: 0;">¿Cancelar Pedido?</h3>
+                <button class="modal-close" id="closeCancelOrderModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 1rem; text-align: center;">
+                <p style="margin-bottom: 1.5rem; color: #666; font-size: 0.95rem;">
+                    ¿Estás seguro de que deseas cancelar el pedido <strong id="cancelOrderIdDisplay">#000</strong>?<br>
+                    Esta acción no se puede deshacer y el stock de los productos será restaurado.
+                </p>
+                <input type="hidden" id="cancelOrderIdHidden">
+            </div>
+            <div class="modal-actions" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" id="declineCancelBtn" style="padding: 0.7rem 1.5rem; border: 1px solid #000000ff; border-radius: 4px; background: white; color: #000000ff; ;cursor: pointer; font-weight: 500; min-width: 140px; flex: 1;">No, mantener</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelBtn" style="padding: 0.7rem 1.5rem; border: none; border-radius: 4px; background: #dc3545; color: white; cursor: pointer; font-weight: bold; min-width: 140px; flex: 1;">Sí, cancelar</button>
             </div>
         </div>
     </div>
@@ -425,5 +502,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/colombia.js' %}"></script>
 <script src="{% static 'js/dashboard-comprador.js' %}?v={% now 'U' %}"></script>
 {% endblock %}
