@@ -4,7 +4,8 @@
 
 // Configuración de la API
 const API_CONFIG = {
-    BASE_URL: 'http://127.0.0.1:8000/api',
+    // Usar la misma URL en la que está montada la página (ej: localhost o pythonanywhere)
+    BASE_URL: window.location.origin + '/api',
     TIMEOUT: 10000,
     RETRY_ATTEMPTS: 3
 };
