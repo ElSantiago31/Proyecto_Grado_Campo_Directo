@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function performLogin() {
-        const email = usernameInput.value.trim();
+        const email = usernameInput.value.trim().toLowerCase();
         const password = passwordInput.value;
         const remember = rememberCheckbox.checked;
 
