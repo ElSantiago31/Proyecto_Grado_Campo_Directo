@@ -30,6 +30,10 @@ def home(request):
     }
     return render(request, 'index.html', context)
 
+def legal_view(request):
+    """Vista para la página de marco legal y privacidad colombiana."""
+    return render(request, 'legal.html')
+
 
 @ensure_csrf_cookie
 def login_page(request):
