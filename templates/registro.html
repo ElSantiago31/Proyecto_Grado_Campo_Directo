@@ -132,8 +132,11 @@
                         <input type="hidden" id="imagen2fa" name="imagen2fa" required>
                         <span class="error-message" id="imagen2fa-error" style="display: block; text-align: center; margin-top: 10px; color: #dc3545; font-size: 0.85rem;"></span>
                     </div>
+                    <div style="font-size: 0.8rem; text-align: center; margin-top: 15px; color: #666;">
+                        Al registrarme, acepto la <a href="{% url 'frontend:legal' %}" target="_blank" style="color: #4a7c29; text-decoration: underline;">Política de Privacidad y Tratamiento de Datos (Ley 1581)</a> y las normativas de Campo Directo.
+                    </div>
 
-                    <button type="submit" class="btn-register" style="margin-top: 20px;">Registrarse</button>
+                    <button type="submit" class="btn-register" style="margin-top: 15px;">Registrarse</button>
                 </form>
                 
                 <div class="login-link">

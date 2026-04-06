@@ -11,6 +11,7 @@ app_name = 'frontend'
 urlpatterns = [
     # Página principal
     path('', views.home, name='home'),
+    path('legal/', views.legal_view, name='legal'),
     
     # Autenticación
     path('login/', views.login_page, name='login'),

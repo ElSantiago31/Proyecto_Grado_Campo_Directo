@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Marco Legal y Privacidad | Campo Directo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .legal-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 40px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        line-height: 1.8;
+        color: #333333;
+    }
+
+    .legal-header {
+        text-align: center;
+        border-bottom: 2px solid #8aaa78;
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+    }
+
+    .legal-header h1 {
+        color: #2d5016;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .legal-header p {
+        color: #666666;
+        font-size: 1.1rem;
+    }
+
+    .legal-section {
+        margin-bottom: 40px;
+    }
+
+    .legal-section h2 {
+        color: #4a7c29;
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .legal-section h3 {
+        color: #2d5016;
+        font-size: 1.3rem;
+        margin-top: 25px;
+        margin-bottom: 10px;
+    }
+
+    .legal-section p {
+        margin-bottom: 15px;
+        text-align: justify;
+    }
+
+    .legal-section ul {
+        margin-left: 20px;
+        margin-bottom: 20px;
+    }
+
+    .legal-section li {
+        margin-bottom: 10px;
+    }
+
+    .highlight-box {
+        background-color: #f4f7f2;
+        border-left: 4px solid #2d5016;
+        padding: 15px 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+    }
+
+    @media (max-width: 768px) {
+        .legal-container {
+            padding: 20px;
+            margin: 20px 15px;
+        }
+        .legal-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header con navegación -->
+<header class="header">
+    <nav class="nav-container">
+        <a href="{% url 'frontend:home' %}">
+            <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="logo">
+        </a>
+        <ul class="nav-menu">
+            <li><a href="{% url 'frontend:home' %}">Volver al Inicio</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="legal-container">
+        <div class="legal-header">
+            <h1>Cumplimiento Normativo y Privacidad</h1>
+            <p>Conoce tus derechos como usuario y las políticas de funcionamiento de Campo Directo acorde a la legislación de la República de Colombia.</p>
+        </div>
+
+        <section class="legal-section">
+            <h2>📜 Ley de Protección de Datos Personales (Ley 1581 de 2012)</h2>
+            <div class="highlight-box">
+                En cumplimiento del Régimen General de Habeas Data y la Ley 1581 de 2012, Campo Directo asegura la confidencialidad, privacidad y el uso ético de los datos recolectados en su ecosistema.
+            </div>
+            
+            <h3>1. Finalidad del Tratamiento de Datos</h3>
+            <p>La información recopilada en nuestra plataforma (nombres, ubicaciones, correos electrónicos y teléfonos) tiene como finalidad exclusiva <strong>conectar a campesinos productores con compradores directos</strong> de forma segura, eliminando la cadena de intermediarios. No compartimos, vendemos, ni comercializamos bases de datos con terceros corporativos u otras entidades comerciales ajenas al servicio intrínseco de compra y venta agrícola.</p>
+
+            <h3>2. Derechos de los Titulares (Derechos ARCO)</h3>
+            <p>Todo usuario (campesino o comprador) registrado en Campo Directo tiene el derecho inalienable de:</p>
+            <ul>
+                <li><strong>Conocer:</strong> Solicitar en cualquier momento el estado y extensión de sus datos guardados en la plataforma.</li>
+                <li><strong>Actualizar:</strong> Modificar los datos reportados que hayan cambiado de estado (ej: reubicación de fincas).</li>
+                <li><strong>Rectificar:</strong> Corregir información inexacta en los perfiles.</li>
+                <li><strong>Suprimir:</strong> Solicitar la eliminación total de su cuenta y huella digital del sistema de Campo Directo de forma permanente.</li>
+            </ul>
+        </section>
+
+        <section class="legal-section">
+            <h2>🛍️ Estatuto del Consumidor (Ley 1480 de 2011)</h2>
+            <div class="highlight-box">
+                Campo Directo se acoge a las regulaciones de la Superintendencia de Industria y Comercio referentes a las Ventas a Distancia y el Comercio Electrónico.
+            </div>
+
+            <h3>1. Deber de Información (Comercio Electrónico)</h3>
+            <p>En aplicación del Artículo 50, se exige a cada campesino exponer claramente:</p>
+            <ul>
+                <li>La descripción exacta, tamaño y peso del producto agrícola.</li>
+                <li>El precio final aplicable, garantizando que el comprador no se encontrará con cargas ocultas al momento de acordar la transacción.</li>
+            </ul>
+
+            <h3>2. Derecho de Retracto (Art. 47)</h3>
+            <p>Aunque los productos agrícolas frescos se consideran "bienes perecederos" y, por tanto, en muchos casos quedan exentos de la norma general de los cinco (5) días hábiles del retracto pleno, <strong>nuestra plataforma propende por la garantía comercial</strong>. Si un pedido llega en condiciones no aptas (podrido, golpeado severamente durante el transporte propio o en desajuste a lo prometido en fotos), el comprador tiene derecho inmediato a rechazarlo al momento de la entrega o notificar la cancelación sin ser expuesto a penalidades en la plataforma, priorizando la resolución de conflicto de manera directa con el agricultor.</p>
+        </section>
+
+        <section class="legal-section">
+            <h2>🛡️ Política de Anti-Intermediación y Uso de la Plataforma</h2>
+            
+            <h3>1. Criterios de Permanencia</h3>
+            <p>Campo Directo utiliza tecnología e investigaciones metodológicas para evitar infiltraciones en la red. <strong>Todo usuario catalogado como revendedor, mayorista externo u oportunista de mercado no agrario (“intermediario abusivo”) será bloqueado permanentemente de la plataforma.</strong> El objetivo constitucional de esta herramienta es impulsar el flujo financiero directamente hacia el sector rural.</p>
+
+            <h3>2. Responsabilidad Transaccional</h3>
+            <p>Campo Directo actúa como un puente digital gratuito («Software as a Service» - Marketplace). Las negociaciones finales, compromisos de entrega y calidades recaen jurídicamente sobre el contrato informal creado entre el Productor y el Comprador Directo. Sin embargo, la plataforma se reserva el derecho de retirar cuentas que posean valoraciones consistentemente negativas (calificaciones) para garantizar la calidad general del ecosistema agrícola.</p>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
