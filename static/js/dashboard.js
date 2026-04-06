@@ -11,37 +11,38 @@ document.addEventListener('DOMContentLoaded', async function () {
     const hasJwtToken = isAuthenticated();
     console.log('[Dashboard] JWT Token disponible:', hasJwtToken);
 
-    // Intentar obtener perfil si tenemos JWT token
-    if (hasJwtToken) {
-        try {
-            console.log('[Dashboard] Intentando obtener perfil con JWT...');
-            const profile = await authApi.getProfile();
+    // Intentar obtener perfil usando API (funciona con JWT O con Cookie de Sesión de Django gracias a credentials: 'include')
+    try {
+        console.log('[Dashboard] Intentando obtener perfil de forma asíncrona...');
+        const profile = await authApi.getProfile();
 
-            if (profile && profile.tipo_usuario === 'campesino') {
-                console.log(`[Dashboard] Usuario autenticado vía JWT: ${profile.nombre} ${profile.apellido}`);
+        if (profile && profile.tipo_usuario === 'campesino') {
+            console.log(`[Dashboard] Perfil cargado: ${profile.nombre} ${profile.apellido}`);
 
-                // Actualizar nombre en la UI
-                const userNameElement = document.getElementById('userName');
-                if (userNameElement && userNameElement.textContent.includes('Usuario')) {
-                    userNameElement.textContent = `${profile.nombre} ${profile.apellido}`;
-                }
-
-                // Cargar datos reales del dashboard
-                console.log('[Dashboard] Iniciando carga de datos reales...');
-                await loadRealDashboardData();
-                console.log('[Dashboard] Carga de datos reales completada.');
-            } else if (profile && profile.tipo_usuario !== 'campesino') {
-                console.log('[Dashboard] Usuario no es campesino, pero está autenticado por sesión Django');
-                // No redirigir, dejar que Django maneje esto
+            // Actualizar nombre en la UI
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement && userNameElement.textContent.includes('Usuario')) {
+                userNameElement.textContent = `${profile.nombre} ${profile.apellido}`;
             }
 
-        } catch (error) {
-            console.warn('[Dashboard] Error obteniendo perfil JWT, usando datos de Django:', error);
-            // No redirigir, usar datos del servidor Django
+            // Cargar datos reales del dashboard
+            console.log('[Dashboard] Iniciando carga de datos reales...');
+            await loadRealDashboardData();
+            console.log('[Dashboard] Carga de datos reales completada.');
+        } else if (profile && profile.tipo_usuario !== 'campesino') {
+            console.log('[Dashboard] Usuario no es campesino, ignorando datos de dashboard');
         }
-    } else {
-        console.log('[Dashboard] Sin JWT token, usando autenticación Django de sesión');
-        // Usuario autenticado por sesión Django, no necesitamos JWT
+
+    } catch (error) {
+        console.warn('[Dashboard] Error obteniendo perfil de la API, puede ser sesión no válida o sin permisos:', error);
+        
+        // Aún así, intentamos cargar los datos del dashboard en caso de que sea sólo el perfil lo que falló
+        try {
+            console.log('[Dashboard] Fallback: Intentando cargar datos reales del dashboard directamente...');
+            await loadRealDashboardData();
+        } catch (e) {
+            console.error('[Dashboard] Error definitivo al cargar datos.', e);
+        }
     }
 
     // Mostrar la aplicación
@@ -55,6 +56,24 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupProductModal();
     setupRatingModal();
     setupOrderTabsCampesino();
+    
+    // Escuchar el cambio en el selector de periodo para estadísticas
+    const salesPeriodSelect = document.getElementById('salesPeriod');
+    if (salesPeriodSelect) {
+        salesPeriodSelect.addEventListener('change', async function(e) {
+            console.log('[Dashboard] Cambiando periodo de ventas a:', e.target.value);
+            await loadRealDashboardData(e.target.value);
+            
+            // Si la vista está en "ventas", necesitamos volver a renderizar con la nueva información
+            const salesSection = document.getElementById('sales');
+            if (salesSection && salesSection.classList.contains('active')) {
+                if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
+                    renderSalesChart(dashboardData.stats.ventas_grafico);
+                }
+            }
+        });
+    }
+
     // updateStats() se llama desde loadRealDashboardData()
 
     // Cargar productos del usuario
@@ -63,45 +82,55 @@ document.addEventListener('DOMContentLoaded', async function () {
     console.log('[Dashboard] Dashboard campesino cargado');
 });
 
-// Datos del dashboard (se cargarán desde la API)
+let salesChart = null;
 let dashboardData = {
     stats: {
         activeProducts: 0,
         pendingOrders: 0,
         monthSales: 0,
-        rating: 0.0
+        rating: 0.0,
+        productsSold: 0,
+        uniqueCustomers: 0,
+        ventas_grafico: { labels: [], data: [] }
     },
     recentActivity: []
 };
 
 // Cargar datos reales del dashboard desde la API
-async function loadRealDashboardData() {
+async function loadRealDashboardData(period = 'month') {
     try {
-        console.log('[Dashboard] Cargando datos reales del usuario...');
+        console.log(`[Dashboard] Cargando datos reales del usuario (periodo: ${period})...`);
         console.log('[Dashboard] URL del endpoint:', '/api/users/dashboard/');
 
         // Obtener datos del dashboard del usuario
-        console.log('[Dashboard] Haciendo petición a la API...');
-        const response = await authApi.fetch('/api/users/dashboard/');
-        console.log('[Dashboard] Respuesta recibida:', response.status, response.statusText);
+        console.log('[Dashboard] Haciendo petición a la API con authApi.getDashboard()...');
+        const data = await authApi.getDashboard(period);
+        console.log('[Dashboard] Datos obtenidos:', data);
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log('[Dashboard] Datos obtenidos:', data);
-
+        if (data) {
             // Actualizar datos del dashboard
             dashboardData.stats = {
                 activeProducts: data.productos_activos || 0,
                 pendingOrders: data.pedidos_pendientes || 0,
                 monthSales: data.ventas_mes || 0,
-                rating: data.calificacion || 0.0
+                rating: data.calificacion || 0.0,
+                productsSold: (data.estadisticas && data.estadisticas.productos_vendidos) || data.productos_vendidos || 0,
+                uniqueCustomers: (data.estadisticas && data.estadisticas.clientes_unicos) || data.clientes_unicos || 0,
+                ventas_grafico: (data.estadisticas && data.estadisticas.ventas_grafico) || data.ventas_grafico || { labels: [], data: [] }
             };
 
             dashboardData.recentActivity = data.actividad_reciente || [];
 
             // Actualizar UI con datos reales
-            updateStats();
+            updateStats(period);
             updateRecentActivity();
+            
+            // Renderizar gráfico si hay datos
+            console.log('[Dashboard] Datos para grafico:', dashboardData.stats.ventas_grafico);
+            if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
+                console.log('[Dashboard] Intentando renderizado inicial del grafico...');
+                renderSalesChart(dashboardData.stats.ventas_grafico);
+            }
 
             console.log('[Dashboard] Datos actualizados en la UI');
         } else {
@@ -141,6 +170,11 @@ function setupNavigation() {
                     loadCampesinoOrders();
                 } else if (targetSection === 'products') {
                     loadUserProducts();
+                } else if (targetSection === 'sales') {
+                    // Renderizar el gráfico cuando se muestra la sección de ventas
+                    if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
+                        setTimeout(() => renderSalesChart(dashboardData.stats.ventas_grafico), 100);
+                    }
                 }
             }
         });
@@ -214,16 +248,158 @@ async function handleLogout() {
     }
 }
 
-function updateStats() {
+function updateStats(period = 'month') {
     const activeProductsEl = document.getElementById('activeProducts');
     const pendingOrdersEl = document.getElementById('pendingOrders');
     const monthSalesEl = document.getElementById('monthSales');
+    const totalRevenueEl = document.getElementById('totalRevenue');
+    const productsSoldEl = document.getElementById('productsSold');
+    const uniqueCustomersEl = document.getElementById('uniqueCustomers');
     const ratingEl = document.getElementById('rating');
+    const userRatingEl = document.getElementById('userRating');
+
+    // Cambiar leyendas según el periodo
+    const revenuePeriodEl = document.getElementById('revenuePeriodLabel');
+    const productsPeriodEl = document.getElementById('productsPeriodLabel');
+    const customersPeriodEl = document.getElementById('customersPeriodLabel');
+    const chartPeriodEl = document.getElementById('chartPeriodLabel');
+
+    let periodText = 'Este mes';
+    let revenuePeriodText = 'Mes actual';
+    let chartText = 'Ventas por Día';
+
+    if (period === 'week') {
+        periodText = 'Esta semana';
+        revenuePeriodText = 'Semana actual';
+        chartText = 'Ventas por Día';
+    } else if (period === 'year') {
+        periodText = 'Este año';
+        revenuePeriodText = 'Año actual';
+        chartText = 'Ventas por Mes';
+    }
+
+    if (revenuePeriodEl) revenuePeriodEl.textContent = revenuePeriodText;
+    if (productsPeriodEl) productsPeriodEl.textContent = periodText;
+    if (customersPeriodEl) customersPeriodEl.textContent = periodText;
+    if (chartPeriodEl) chartPeriodEl.textContent = chartText;
 
     if (activeProductsEl) activeProductsEl.textContent = dashboardData.stats.activeProducts;
     if (pendingOrdersEl) pendingOrdersEl.textContent = dashboardData.stats.pendingOrders;
+    
+    // El dashboard campesino tiene IDs diferentes para las tarjetas de resumen
     if (monthSalesEl) monthSalesEl.textContent = formatCurrency(dashboardData.stats.monthSales);
+    if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(dashboardData.stats.monthSales);
+    
+    if (productsSoldEl) productsSoldEl.textContent = `${dashboardData.stats.productsSold} unidades`;
+    if (uniqueCustomersEl) uniqueCustomersEl.textContent = dashboardData.stats.uniqueCustomers;
+    
     if (ratingEl) ratingEl.textContent = dashboardData.stats.rating.toFixed(1);
+}
+
+/**
+ * Renderiza el gráfico de ventas usando Chart.js
+ */
+function renderSalesChart(data) {
+    console.log('[Chart] Iniciando renderizado con:', data);
+    
+    if (typeof Chart === 'undefined') {
+        console.error('[Chart] ERROR: La librería Chart.js no está cargada.');
+        return;
+    }
+
+    const ctx = document.getElementById('salesChart');
+    if (!ctx) {
+        console.error('[Chart] ERROR: No se encontró el elemento canvas #salesChart');
+        return;
+    }
+    
+    console.log('[Chart] Canvas encontrado, dimensiones:', ctx.offsetWidth, 'x', ctx.offsetHeight);
+
+    if (salesChart) {
+        console.log('[Chart] Destruyendo gráfico previo');
+        salesChart.destroy();
+    }
+
+    try {
+        salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Ventas Diarias ($)',
+                data: data.data,
+                borderColor: '#2d5016',
+                backgroundColor: 'rgba(45, 80, 22, 0.1)',
+                borderWidth: 3,
+                pointBackgroundColor: '#2d5016',
+                pointBorderColor: '#fff',
+                pointHoverRadius: 6,
+                pointRadius: 4,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000) {
+                                return '$' + (value / 1000) + 'k';
+                            }
+                            return '$' + value;
+                        },
+                        font: {
+                            family: "'Segoe UI', sans-serif",
+                            size: 11
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Segoe UI', sans-serif",
+                            size: 11
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#2d5016',
+                    bodyColor: '#333',
+                    borderColor: '#2d5016',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Ventas: ' + formatCurrency(context.parsed.y);
+                        }
+                    }
+                }
+            }
+        }
+    });
+        console.log('[Chart] Gráfico renderizado exitosamente');
+    } catch (error) {
+        console.error('[Chart] ERROR fatal renderizando gráfico:', error);
+    }
 }
 
 function updateRecentActivity() {
@@ -307,10 +483,11 @@ function setupProductModal() {
         cancelBtn.addEventListener('click', closeProductModal);
     }
 
-    // Cerrar al hacer click fuera del modal
+    // Cerrar al hacer click fuera del modal (en el backdrop)
     if (modal) {
         modal.addEventListener('click', function (e) {
-            if (e.target === modal) {
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent && !modalContent.contains(e.target)) {
                 closeProductModal();
             }
         });
@@ -1965,6 +2142,8 @@ function showSection(sectionName) {
     // Cargar contenido específico de la sección
     if (sectionName === 'products') {
         loadUserProducts();
+    } else if (sectionName === 'orders') {
+        loadCampesinoOrders();
     }
 }
 
@@ -2063,6 +2242,49 @@ function loadInitialData() {
     // Cargar datos del usuario
     if (window.dashboardData && window.dashboardData.usuario.is_authenticated) {
         loadUserProducts();
+        // Cargar pedidos automáticamente al entrar al dashboard
+        loadCampesinoOrders();
+    }
+
+    // Polling: notificar al campesino si llega un pedido nuevo cada 30 segundos
+    startOrderPolling();
+}
+
+// Estado previo de pedidos para detectar nuevos
+let _lastKnownPendingCount = null;
+
+async function startOrderPolling() {
+    // Primer check inmediato para establecer baseline
+    _lastKnownPendingCount = await getOrderPendingCount();
+
+    setInterval(async () => {
+        const currentCount = await getOrderPendingCount();
+        if (_lastKnownPendingCount !== null && currentCount > _lastKnownPendingCount) {
+            const nuevos = currentCount - _lastKnownPendingCount;
+            showNotification(
+                `Tienes ${nuevos} pedido${nuevos > 1 ? 's' : ''} nuevo${nuevos > 1 ? 's' : ''} pendiente${nuevos > 1 ? 's' : ''} de confirmar.`,
+                'warning',
+                '🛒 Nuevo Pedido'
+            );
+            // Recargar la lista de pedidos si la sección está activa
+            const ordersSection = document.getElementById('orders');
+            if (ordersSection && ordersSection.classList.contains('active')) {
+                loadCampesinoOrders();
+            }
+            // Actualizar badge de pendientes
+            updatePendingCount(currentCount);
+        }
+        _lastKnownPendingCount = currentCount;
+    }, 30000); // cada 30 segundos
+}
+
+async function getOrderPendingCount() {
+    try {
+        const response = await orderApi.getMisVentas();
+        const pedidos = response.results || response || [];
+        return pedidos.filter(p => ['pending', 'confirmed', 'preparing', 'ready'].includes(p.estado)).length;
+    } catch {
+        return _lastKnownPendingCount ?? 0;
     }
 }
 
@@ -2380,6 +2602,27 @@ async function loadProfileData() {
                 const muniSelect = document.getElementById('profileMunicipioFinca');
                 
                 if (typeof colombiaData !== 'undefined' && deptoSelect && muniSelect) {
+                    // Cargar imagen de perfil si existe
+                    if (profile.avatar) {
+                        const avatarImg = document.getElementById('profileAvatarImg');
+                        const headerAvatarImg = document.getElementById('headerAvatarImg');
+                        const placeholder = document.getElementById('profileAvatarPlaceholder');
+                        const headerPlaceholder = document.getElementById('headerAvatarContainer');
+                        
+                        if (avatarImg) avatarImg.src = profile.avatar;
+                        else if (placeholder) {
+                            const container = document.getElementById('profileAvatarLarge');
+                            if (container) {
+                                container.innerHTML = `<img src="${profile.avatar}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                            }
+                        }
+                        
+                        if (headerAvatarImg) headerAvatarImg.src = profile.avatar;
+                        else if (headerPlaceholder) {
+                            headerPlaceholder.innerHTML = `<img src="${profile.avatar}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                        }
+                    }
+
                     deptoSelect.innerHTML = '<option value="">Selecciona Departamento</option>';
                     colombiaData.forEach(d => {
                         const option = document.createElement('option');
@@ -2421,11 +2664,124 @@ async function loadProfileData() {
                 
                 document.getElementById('fincaFieldGroup').style.display = 'block';
             } else {
-                document.getElementById('fincaFieldGroup').style.display = 'none';
+            }
+
+            // Actualizar visibilidad del botón de eliminar foto
+            const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = profile.avatar ? 'inline-block' : 'none';
             }
         }
+        
+        // Configurar listener para la foto de perfil (solo una vez)
+        setupProfilePhotoUpload();
     } catch (error) {
         console.error("Error al cargar perfil:", error);
+    }
+}
+
+function setupProfilePhotoUpload() {
+    const photoInput = document.getElementById('profilePhotoInput');
+    const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
+    
+    if (!photoInput || photoInput.dataset.initialized) return;
+    photoInput.dataset.initialized = 'true';
+    
+    photoInput.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        // Validar tipo (solo fotos, nada de gif o video)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Solo se permiten fotos (JPG, PNG). No se admiten GIFs ni videos.', 'error');
+            this.value = '';
+            return;
+        }
+        
+        // Validar tamaño (máx 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('La imagen es demasiado grande. Máximo 5MB.', 'error');
+            return;
+        }
+        
+        // Mostrar previsualización inmediata y loading
+        const avatarLarge = document.getElementById('profileAvatarLarge');
+        const originalContent = avatarLarge.innerHTML;
+        avatarLarge.style.opacity = '0.5';
+        
+        const formData = new FormData();
+        formData.append('avatar', file);
+        
+        try {
+            console.log('[Dashboard] Subiendo foto de perfil...');
+            const response = await authApi.updateProfile(formData);
+            console.log('[Dashboard] Foto de perfil actualizada:', response);
+            
+            const userData = response.user || response;
+            if (userData && userData.avatar) {
+                // Actualizar todas las imágenes en la UI
+                const newAvatarUrl = userData.avatar;
+                
+                // Avatar grande
+                avatarLarge.innerHTML = `<img src="${newAvatarUrl}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
+                
+                // Avatar en el header
+                const headerAvatarContainer = document.getElementById('headerAvatarContainer');
+                if (headerAvatarContainer) {
+                    headerAvatarContainer.innerHTML = `<img src="${newAvatarUrl}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                }
+                
+                // Mostrar botón eliminar
+                if (deleteBtn) deleteBtn.style.display = 'inline-block';
+                
+                showNotification('¡Foto de perfil actualizada!', 'success');
+            }
+        } catch (error) {
+            console.error('[Dashboard] Error subiendo foto:', error);
+            avatarLarge.innerHTML = originalContent;
+            showNotification('Error al subir la foto: ' + error.message, 'error');
+        } finally {
+            avatarLarge.style.opacity = '1';
+            // Resetear input para permitir subir la misma foto si se desea
+            photoInput.value = '';
+        }
+    });
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+            if (!confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) return;
+            
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = 'Eliminando...';
+            
+            try {
+                // Enviar null para eliminar la foto
+                const response = await authApi.updateProfile({ avatar: null });
+                console.log('[Dashboard] Foto de perfil eliminada:', response);
+                
+                // Actualizar UI al estado predeterminado
+                const avatarLarge = document.getElementById('profileAvatarLarge');
+                if (avatarLarge) {
+                    avatarLarge.innerHTML = '<span id="profileAvatarPlaceholder">👤</span>';
+                }
+                
+                const headerAvatarContainer = document.getElementById('headerAvatarContainer');
+                if (headerAvatarContainer) {
+                    // Restaurar avatar predeterminado
+                    headerAvatarContainer.innerHTML = '👤';
+                }
+                
+                this.style.display = 'none';
+                showNotification('Foto de perfil eliminada', 'success');
+            } catch (error) {
+                console.error('[Dashboard] Error eliminando foto:', error);
+                showNotification('Error al eliminar la foto', 'error');
+                this.textContent = originalText;
+                this.disabled = false;
+            }
+        });
     }
 }
 

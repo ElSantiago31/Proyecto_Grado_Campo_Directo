@@ -72,12 +72,20 @@ class ApiClient {
         const config = {
             method: options.method || 'GET',
             headers: this.buildHeaders(options.headers),
+            credentials: 'include', // Forzar envío/recepción de cookies (sessionid)
             ...options
         };
 
         // Agregar body si es necesario
         if (options.data && config.method !== 'GET') {
-            config.body = JSON.stringify(options.data);
+            if (options.data instanceof FormData) {
+                config.body = options.data;
+                // Importante: al usar FormData, no debemos poner Content-Type manual 
+                // para que el navegador ponga el boundary correcto
+                delete config.headers['Content-Type'];
+            } else {
+                config.body = JSON.stringify(options.data);
+            }
         }
 
         try {
@@ -228,8 +236,8 @@ const authApi = {
         return await api.post('/auth/change-password/', passwordData);
     },
 
-    async getDashboard() {
-        return await api.get('/auth/dashboard/');
+    async getDashboard(period = 'month') {
+        return await api.get(`/auth/dashboard/?period=${period}`);
     },
 
     async refreshToken() {
@@ -348,6 +356,10 @@ const orderApi = {
 
     async calificar(orderId, ratingData) {
         return await api.post(`/orders/pedidos/${orderId}/calificar/`, ratingData);
+    },
+
+    async cancelar(orderId) {
+        return await api.patch(`/orders/pedidos/${orderId}/cancelar/`);
     }
 };
 

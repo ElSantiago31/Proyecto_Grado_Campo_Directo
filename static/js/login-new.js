@@ -37,7 +37,41 @@ document.addEventListener('DOMContentLoaded', function () {
     // FUNCIONES DE AUTENTICACIÓN
     // ============================================================
 
+    // Variables globales para el 2FA Visual
+    const visual2faModal = document.getElementById('visual2faModal');
+    const visual2faBox = document.getElementById('visual2faBox');
+    const close2faBtn = document.getElementById('close2faBtn');
+    const btnLoginEmojis = document.querySelectorAll('.btn-login-emoji');
+    const error2faMsg = document.getElementById('error2faMsg');
+    
+    let resolve2faPromise = null;
+
+    if(close2faBtn) {
+        close2faBtn.addEventListener('click', () => {
+            visual2faModal.style.display = 'none';
+        });
+    }
+
+    btnLoginEmojis.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const val = this.getAttribute('data-value');
+            if (resolve2faPromise) {
+                resolve2faPromise(val);
+            }
+        });
+    });
+
     async function checkAuthenticationStatus() {
+        // CIRCUIT BREAKER: Si acabamos de ser rebotados por Django (falta de Cookie de sesión)
+        // entonces NO debemos auto-redireccionar usando el JWT, pues creará un loop infinito.
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('next')) {
+            console.warn("Detectado 'next' en URL: Django rechazó la Cookie de Sesión. Limpiando JWT fantasma...");
+            localStorage.removeItem('refreshToken');
+            if (authApi) authApi.setAuthToken(null); // Assuming 'authApi' is the correct global/available API object
+            return; // Detener auto-login
+        }
+
         if (isAuthenticated()) {
             try {
                 const response = await authApi.getProfile();
@@ -65,84 +99,93 @@ document.addEventListener('DOMContentLoaded', function () {
         const password = passwordInput.value;
         const remember = rememberCheckbox.checked;
 
-        // Show loading state
-        const loginBtn = document.querySelector('.login-button');
-        const originalText = loginBtn.textContent;
-        loginBtn.innerHTML = '<span class="button-icon">🌱</span> Ingresando...';
-        loginBtn.disabled = true;
-        loginBtn.classList.add('loading');
-
-        try {
-            const response = await authApi.login({ email, password });
-
-            // Django JWT devuelve access y refresh tokens directamente
-            if (response.access && response.refresh) {
-                // Save username for remember me functionality
-                if (remember) {
-                    localStorage.setItem('rememberedUser', email);
-                } else {
-                    localStorage.removeItem('rememberedUser');
-                }
-
-                // Obtener perfil del usuario para mostrar mensaje
-                try {
-                    const profile = await authApi.getProfile();
-                    showLoginSuccess(profile);
-                } catch (profileError) {
-                    console.warn('No se pudo cargar el perfil:', profileError);
-                    showLoginSuccess({ nombre: response.user?.nombre || 'Usuario' });
-                }
-
-                // Redirect to dashboard after short delay
-                setTimeout(() => {
-                    if (response.user && response.user.tipo_usuario === 'comprador') {
-                        window.location.href = '/dashboard-comprador/';
-                    } else {
-                        window.location.href = '/dashboard/';
-                    }
-                }, 2000);
-            } else {
-                throw new ApiError('Respuesta de login inválida', 400);
-            }
-
-        } catch (error) {
-            console.error('Error en login:', error);
-
-            // Restore button state
-            loginBtn.innerHTML = originalText;
-            loginBtn.disabled = false;
-            loginBtn.classList.remove('loading');
-
-            // Show appropriate error message
-            if (error instanceof ApiError) {
-                if (error.status === 401) {
-                    showError(passwordInput, passwordError, 'Usuario o contraseña incorrectos');
-                } else if (error.status === 403) {
-                    showError(passwordInput, passwordError, 'Usuario inactivo o suspendido');
-                } else if (error.isValidationError()) {
-                    // Show validation errors if available
-                    if (error.details && error.details.errors) {
-                        error.details.errors.forEach(err => {
-                            if (err.path === 'email') {
-                                showError(usernameInput, usernameError, err.msg);
-                            } else if (err.path === 'password') {
-                                showError(passwordInput, passwordError, err.msg);
-                            }
-                        });
-                    } else {
-                        showError(passwordInput, passwordError, error.message);
-                    }
-                } else {
-                    showError(passwordInput, passwordError, 'Error en el servidor. Intenta de nuevo.');
-                }
-            } else {
-                showError(passwordInput, passwordError, 'Error de conexión. Verifica tu internet.');
-            }
-
-            // Shake animation for invalid login
-            loginForm.classList.add('shake');
-            setTimeout(() => loginForm.classList.remove('shake'), 500);
+        // Mostrar Modal 2FA en vez de hacer request inmediato
+        if(visual2faModal) {
+            visual2faModal.style.display = 'flex';
+            error2faMsg.textContent = '';
+            error2faMsg.style.color = '#dc3545';
         }
+
+        // Definimos la función resolver del ciclo 2FA
+        resolve2faPromise = async (imagen_2fa) => {
+            error2faMsg.style.color = '#5a9e2f';
+            error2faMsg.textContent = 'Validando seguridad...';
+
+            try {
+                // Hacer el request oficial de Login incluyendo imagen_2fa
+                const response = await authApi.login({ email, password, imagen_2fa });
+
+                // Éxito absoluto (Credenciales + 2FA OK)
+                if(visual2faModal) visual2faModal.style.display = 'none';
+                
+                if (response.access && response.refresh) {
+                    if (remember) {
+                        localStorage.setItem('rememberedUser', email);
+                    } else {
+                        localStorage.removeItem('rememberedUser');
+                    }
+
+                    const loginBtn = document.querySelector('.login-button');
+                    loginBtn.innerHTML = '<span class="button-icon">✅</span> Ingreso exitoso!';
+                    loginBtn.classList.add('success');
+
+                    setTimeout(() => {
+                        if (response.user && response.user.tipo_usuario === 'comprador') {
+                            window.location.href = '/dashboard-comprador/';
+                        } else {
+                            window.location.href = '/dashboard/';
+                        }
+                    }, 1000);
+                } else {
+                    throw new ApiError('Respuesta de login inválida', 400);
+                }
+            } catch (error) {
+                console.error('Error de login o 2FA:', error);
+                
+                // Analizar si el rechazo fue por 2FA (401 + mensaje específico) o si fue contraseña
+                let isVisualError = false;
+                if (error.details && error.details.non_field_errors) {
+                    const textError = JSON.stringify(error.details.non_field_errors).toLowerCase();
+                    if (textError.includes('visual') || textError.includes('2fa')) {
+                        isVisualError = true;
+                    }
+                }
+                
+                if (isVisualError) {
+                    // Fallo solo el PIN Visual: mostrar el mensaje exacto del servidor
+                    error2faMsg.style.color = '#dc3545';
+                    const serverMsg = error.details?.non_field_errors?.[0] || '❌ PIN Visual incorrecto. Intenta de nuevo.';
+                    error2faMsg.textContent = serverMsg;
+                    
+                    // Efecto Shake en la ventanita del Modal
+                    if(visual2faBox) {
+                        visual2faBox.style.transform = 'translateX(10px)';
+                        setTimeout(() => visual2faBox.style.transform = 'translateX(-10px)', 100);
+                        setTimeout(() => visual2faBox.style.transform = 'translateX(10px)', 200);
+                        setTimeout(() => visual2faBox.style.transform = 'translate(0)', 300);
+                    }
+                } else {
+                    // Contraseña incorrecta, inactivo, servidor caído...
+                    if(visual2faModal) visual2faModal.style.display = 'none';
+                    
+                    if (error instanceof ApiError) {
+                        if (error.status === 401) {
+                            showError(passwordInput, passwordError, 'Usuario o contraseña incorrectos');
+                        } else if (error.status === 403) {
+                            showError(passwordInput, passwordError, 'Usuario inactivo o suspendido');
+                        } else {
+                            showError(passwordInput, passwordError, 'Credenciales denegadas por el servidor.');
+                        }
+                    } else {
+                        showError(passwordInput, passwordError, 'Error de conexión. Verifica tu internet.');
+                    }
+
+                    // Shake animation main form
+                    loginForm.classList.add('shake');
+                    setTimeout(() => loginForm.classList.remove('shake'), 500);
+                }
+            }
+        };
     }
 
     // ============================================================

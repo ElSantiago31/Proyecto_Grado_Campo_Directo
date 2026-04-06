@@ -2,7 +2,7 @@
 Vistas para autenticación y gestión de usuarios
 """
 
-from rest_framework import status, permissions
+from rest_framework import status, permissions, parsers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -59,6 +59,9 @@ class RegisterView(APIView):
         if serializer.is_valid():
             print(f"✅ [DEBUG REGISTRO] Serializer válido")
             user = serializer.save()
+            
+            # Crear sesión Django para el usuario (para que de los permisos de @login_required)
+            login(request, user)
             
             # Generar tokens JWT
             refresh = RefreshToken.for_user(user)
@@ -157,6 +160,7 @@ class UpdateProfileView(APIView):
     Vista para actualizar el perfil del usuario
     """
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     
     @swagger_auto_schema(
         operation_description="Actualizar perfil del usuario",
@@ -227,5 +231,6 @@ class UserDashboardView(APIView):
         responses={200: UserDashboardSerializer()}
     )
     def get(self, request):
-        serializer = UserDashboardSerializer(request.user)
+        period = request.query_params.get('period', 'month')
+        serializer = UserDashboardSerializer(request.user, context={'request': request, 'period': period})
         return Response(serializer.data)

@@ -99,7 +99,7 @@ class ProductoDetailSerializer(serializers.ModelSerializer):
             'ubicacion': obj.finca.ubicacion_completa,
             'area_hectareas': obj.finca.area_hectareas,
             'tipo_cultivo': obj.finca.get_tipo_cultivo_display(),
-            'certificaciones_count': obj.finca.certificaciones.filter(estado='vigente').count()
+            'certificaciones_count': obj.finca.certificaciones.filter(estado='vigente').count() if hasattr(obj.finca, 'certificaciones') else 0
         }
     
     def get_tags_list(self, obj):
@@ -196,10 +196,19 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
                 limite_maximo = sipsa_val.precio_promedio * Decimal('1.30')
                 if precio > limite_maximo:
                     if es_exacto or sipsa_val.producto.lower() == palabra_clave.lower():
-                        mensaje = f'El precio que intentas asignar excede el límite ético. Según el DANE, el promedio de {sipsa_val.producto} en tu área es ${sipsa_val.precio_promedio:,.0f} COP. Límite: ${limite_maximo:,.0f}.'
+                        mensaje = (
+                            f'Precio demasiado alto. Referencia DANE para "{sipsa_val.producto}": '
+                            f'${sipsa_val.precio_promedio:,.0f} COP. '
+                            f'Limite maximo permitido (130% del referencial): ${limite_maximo:,.0f} COP. '
+                            f'Tu precio (${precio:,.0f}) supera ese limite.'
+                        )
                     else:
-                        mensaje = f'Tu variante exacta no figura en el DANE hoy. Por precaución, te evaluamos contra la variante más cara de tu rubro ({sipsa_val.producto} a ${sipsa_val.precio_promedio:,.0f} COP). Aún así, tu precio excede el límite permitido de ${limite_maximo:,.0f} COP.'
-                    
+                        mensaje = (
+                            f'Tu variante no figura en el DANE, se uso la referencia mas alta de "{sipsa_val.producto}" '
+                            f'(${sipsa_val.precio_promedio:,.0f} COP). '
+                            f'El limite permitido es ${limite_maximo:,.0f} COP y tu precio (${precio:,.0f}) lo supera.'
+                        )
+
                     raise serializers.ValidationError({
                         'precio_por_kg': mensaje
                     })

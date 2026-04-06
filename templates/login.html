@@ -81,6 +81,31 @@
             </form>
         </div>
     </div>
+
+    <!-- Modal Visual 2FA -->
+    <div id="visual2faModal" class="visual-2fa-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div class="visual-2fa-content" id="visual2faBox" style="background: white; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 90%; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; transition: transform 0.1s;">
+            <button type="button" id="close2faBtn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            <h3 style="color: #2d5016; margin-top: 0; margin-bottom: 10px; font-size: 1.4rem;">Autenticación Segura 🔒</h3>
+            <p style="color: #555; margin-bottom: 25px; line-height: 1.5;">Selecciona tu <b>PIN Visual</b> (Emoji) que configuraste al registrarte para continuar.</p>
+            
+            <div class="emoji-grid" id="loginEmojiGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px;">
+                <button type="button" class="btn-login-emoji" data-value="🍎" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍎</button>
+                <button type="button" class="btn-login-emoji" data-value="🍌" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍌</button>
+                <button type="button" class="btn-login-emoji" data-value="🍅" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍅</button>
+                <button type="button" class="btn-login-emoji" data-value="🥕" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🥕</button>
+                <button type="button" class="btn-login-emoji" data-value="🥔" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🥔</button>
+                <button type="button" class="btn-login-emoji" data-value="🌽" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🌽</button>
+                <button type="button" class="btn-login-emoji" data-value="🍊" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍊</button>
+                <button type="button" class="btn-login-emoji" data-value="🍓" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍓</button>
+                <button type="button" class="btn-login-emoji" data-value="🥬" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🥬</button>
+                <button type="button" class="btn-login-emoji" data-value="🌶" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🌶️</button>
+                <button type="button" class="btn-login-emoji" data-value="🍏" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍏</button>
+                <button type="button" class="btn-login-emoji" data-value="🥑" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🥑</button>
+            </div>
+            <p id="error2faMsg" style="color: #dc3545; font-size: 0.9rem; min-height: 20px; font-weight: 500; margin:0;"></p>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}

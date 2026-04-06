@@ -120,6 +120,7 @@ class Pedido(models.Model):
     class Meta:
         verbose_name = 'Pedido'
         verbose_name_plural = 'Pedidos'
+        ordering = ['-fecha_pedido']
         indexes = [
             models.Index(fields=['comprador']),
             models.Index(fields=['campesino']),

@@ -179,9 +179,9 @@ def dashboard_comprador(request):
     """
     Dashboard del comprador - Solo usuarios autenticados
     """
-    # Verificar que el usuario sea comprador
-    if not request.user.is_comprador:
-        return redirect('frontend:dashboard')
+    # Permitir tanto a compradores como a campesinos entrar al marketplace
+    if not (request.user.is_comprador or request.user.is_campesino):
+        return redirect('frontend:login')
     
     # Renderizar dashboard con datos reales del usuario autenticado
     return render_comprador_dashboard_with_data(request)
@@ -241,8 +241,12 @@ def render_comprador_dashboard_with_data(request):
                         else:
                             sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
                             
-            if sipsa_val and sipsa_val.precio_promedio > detalle.precio_unitario:
-                ahorro_estimado += (sipsa_val.precio_promedio - detalle.precio_unitario) * detalle.cantidad
+            # Precio estimado en supermercado = SIPSA mayorista × 1.5
+            # (el minorista típicamente cobra 40-70% más que el mayoreo)
+            if sipsa_val:
+                precio_supermercado = sipsa_val.precio_promedio * Decimal('1.5')
+                if precio_supermercado > detalle.precio_unitario:
+                    ahorro_estimado += (precio_supermercado - detalle.precio_unitario) * detalle.cantidad
     
     # Pedidos activos (no completados)
     pedidos_activos = usuario.pedidos_comprador.filter(

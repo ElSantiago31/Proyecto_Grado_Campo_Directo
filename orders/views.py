@@ -52,10 +52,8 @@ class PedidoViewSet(viewsets.ModelViewSet):
         
         # Filtrar según el tipo de usuario
         if hasattr(user, 'tipo_usuario'):
-            if user.tipo_usuario == 'comprador':
-                queryset = queryset.filter(comprador=user)
-            elif user.tipo_usuario == 'campesino':
-                queryset = queryset.filter(campesino=user)
+            # Permitir ver pedidos donde el usuario es el comprador O el campesino
+            queryset = queryset.filter(Q(comprador=user) | Q(campesino=user))
         
         return queryset
 
@@ -71,9 +69,10 @@ class PedidoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Personalizar creación de pedidos"""
-        # Validar que el usuario sea comprador
-        if not self.request.user.tipo_usuario == 'comprador':
-            raise permissions.PermissionDenied("Solo los compradores pueden crear pedidos")
+        # Validar que el usuario tenga permisos para comprar (comprador o campesino)
+        # Se permite a ambos roles realizar compras
+        if not (self.request.user.tipo_usuario == 'comprador' or self.request.user.tipo_usuario == 'campesino'):
+            raise permissions.PermissionDenied("No tienes permisos para crear pedidos")
         
         serializer.save()
 
@@ -206,9 +205,10 @@ class PedidoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def mis_compras(self, request):
         """Obtener pedidos del usuario como comprador"""
-        if not request.user.tipo_usuario == 'comprador':
+        # Permitir tanto a compradores como a campesinos ver sus compras
+        if not (request.user.tipo_usuario == 'comprador' or request.user.tipo_usuario == 'campesino'):
             return Response(
-                {'error': 'Solo disponible para compradores'}, 
+                {'error': 'No tienes permisos para ver compras'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
         

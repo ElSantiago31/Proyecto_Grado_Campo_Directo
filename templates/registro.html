@@ -107,7 +107,33 @@
                         <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirmar contraseña" required minlength="6">
                     </div>
                     
-                    <button type="submit" class="btn-register">Registrarse</button>
+                    <!-- Doble Factor Visual -->
+                    <div class="form-group visual-2fa-group" style="margin-top: 15px; border: 2px dashed #8aaa78; padding: 15px; border-radius: 12px; background: #f9fbf8;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px; color: #2d5016; text-align: center; font-size: 1.1rem;">
+                            Elige tu PIN Visual de Seguridad 🔒
+                        </label>
+                        <p style="font-size: 0.85rem; color: #5a704a; margin-bottom: 15px; text-align: center;">
+                            Toca la fruta o verdura que usarás como llave para iniciar sesión. ¡No la olvides!
+                        </p>
+                        <div class="emoji-grid" id="emojiGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 340px; margin: 0 auto;">
+                            <button type="button" class="btn-emoji" data-value="🍎" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍎</button>
+                            <button type="button" class="btn-emoji" data-value="🍌" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍌</button>
+                            <button type="button" class="btn-emoji" data-value="🍅" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍅</button>
+                            <button type="button" class="btn-emoji" data-value="🥕" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🥕</button>
+                            <button type="button" class="btn-emoji" data-value="🥔" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🥔</button>
+                            <button type="button" class="btn-emoji" data-value="🌽" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🌽</button>
+                            <button type="button" class="btn-emoji" data-value="🍊" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍊</button>
+                            <button type="button" class="btn-emoji" data-value="🍓" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍓</button>
+                            <button type="button" class="btn-emoji" data-value="🥬" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🥬</button>
+                            <button type="button" class="btn-emoji" data-value="🌶" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🌶️</button>
+                            <button type="button" class="btn-emoji" data-value="🍏" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🍏</button>
+                            <button type="button" class="btn-emoji" data-value="🥑" style="font-size: 2.2rem; padding: 10px; background: white; border: 2px solid #dde8d5; border-radius: 12px; cursor: pointer; transition: all 0.2s;">🥑</button>
+                        </div>
+                        <input type="hidden" id="imagen2fa" name="imagen2fa" required>
+                        <span class="error-message" id="imagen2fa-error" style="display: block; text-align: center; margin-top: 10px; color: #dc3545; font-size: 0.85rem;"></span>
+                    </div>
+
+                    <button type="submit" class="btn-register" style="margin-top: 20px;">Registrarse</button>
                 </form>
                 
                 <div class="login-link">
@@ -124,6 +150,5 @@
 window.csrfToken = '{{ csrf_token }}';
 </script>
 <script src="{% static 'js/colombia.js' %}?v={% now 'U' %}"></script>
-<script src="{% static 'js/config/api.js' %}?v={% now 'U' %}"></script>
 <script src="{% static 'js/registro.js' %}?v={% now 'U' %}"></script>
 {% endblock %}

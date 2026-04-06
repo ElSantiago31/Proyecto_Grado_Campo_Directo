@@ -71,6 +71,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configuración inicial
     toggleFields();
 
+    // Lógica del Doble Factor Visual (2FA)
+    const emojiBtns = document.querySelectorAll('.btn-emoji');
+    const imagen2faInput = document.getElementById('imagen2fa');
+    const imagen2faError = document.getElementById('imagen2fa-error');
+
+    emojiBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover clase activa de todos
+            emojiBtns.forEach(b => {
+                b.style.background = 'white';
+                b.style.borderColor = '#dde8d5';
+                b.style.transform = 'scale(1)';
+            });
+            // Añadir al clickeado
+            this.style.background = '#e8f5e2';
+            this.style.borderColor = '#5a9e2f';
+            this.style.transform = 'scale(1.05)';
+            
+            // Guardar el valor en el input hidden
+            imagen2faInput.value = this.getAttribute('data-value');
+            if(imagen2faError) imagen2faError.textContent = '';
+        });
+    });
+
     // Validación y envío del formulario
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -89,7 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
             municipioFinca: formData.get('municipioFinca') || null,
             direccion: formData.get('direccion') || null,
             password: formData.get('password'),
-            passwordConfirm: formData.get('passwordConfirm')
+            passwordConfirm: formData.get('passwordConfirm'),
+            imagen2fa: formData.get('imagen2fa')
         };
 
         // Validaciones adicionales
@@ -109,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fecha_nacimiento: toISODate(data.fechaNacimiento),
                 password: data.password,
                 password_confirm: data.passwordConfirm,
+                imagen_2fa: data.imagen2fa,
                 ...(data.nombreFinca ? { nombre_finca: data.nombreFinca } : {}),
                 ...(data.departamentoFinca ? { departamento_finca: data.departamentoFinca } : {}),
                 ...(data.municipioFinca ? { municipio_finca: data.municipioFinca } : {}),
@@ -130,7 +156,19 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '/registro-exitoso/';
         } catch (err) {
             hideLoading();
-            alert('Error: ' + err.message);
+            
+            // Analizar errores arrojados desde el Backend DRF
+            if (err.details && typeof err.details === 'object') {
+                let errorMessages = [];
+                for (const [field, messages] of Object.entries(err.details)) {
+                    const fieldName = field.charAt(0).toUpperCase() + field.slice(1);
+                    const msg = Array.isArray(messages) ? messages[0] : messages;
+                    errorMessages.push(`- ${fieldName}: ${msg}`);
+                }
+                alert('No pudimos procesar tu registro:\n\n' + errorMessages.join('\n'));
+            } else {
+                alert('Error inesperado: ' + (err.message || 'Inténtalo de nuevo.'));
+            }
         }
     });
 
@@ -197,8 +235,17 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push('La contraseña debe tener al menos 6 caracteres e incluir minúscula, mayúscula y número');
             isValid = false;
         }
-        if ((data.password || '') !== (data.passwordConfirm || '')) {
+        if (data.password !== data.passwordConfirm) {
             errors.push('Las contraseñas no coinciden');
+            isValid = false;
+        }
+
+        // Validar 2FA Visual
+        if (!data.imagen2fa) {
+            if(imagen2faError) {
+                imagen2faError.textContent = 'Debes seleccionar una imagen de seguridad 🔒';
+            }
+            errors.push('Selecciona un PIN Visual de Seguridad');
             isValid = false;
         }
 
