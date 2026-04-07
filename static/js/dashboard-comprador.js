@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         updateFavoriteProductsCount();
     }
 
+    // Actualizar tarjeta de calificación con datos reales desde la API
+    loadMyRatingCard();
+
     console.log('[Dashboard Comprador] ✅ Dashboard comprador cargado correctamente');
     console.log('[Dashboard Comprador] === FIN DE INICIALIZACIÓN ===');
 });
@@ -1524,6 +1527,31 @@ function populateLocationFilter() {
         locationFilter.appendChild(option);
     });
     console.log(`[Marketplace] Filtro de ubicación poblado con ${sortedData.length} departamentos colombianos.`);
+}
+
+// Carga silenciosa de la calificación real del comprador para actualizar la tarjeta del resumen
+async function loadMyRatingCard() {
+    try {
+        const data = await userApi.getMisResenas();
+        const total = data.total_calificaciones || 0;
+        const prom = parseFloat(data.calificacion_promedio || 0);
+        const ratingEl = document.getElementById('myRatingValue');
+        const ratingCard = document.getElementById('myRatingCard');
+        if (!ratingEl) return;
+
+        if (total > 0) {
+            ratingEl.textContent = prom.toFixed(1);
+            // Actualizar el small debajo
+            const small = ratingCard?.querySelector('small');
+            if (small) small.textContent = `según ${total} productor${total !== 1 ? 'es' : ''} · ver reseñas`;
+        } else {
+            ratingEl.textContent = 'Nueva';
+            const small = ratingCard?.querySelector('small');
+            if (small) small.textContent = 'aún sin calificaciones · ver reseñas';
+        }
+    } catch (e) {
+        // Silencioso: si falla, el valor del template se queda visible
+    }
 }
 
 async function showMyReviewsModal() {
