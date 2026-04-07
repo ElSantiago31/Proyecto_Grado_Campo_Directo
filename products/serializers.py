@@ -42,6 +42,7 @@ class ProductoListSerializer(serializers.ModelSerializer):
     precio_formateado = serializers.ReadOnlyField()
     is_disponible = serializers.ReadOnlyField()
     tags_list = serializers.SerializerMethodField()
+    campesino_calificacion = serializers.DecimalField(source='usuario.calificacion_promedio', max_digits=3, decimal_places=1, read_only=True)
     
     class Meta:
         model = Producto
@@ -50,7 +51,7 @@ class ProductoListSerializer(serializers.ModelSerializer):
             'stock_disponible', 'unidad_medida', 'estado', 'is_disponible',
             'imagen_principal', 'calidad', 'fecha_cosecha', 'disponible_entrega_inmediata',
             'campesino', 'campesino_nombre', 'categoria_nombre', 'categoria_icono', 
-            'finca_nombre', 'ubicacion', 'tags_list'
+            'finca_nombre', 'ubicacion', 'tags_list', 'campesino_calificacion'
         ]
     
     def get_tags_list(self, obj):

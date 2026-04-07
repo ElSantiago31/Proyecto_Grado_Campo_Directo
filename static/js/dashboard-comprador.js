@@ -245,7 +245,12 @@ function renderMarketplaceProducts(productos) {
             </a>
             <div class="product-info" style="padding: 15px;">
                 <h3 class="product-name" style="margin-bottom: 5px; font-size: 1.2rem;">${product.nombre}</h3>
-                <p class="product-farmer" style="margin-bottom: 3px; color: #555;">🧑‍🌾 ${campesinoNombre}</p>
+                <p class="product-farmer" style="margin-bottom: 3px; color: #555;">
+                    🧑‍🌾 ${campesinoNombre} 
+                    <span style="font-size: 0.85rem; color: #f39c12; margin-left: 5px;" title="Calificación del Productor">
+                        ⭐ ${product.campesino_calificacion > 0 ? parseFloat(product.campesino_calificacion).toFixed(1) : 'Nuevo'}
+                    </span>
+                </p>
                 <p class="product-location" style="margin-bottom: 8px; font-size: 0.85rem; color: #777;">📍 ${fincaNombre}, ${ubicacion}</p>
                 <p class="product-description" style="font-size: 0.85rem; color: #666; margin-bottom: 8px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${(product.descripcion || '').replace(/"/g, '&quot;')}">${product.descripcion || 'Sin descripción adicional'}</p>
                 <p class="product-price" style="font-size: 1.1rem; color: #2d5016; font-weight: bold; margin-bottom: 5px;">$${price} / ${product.unidad_medida}</p>
