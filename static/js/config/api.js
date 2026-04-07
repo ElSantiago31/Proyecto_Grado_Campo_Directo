@@ -282,6 +282,10 @@ const userApi = {
 
     async getResenasCampesino(campesinoId) {
         return await api.get(`/auth/campesinos/${campesinoId}/resenas/`);
+    },
+
+    async getMisResenas() {
+        return await api.get('/auth/mis-resenas/');
     }
 };
 

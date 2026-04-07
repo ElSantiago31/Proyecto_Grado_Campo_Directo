@@ -269,9 +269,38 @@ class CampesinoResenasView(APIView):
                 'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
             })
 
+
+class MisResenasCompradorView(APIView):
+    """
+    Vista para que el comprador vea las reseñas que le dejaron los campesinos
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from orders.models import Pedido
+        pedidos = Pedido.objects.filter(
+            comprador=request.user,
+            estado='completed',
+            calificacion_campesino__isnull=False
+        ).select_related('campesino').order_by('-fecha_completado')
+
+        resenas = []
+        for pedido in pedidos:
+            campesino = pedido.campesino
+            nombre = campesino.get_full_name() if campesino else 'Productor'
+            partes = nombre.strip().split()
+            nombre_corto = partes[0] + ' ' + partes[-1][0] + '.' if len(partes) > 1 else nombre
+
+            resenas.append({
+                'calificacion': pedido.calificacion_campesino,
+                'comentario': pedido.comentario_calificacion or '',
+                'campesino_nombre': nombre_corto,
+                'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
+            })
+
         return Response({
-            'campesino': campesino.get_full_name(),
-            'calificacion_promedio': float(campesino.calificacion_promedio),
-            'total_calificaciones': campesino.total_calificaciones,
+            'comprador': request.user.get_full_name(),
+            'calificacion_promedio': float(request.user.calificacion_promedio),
+            'total_calificaciones': request.user.total_calificaciones,
             'resenas': resenas
         })
