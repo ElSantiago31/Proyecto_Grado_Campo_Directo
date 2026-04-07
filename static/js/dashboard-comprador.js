@@ -238,9 +238,11 @@ function renderMarketplaceProducts(productos) {
 
         return `
         <div class="product-card" data-id="${product.id}">
-            <div class="product-image" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; min-height: 180px;">
-                <span class="product-status status-disponible" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${categoria}</span>
+            <a href="${imageUrl}" target="_blank" title="Click para ver foto completa" style="display:block; text-decoration:none; color:inherit;">
+            <div class="product-image" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; min-height: 180px; position:relative; cursor:pointer;">
+                <span class="product-status status-disponible" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; color: #333;">${categoria}</span>
             </div>
+            </a>
             <div class="product-info" style="padding: 15px;">
                 <h3 class="product-name" style="margin-bottom: 5px; font-size: 1.2rem;">${product.nombre}</h3>
                 <p class="product-farmer" style="margin-bottom: 3px; color: #555;">🧑‍🌾 ${campesinoNombre}</p>
