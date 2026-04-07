@@ -181,6 +181,11 @@ class Pedido(models.Model):
         elif nuevo_estado == 'completed' and not self.fecha_completado:
             self.fecha_completado = timezone.now()
             
+        # Si se cancela el pedido, restaurar el stock automáticamente
+        if nuevo_estado == 'cancelled' and self.estado != 'cancelled':
+            for detalle in self.detalles.all():
+                detalle.producto.aumentar_stock(int(detalle.cantidad))
+                
         self.estado = nuevo_estado
         self.save()
     
