@@ -278,8 +278,13 @@ const userApi = {
     async getFarmers(params = {}) {
         const queryString = new URLSearchParams(params).toString();
         return await api.get(`/users/farmers?${queryString}`);
+    },
+
+    async getResenasCampesino(campesinoId) {
+        return await api.get(`/users/campesinos/${campesinoId}/resenas/`);
     }
 };
+
 
 /**
  * APIs de Productos

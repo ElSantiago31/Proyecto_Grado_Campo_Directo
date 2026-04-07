@@ -22,4 +22,7 @@ urlpatterns = [
     
     # Estadísticas del usuario
     path('dashboard/', views.UserDashboardView.as_view(), name='user-dashboard'),
+
+    # Reseñas públicas de un campesino
+    path('campesinos/<int:pk>/resenas/', views.CampesinoResenasView.as_view(), name='campesino-resenas'),
 ]

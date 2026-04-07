@@ -234,3 +234,45 @@ class UserDashboardView(APIView):
         period = request.query_params.get('period', 'month')
         serializer = UserDashboardSerializer(request.user, context={'request': request, 'period': period})
         return Response(serializer.data)
+
+
+class CampesinoResenasView(APIView):
+    """
+    Vista pública para obtener las reseñas/comentarios recibidos por un campesino
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        try:
+            campesino = Usuario.objects.get(pk=pk, tipo_usuario='campesino')
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Productor no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+        from orders.models import Pedido
+        pedidos = Pedido.objects.filter(
+            campesino=campesino,
+            estado='completed',
+            calificacion_campesino__isnull=False
+        ).select_related('comprador').order_by('-fecha_completado')
+
+        resenas = []
+        for pedido in pedidos:
+            comprador = pedido.comprador
+            nombre = comprador.get_full_name() if comprador else 'Comprador'
+            partes = nombre.strip().split()
+            nombre_corto = partes[0] + ' ' + partes[-1][0] + '.' if len(partes) > 1 else nombre
+
+            resenas.append({
+                'calificacion': pedido.calificacion_campesino,
+                'comentario': pedido.comentario_calificacion or '',
+                'comprador_nombre': nombre_corto,
+                'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
+                'productos': pedido.get_productos_resumen() if hasattr(pedido, 'get_productos_resumen') else ''
+            })
+
+        return Response({
+            'campesino': campesino.get_full_name(),
+            'calificacion_promedio': float(campesino.calificacion_promedio),
+            'total_calificaciones': campesino.total_calificaciones,
+            'resenas': resenas
+        })
