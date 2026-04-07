@@ -130,6 +130,9 @@
                     const starsFull = Math.min(5, Math.max(0, parseInt(r.calificacion) || 0));
                     const starsHtml = '⭐'.repeat(starsFull) + '☆'.repeat(5 - starsFull);
                     const comentario = r.comentario ? `<p style="margin:6px 0 0; color:#444; font-size:0.9rem; font-style:italic;">"${r.comentario}"</p>` : '';
+                    const productos = (r.productos && r.productos.length > 0)
+                        ? `<p style="margin:6px 0 0; font-size:0.78rem; color:#777;">🛒 Compró: <span style="font-weight:500; color:#2d5016;">${r.productos.join(', ')}</span></p>`
+                        : '';
                     return `
                         <div style="padding:14px 0; border-bottom:1px solid #f0f0f0;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -137,10 +140,12 @@
                                 <span style="font-size:0.8rem; color:#aaa;">${r.fecha}</span>
                             </div>
                             <div style="font-size:1rem; margin-top:4px;">${starsHtml}</div>
+                            ${productos}
                             ${comentario}
                         </div>
                     `;
                 }).join('');
+
 
             } catch (err) {
                 lista.innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">❌ No se pudieron cargar las reseñas. Inténtalo luego.</p>';
