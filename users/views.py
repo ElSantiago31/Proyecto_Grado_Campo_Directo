@@ -252,7 +252,7 @@ class CampesinoResenasView(APIView):
         pedidos = Pedido.objects.filter(
             campesino=campesino,
             estado='completed',
-            calificacion_campesino__isnull=False
+            calificacion_comprador__isnull=False
         ).select_related('comprador').order_by('-fecha_completado')
 
         resenas = []
@@ -263,11 +263,10 @@ class CampesinoResenasView(APIView):
             nombre_corto = partes[0] + ' ' + partes[-1][0] + '.' if len(partes) > 1 else nombre
 
             resenas.append({
-                'calificacion': pedido.calificacion_campesino,
+                'calificacion': pedido.calificacion_comprador,
                 'comentario': pedido.comentario_calificacion or '',
                 'comprador_nombre': nombre_corto,
                 'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
-                'productos': pedido.get_productos_resumen() if hasattr(pedido, 'get_productos_resumen') else ''
             })
 
         return Response({
