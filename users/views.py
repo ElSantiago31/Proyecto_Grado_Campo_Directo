@@ -253,7 +253,7 @@ class CampesinoResenasView(APIView):
             campesino=campesino,
             estado='completed',
             calificacion_comprador__isnull=False
-        ).select_related('comprador').order_by('-fecha_completado')
+        ).select_related('comprador').prefetch_related('detalles').order_by('-fecha_completado')
 
         resenas = []
         for pedido in pedidos:
@@ -262,11 +262,18 @@ class CampesinoResenasView(APIView):
             partes = nombre.strip().split()
             nombre_corto = partes[0] + ' ' + partes[-1][0] + '.' if len(partes) > 1 else nombre
 
+            # Obtener nombres de los productos comprados en este pedido
+            productos_comprados = [
+                d.nombre_producto_snapshot or d.producto.nombre
+                for d in pedido.detalles.all()
+            ]
+
             resenas.append({
                 'calificacion': pedido.calificacion_comprador,
                 'comentario': pedido.comentario_calificacion or '',
                 'comprador_nombre': nombre_corto,
                 'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
+                'productos': productos_comprados,
             })
 
         # Calcular promedio real desde los pedidos
