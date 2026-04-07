@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Verificar autenticación JWT
     if (!isAuthenticated()) {
-        console.log('[Dashboard Comprador] ❌ No hay token de autenticación, redirigiendo al login');
+        console.log('[Dashboard Comprador] No hay token de autenticación, redirigiendo al login');
         window.location.href = '/login-comprador/';
         return;
     }
 
-    console.log('[Dashboard Comprador] ✅ Token válido, verificando perfil...');
+    console.log('[Dashboard Comprador] Token válido, verificando perfil...');
 
     // Verificar que el usuario sea un comprador
     try {
@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log('[Dashboard Comprador] Perfil obtenido:', profile);
 
         if (!profile || profile.tipo_usuario !== 'comprador') {
-            console.log('[Dashboard Comprador] ❌ Usuario no es comprador, tipo:', profile?.tipo_usuario);
+            console.log('[Dashboard Comprador] Usuario no es comprador, tipo:', profile?.tipo_usuario);
             window.location.href = '/login-comprador/';
             return;
         }
 
-        console.log(`[Dashboard Comprador] ✅ Usuario comprador autenticado: ${profile.nombre} ${profile.apellido}`);
+        console.log(`[Dashboard Comprador] Usuario comprador autenticado: ${profile.nombre} ${profile.apellido}`);
 
         // Actualizar nombre en la UI
         const userNameElement = document.getElementById('userName');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
     } catch (error) {
-        console.error('[Dashboard Comprador] ❌ Error verificando perfil:', error);
+        console.error('[Dashboard Comprador] Error verificando perfil:', error);
 
         // Si es error de autenticación (401), redirigir al login
         if (error instanceof ApiError && error.isAuthError()) {
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupQuantityModal();
     setupOrderTabs();
 
-    console.log('[Dashboard Comprador] ✅ Dashboard comprador cargado correctamente');
+    console.log('[Dashboard Comprador] Dashboard comprador cargado correctamente');
     console.log('[Dashboard Comprador] === FIN DE INICIALIZACIÓN ===');
 });
 
@@ -128,11 +128,11 @@ function setupLogout() {
         const showSection = (sectionId, e) => {
             e.preventDefault();
             userDropdown.classList.remove('show');
-            
+
             // Remover 'active' de navegación lateral y todas las secciones
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            
+
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
@@ -233,7 +233,7 @@ function renderMarketplaceProducts(productos) {
         return `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; min-height: 180px;">
-                <span class="product-status status-disponible" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${categoria}</span>
+                <span class="product-status status-disponible" style="color: white; ;position: absolute; top: 10px; right: 10px; background: #2d5016; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${categoria}</span>
             </div>
             <div class="product-info" style="padding: 15px;">
                 <h3 class="product-name" style="margin-bottom: 5px; font-size: 1.2rem;">${product.nombre}</h3>
@@ -634,29 +634,29 @@ async function processPurchase() {
         }
     }
 
-        const profileData = await authApi.getProfile();
-        // Agrupar por campesino porque el backend exige que 1 pedido = 1 campesino
-        const ordersByCampesino = {};
-        cart.forEach(item => {
-            const campId = item.campesino_id;
-            if (!campId) return; // ignore invalid items
-            if (!ordersByCampesino[campId]) {
-                ordersByCampesino[campId] = {
-                    campesino: parseInt(campId),
-                    notas_comprador: "Pedido generado desde la web",
-                    metodo_pago: "efectivo",
-                    metodo_entrega: "recogida",
-                    direccion_entrega: profileData?.direccion || "Dirección no registrada",
-                    telefono_contacto: profileData?.telefono || "Teléfono no registrado",
-                    detalles: []
-                };
-            }
-            ordersByCampesino[campId].detalles.push({
-                producto: item.id,
-                cantidad: item.quantity,
-                precio_unitario: item.price
-            });
+    const profileData = await authApi.getProfile();
+    // Agrupar por campesino porque el backend exige que 1 pedido = 1 campesino
+    const ordersByCampesino = {};
+    cart.forEach(item => {
+        const campId = item.campesino_id;
+        if (!campId) return; // ignore invalid items
+        if (!ordersByCampesino[campId]) {
+            ordersByCampesino[campId] = {
+                campesino: parseInt(campId),
+                notas_comprador: "Pedido generado desde la web",
+                metodo_pago: "efectivo",
+                metodo_entrega: "recogida",
+                direccion_entrega: profileData?.direccion || "Dirección no registrada",
+                telefono_contacto: profileData?.telefono || "Teléfono no registrado",
+                detalles: []
+            };
+        }
+        ordersByCampesino[campId].detalles.push({
+            producto: item.id,
+            cantidad: item.quantity,
+            precio_unitario: item.price
         });
+    });
 
     const validOrders = Object.values(ordersByCampesino);
     if (validOrders.length === 0) {
@@ -775,7 +775,7 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         email: document.getElementById('profileEmail').value.trim(),
         direccion: document.getElementById('profileDireccion').value.trim()
     };
-    
+
     const fecha = document.getElementById('profileFechaNacimiento').value;
     if (fecha) {
         profileData.fecha_nacimiento = fecha;
@@ -809,17 +809,17 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
 // Manejo del Cambio de Contraseña
 document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const cp = document.getElementById('currentPassword').value;
     const np = document.getElementById('newPassword').value;
     const npc = document.getElementById('newPasswordConfirm').value;
-    
+
     if (np !== npc) {
         if (typeof showNotification === 'function') showNotification('Las nuevas contraseñas no coinciden', 'error');
         else alert('Las nuevas contraseñas no coinciden');
         return;
     }
-    
+
     const btn = document.getElementById('changePasswordBtn');
     btn.disabled = true;
     btn.textContent = 'Guardando...';
@@ -830,10 +830,10 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
             new_password: np,
             new_password_confirm: npc
         });
-        
+
         if (typeof showNotification === 'function') showNotification('Contraseña actualizada con éxito', 'success');
         else alert('Contraseña actualizada con éxito');
-        
+
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
         console.error("Error cambiando contraseña:", error);
@@ -862,14 +862,14 @@ async function loadConversations() {
         renderConversations(response.results || response);
     } catch (error) {
         console.error("Error cargando conversaciones:", error);
-        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
+        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0, 100)}</small></li>`;
     }
 }
 
 function renderConversations(conversations) {
     const listEl = document.getElementById('chatContactsList');
     listEl.innerHTML = '';
-    
+
     if (!conversations || conversations.length === 0) {
         listEl.innerHTML = `<li style="padding: 20px; text-align: center; color: #888;">No hay chats iniciados. Cuando realices compras aparecerán aquí.</li>`;
         return;
@@ -885,12 +885,12 @@ function renderConversations(conversations) {
 
         const li = document.createElement('li');
         li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
-        
+
         // Identificar nombre de la contraparte a renderizar
         let counterPartName = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
         let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
-        
+
         li.innerHTML = `
             <div class="chat-avatar">${counterPartName.charAt(0).toUpperCase()}</div>
             <div class="chat-contact-info">
@@ -899,43 +899,43 @@ function renderConversations(conversations) {
             </div>
             ${unreadBadge}
         `;
-        
+
         li.addEventListener('click', () => {
-             // Actualizar UI del chat activo
-             document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
-             li.classList.add('active');
-             
-             if(conv.mensajes_no_leidos > 0) {
-                 li.querySelector('span')?.remove(); // quita el badge al clickear
-             }
-             
-             openChat(conv.id, counterPartName);
+            // Actualizar UI del chat activo
+            document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+
+            if (conv.mensajes_no_leidos > 0) {
+                li.querySelector('span')?.remove(); // quita el badge al clickear
+            }
+
+            openChat(conv.id, counterPartName);
         });
-        
+
         listEl.appendChild(li);
     });
 }
 
 function openChat(convId, counterPartName) {
     activeConversationId = convId;
-    
+
     // Cambiar vistas
     document.getElementById('chatEmptyState').style.display = 'none';
     document.getElementById('chatMainArea').style.display = 'flex';
     document.getElementById('activeChatName').textContent = counterPartName;
     document.getElementById('activeChatAvatar').textContent = counterPartName.charAt(0).toUpperCase();
-    
+
     // Ajuste móvil
-    if(window.innerWidth <= 768) {
+    if (window.innerWidth <= 768) {
         document.querySelector('.chat-sidebar').style.display = 'none';
         document.getElementById('chatMobileBackBtn').style.display = 'block';
     }
-    
+
     // Carga inicial 
     loadMessages(convId);
-    
+
     // Iniciar el Polling por si responden en vivo (cada 4 segundos)
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     chatPollingInterval = setInterval(() => loadMessages(convId, true), 4000);
 }
 
@@ -943,7 +943,7 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
     document.querySelector('.chat-sidebar').style.display = 'flex';
     document.getElementById('chatMainArea').style.display = 'none';
     document.getElementById('chatMobileBackBtn').style.display = 'none';
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     activeConversationId = null;
     loadConversations();
 });
@@ -952,7 +952,7 @@ async function loadMessages(convId, isPolling = false) {
     try {
         const messages = await chatApi.getMessages(convId);
         renderMessages(messages);
-        
+
         if (!isPolling || document.visibilityState === 'visible') {
             await chatApi.markAsRead(convId);
         }
@@ -963,12 +963,12 @@ async function loadMessages(convId, isPolling = false) {
 
 function renderMessages(messages) {
     const area = document.getElementById('chatMessagesArea');
-    
+
     // Optimización muy básica de DOM para evitar flickers en el polling
     const newLength = messages.length;
     let oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
-    if (newLength === oldLength && newLength > 0) return; 
-    
+    if (newLength === oldLength && newLength > 0) return;
+
     area.innerHTML = '';
     area.dataset.msgCount = newLength;
 
@@ -979,7 +979,7 @@ function renderMessages(messages) {
 
     messages.forEach(msg => {
         const div = document.createElement('div');
-        
+
         let msgType = 'received';
         if (msg.tipo_mensaje === 'sistema') {
             // El mensaje sistema o autogenerado por el backend
@@ -987,10 +987,10 @@ function renderMessages(messages) {
         } else if (msg.remitente === myChatUserId) {
             msgType = 'sent';
         }
-        
+
         div.className = `chat-bubble-wrapper ${msgType}`;
-        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
+        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
         div.innerHTML = `
             <div class="chat-bubble">
                 <span style="white-space: pre-wrap;">${msg.contenido}</span>
@@ -999,7 +999,7 @@ function renderMessages(messages) {
         `;
         area.appendChild(div);
     });
-    
+
     // Auto-scroll the chat
     area.scrollTop = area.scrollHeight;
 }
@@ -1007,26 +1007,26 @@ function renderMessages(messages) {
 document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!activeConversationId) return;
-    
+
     const input = document.getElementById('chatInputMessage');
     const txt = input.value.trim();
-    if(!txt) return;
-    
+    if (!txt) return;
+
     input.value = '';
     input.disabled = true;
-    
+
     try {
         await chatApi.sendMessage(activeConversationId, {
             tipo_mensaje: 'texto',
             contenido: txt
         });
-        
+
         loadMessages(activeConversationId);
         loadConversations();
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         alert('Error enviando mensaje.');
-        input.value = txt; 
+        input.value = txt;
     } finally {
         input.disabled = false;
         input.focus();
@@ -1036,11 +1036,11 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
 // Listener extra para refrescar chats a demanda cuando se abre la ventana (al darle a Navegación -> Mensajes)
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
-        if(e.currentTarget.getAttribute('data-section') === 'messages') {
+        if (e.currentTarget.getAttribute('data-section') === 'messages') {
             loadConversations();
         } else {
             // Si nos vamos a otra tab, apagamos el polling para optimizar red
-            if(chatPollingInterval) clearInterval(chatPollingInterval);
+            if (chatPollingInterval) clearInterval(chatPollingInterval);
         }
     });
 });
