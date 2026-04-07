@@ -427,19 +427,11 @@ function handleAuthError() {
     api.setAuthToken(null);
     localStorage.removeItem('refreshToken');
 
-    // Redirigir al login si no estamos ya ahí
+    // Redirigir al login unificado si no estamos ya ahí
     const currentPath = window.location.pathname;
     if (!currentPath.includes('login') && !currentPath.includes('registro')) {
         console.log('Token inválido, redirigiendo al login');
-
-        // Detectar si el usuario debe ir al login de comprador o campesino
-        if (currentPath.includes('comprador') || currentPath.includes('/dashboard-comprador/')) {
-            console.log('Redirigiendo al login de compradores');
-            window.location.href = '/login-comprador/';
-        } else {
-            console.log('Redirigiendo al login de campesinos');
-            window.location.href = '/login/';
-        }
+        window.location.href = '/login/';
     }
 }
 

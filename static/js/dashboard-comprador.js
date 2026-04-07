@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Verificar autenticación JWT
     if (!isAuthenticated()) {
         console.log('[Dashboard Comprador] ❌ No hay token de autenticación, redirigiendo al login');
-        window.location.href = '/login-comprador/';
+        window.location.href = '/login/';
         return;
     }
 
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         if (!profile || (profile.tipo_usuario !== 'comprador' && profile.tipo_usuario !== 'campesino')) {
             console.log('[Dashboard Comprador] ❌ Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario);
-            window.location.href = '/login-comprador/';
+            window.location.href = '/login/';
             return;
         }
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Si es error de autenticación (401), redirigir al login
         if (error instanceof ApiError && error.isAuthError()) {
             console.log('[Dashboard Comprador] Error de autenticación, redirigiendo...');
-            window.location.href = '/login-comprador/';
+            window.location.href = '/login/';
             return;
         }
 
