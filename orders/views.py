@@ -149,12 +149,8 @@ class PedidoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Cancelar y restaurar stock
+        # Cancelar el pedido (la restauración de stock ocurre a nivel modelo de forma automática)
         pedido.actualizar_estado('cancelled')
-        
-        # Restaurar stock de productos
-        for detalle in pedido.detalles.all():
-            detalle.producto.aumentar_stock(int(detalle.cantidad))
         
         return Response({'message': 'Pedido cancelado correctamente'})
 
