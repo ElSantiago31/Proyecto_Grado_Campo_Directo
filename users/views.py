@@ -298,9 +298,18 @@ class MisResenasCompradorView(APIView):
                 'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
             })
 
+        # Calcular promedio REAL desde los pedidos, no desde el campo del modelo
+        # (el campo del modelo pudo ser poblado por datos de prueba)
+        total_real = len(resenas)
+        if total_real > 0:
+            promedio_real = sum(r['calificacion'] for r in resenas) / total_real
+        else:
+            promedio_real = 0.0
+
         return Response({
             'comprador': request.user.get_full_name(),
-            'calificacion_promedio': float(request.user.calificacion_promedio),
-            'total_calificaciones': request.user.total_calificaciones,
+            'calificacion_promedio': round(promedio_real, 1),
+            'total_calificaciones': total_real,
             'resenas': resenas
         })
+
