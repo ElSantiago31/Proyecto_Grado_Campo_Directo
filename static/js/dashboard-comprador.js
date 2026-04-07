@@ -247,9 +247,11 @@ function renderMarketplaceProducts(productos) {
                 <h3 class="product-name" style="margin-bottom: 5px; font-size: 1.2rem;">${product.nombre}</h3>
                 <p class="product-farmer" style="margin-bottom: 3px; color: #555;">
                     🧑‍🌾 ${campesinoNombre} 
-                    <span style="font-size: 0.85rem; color: #f39c12; margin-left: 5px;" title="Calificación del Productor">
-                        ⭐ ${product.campesino_calificacion > 0 ? parseFloat(product.campesino_calificacion).toFixed(1) : 'Nuevo'}
-                    </span>
+                    <button onclick="showReviewsModal(${product.campesino || 0}, '${safeName.replace(/'/g, '')}')" 
+                        title="Ver reseñas y comentarios de este productor"
+                        style="font-size: 0.82rem; color: #f39c12; margin-left: 6px; background: #fffbea; border: 1px solid #f7dc6f; border-radius: 20px; padding: 2px 9px; cursor: pointer; font-weight: 600; transition: background 0.2s;">
+                        ⭐ ${product.campesino_calificacion > 0 ? parseFloat(product.campesino_calificacion).toFixed(1) : 'Nuevo'} <span style="font-size:0.75rem; color:#aaa;">ver reseñas</span>
+                    </button>
                 </p>
                 <p class="product-location" style="margin-bottom: 8px; font-size: 0.85rem; color: #777;">📍 ${fincaNombre}, ${ubicacion}</p>
                 <p class="product-description" style="font-size: 0.85rem; color: #666; margin-bottom: 8px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${(product.descripcion || '').replace(/"/g, '&quot;')}">${product.descripcion || 'Sin descripción adicional'}</p>
