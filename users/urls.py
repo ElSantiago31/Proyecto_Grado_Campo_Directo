@@ -25,4 +25,7 @@ urlpatterns = [
 
     # Reseñas públicas de un campesino
     path('campesinos/<int:pk>/resenas/', views.CampesinoResenasView.as_view(), name='campesino-resenas'),
+
+    # Mis reseñas recibidas como comprador
+    path('mis-resenas/', views.MisResenasCompradorView.as_view(), name='mis-resenas-comprador'),
 ]

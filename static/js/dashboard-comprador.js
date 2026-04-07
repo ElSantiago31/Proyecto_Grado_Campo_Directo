@@ -1525,3 +1525,61 @@ function populateLocationFilter() {
     });
     console.log(`[Marketplace] Filtro de ubicación poblado con ${sortedData.length} departamentos colombianos.`);
 }
+
+async function showMyReviewsModal() {
+    // Reutilizamos el modal universal de reseñas de base.html
+    const modal = document.getElementById('resenasModal');
+    const title = document.getElementById('resenasModalTitle');
+    const subtitle = document.getElementById('resenasModalSubtitle');
+    const resumen = document.getElementById('resenasModalResumen');
+    const lista = document.getElementById('resenasModalLista');
+
+    title.textContent = 'Mi Reputación como Comprador';
+    subtitle.textContent = 'Cargando comentarios...';
+    resumen.innerHTML = '';
+    lista.innerHTML = '<p style="text-align:center; color:#aaa; padding:20px;">⏳ Cargando reseñas...</p>';
+
+    modal.style.display = 'flex';
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
+
+    try {
+        const data = await userApi.getMisResenas();
+        const prom = parseFloat(data.calificacion_promedio || 0);
+        const total = data.total_calificaciones || 0;
+        const resenas = data.resenas || [];
+
+        subtitle.textContent = `${total} calificación${total !== 1 ? 'es' : ''} recibida${total !== 1 ? 's' : ''}`;
+
+        const estrellas = '⭐'.repeat(Math.round(prom)) + '☆'.repeat(5 - Math.round(prom));
+        resumen.innerHTML = `
+            <div style="font-size:2rem;">${estrellas}</div>
+            <div style="font-size:1.5rem; font-weight:bold; color:#2d5016;">${prom > 0 ? prom.toFixed(1) : 'Sin calificación'} <span style="font-size:1rem; color:#777;">/ 5.0</span></div>
+            <div style="font-size:0.85rem; color:#888;">${total} opiniones de productores</div>
+        `;
+
+        if (resenas.length === 0) {
+            lista.innerHTML = '<p style="text-align:center; color:#aaa; padding:30px;">🌱 Aún no has recibido comentarios de los productores.<br>Completa tu primera compra para que puedan calificarte.</p>';
+            return;
+        }
+
+        lista.innerHTML = resenas.map(r => {
+            const starsFull = Math.min(5, Math.max(0, parseInt(r.calificacion) || 0));
+            const starsHtml = '⭐'.repeat(starsFull) + '☆'.repeat(5 - starsFull);
+            const comentario = r.comentario ? `<p style="margin:6px 0 0; color:#444; font-size:0.9rem; font-style:italic;">"${r.comentario}"</p>` : '';
+            return `
+                <div style="padding:14px 0; border-bottom:1px solid #f0f0f0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:600; color:#333;">🚜 ${r.campesino_nombre}</span>
+                        <span style="font-size:0.8rem; color:#aaa;">${r.fecha}</span>
+                    </div>
+                    <div style="font-size:1rem; margin-top:4px;">${starsHtml}</div>
+                    ${comentario}
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        lista.innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">❌ No se pudieron cargar las reseñas. Inténtalo luego.</p>';
+        console.error('Error cargando mis reseñas:', err);
+    }
+}

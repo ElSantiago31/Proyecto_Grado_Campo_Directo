@@ -133,14 +133,12 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card">
-                        <div class="stat-icon">💚</div>
+                    <div class="stat-card" id="myRatingCard" style="cursor:pointer;" onclick="showMyReviewsModal()" title="Haz clic para ver los comentarios que te dejaron los campesinos">
+                        <div class="stat-icon">⭐</div>
                         <div class="stat-content">
-                            <h3>Ahorro Estimado
-                                <span title="Estimado vs precio de supermercado (referencia DANE SIPSA × 1.5)" style="font-size:0.75rem; color:#888; cursor:help;">ℹ️</span>
-                            </h3>
-                            <div class="stat-number">$<span id="totalSavings">{{ estadisticas.ahorro_total|floatformat:0 }}</span></div>
-                            <small style="color:#6c757d; font-size:0.7rem;">vs supermercado estimado</small>
+                            <h3>Mi Calificación</h3>
+                            <div class="stat-number" id="myRatingValue">{{ usuario.calificacion_promedio|default:"0.0" }}</div>
+                            <small style="color:#6c757d; font-size:0.7rem;">según {{ usuario.total_calificaciones|default:0 }} productor{{ usuario.total_calificaciones|pluralize:",es" }} · ver reseñas</small>
                         </div>
                     </div>
                 </div>
