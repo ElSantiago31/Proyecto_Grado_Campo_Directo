@@ -275,8 +275,9 @@ function setupMarketplaceFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
     const locationFilter = document.getElementById('locationFilter');
 
-    // Poblar el filtro de ubicación dinámicamente si existe colombiaData
+    // Poblar los filtros dinámicamente
     populateLocationFilter();
+    populateCategoryFilter();
 
     // Función que aplica todos los filtros activos a la vez
     const applyFilters = () => {
@@ -1486,6 +1487,35 @@ setTimeout(() => {
     pollUnreadMessages();
     _globalMsgPoller = setInterval(pollUnreadMessages, 10000);
 }, 5000);
+
+async function populateCategoryFilter() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (!categoryFilter) return;
+
+    try {
+        const categories = await productApi.getCategories();
+        // DRF con paginación devuelve los resultados en .results
+        const data = categories.results || categories;
+
+        if (!data || data.length === 0) return;
+
+        // Limpiar opciones previas excepto la primera (id="")
+        while (categoryFilter.options.length > 1) {
+            categoryFilter.remove(1);
+        }
+
+        data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.nombre.toLowerCase();
+            option.textContent = `${cat.icono || '🌱'} ${cat.nombre}`;
+            categoryFilter.appendChild(option);
+        });
+
+        console.log(`[Marketplace] Filtro de categorías actualizado con ${data.length} categorías.`);
+    } catch (error) {
+        console.error('[Marketplace] Error al poblar el filtro de categorías:', error);
+    }
+}
 
 function populateLocationFilter() {
     const locationFilter = document.getElementById('locationFilter');
