@@ -620,6 +620,12 @@ async function loadProductCategories() {
             <option value="15">Hierbas Aromáticas</option>
             <option value="16">Tubérculos</option>
             <option value="17">Legumbres</option>
+            <option value="18">Productos Avícolas</option>
+            <option value="19">Carnes y Pescados</option>
+            <option value="20">Lácteos y Derivados</option>
+            <option value="21">Plantas y Flores</option>
+            <option value="22">Insumos Agrícolas</option>
+            <option value="23">Miel y Procesados</option>
         `;
 
     } catch (error) {
@@ -635,6 +641,12 @@ async function loadProductCategories() {
             <option value="15">Hierbas Aromáticas</option>
             <option value="16">Tubérculos</option>
             <option value="17">Legumbres</option>
+            <option value="18">Productos Avícolas</option>
+            <option value="19">Carnes y Pescados</option>
+            <option value="20">Lácteos y Derivados</option>
+            <option value="21">Plantas y Flores</option>
+            <option value="22">Insumos Agrícolas</option>
+            <option value="23">Miel y Procesados</option>
         `;
     }
 }
@@ -1197,6 +1209,12 @@ async function loadCategoriesForEdit() {
             <option value="15">Hierbas Aromáticas</option>
             <option value="16">Tubérculos</option>
             <option value="17">Legumbres</option>
+            <option value="18">Productos Avícolas</option>
+            <option value="19">Carnes y Pescados</option>
+            <option value="20">Lácteos y Derivados</option>
+            <option value="21">Plantas y Flores</option>
+            <option value="22">Insumos Agrícolas</option>
+            <option value="23">Miel y Procesados</option>
         `;
     }
 }
