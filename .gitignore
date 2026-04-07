@@ -32,6 +32,8 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 CREDENCIALES_PRODUCCION.md
+staticfiles/
+media/
 
 
 # VS Code / IDE
