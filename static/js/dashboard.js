@@ -1071,7 +1071,7 @@ function displayProducts(productos) {
             <div class="product-card">
                 <div class="product-image">
                     ${producto.imagen_principal ?
-                `<a href="${producto.imagen_principal}" target="_blank" title="Click para ver foto completa" style="display:block; height:100%;"><img src="${producto.imagen_principal}" alt="${producto.nombre}" style="cursor:pointer;" /></a>` :
+                `<a href="${producto.imagen_principal}" onclick="event.preventDefault(); openLightbox('${producto.imagen_principal}')" title="Haz clic para ver la imagen completa" style="display:block; height:100%;"><img src="${producto.imagen_principal}" alt="${producto.nombre}" style="cursor:zoom-in;" /></a>` :
                 '<div class="no-image">📦</div>'
             }
                 </div>

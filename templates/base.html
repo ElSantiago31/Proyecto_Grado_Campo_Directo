@@ -42,5 +42,34 @@
             debug: {% if debug %}true{% else %}false{% endif %}
         };
     </script>
+    <!-- Lightbox Modal Universal para Imágenes -->
+    <div id="imageLightboxModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.85); z-index: 999999; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; cursor: zoom-out;" onclick="closeLightbox()">
+        <img id="imageLightboxContent" src="" style="max-width: 90%; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain; transform: scale(0.95); transition: transform 0.3s ease;">
+    </div>
+
+    <script>
+        function openLightbox(imageUrl) {
+            const modal = document.getElementById('imageLightboxModal');
+            const img = document.getElementById('imageLightboxContent');
+            img.src = imageUrl;
+            modal.style.display = 'flex';
+            // Pequeño delay para permitir la transición fluida
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                img.style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('imageLightboxModal');
+            const img = document.getElementById('imageLightboxContent');
+            modal.style.opacity = '0';
+            img.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                img.src = ''; // Limpiar
+            }, 300);
+        }
+    </script>
 </body>
 </html>
