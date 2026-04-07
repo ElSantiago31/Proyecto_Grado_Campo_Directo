@@ -269,6 +269,16 @@ class CampesinoResenasView(APIView):
                 'fecha': pedido.fecha_completado.strftime('%d/%m/%Y') if pedido.fecha_completado else '',
             })
 
+        # Calcular promedio real desde los pedidos
+        total_real = len(resenas)
+        promedio_real = sum(r['calificacion'] for r in resenas) / total_real if total_real > 0 else 0.0
+
+        return Response({
+            'campesino': campesino.get_full_name(),
+            'calificacion_promedio': round(promedio_real, 1),
+            'total_calificaciones': total_real,
+            'resenas': resenas
+        })
 
 class MisResenasCompradorView(APIView):
     """
