@@ -233,7 +233,7 @@ function renderMarketplaceProducts(productos) {
         return `
         <div class="product-card" data-id="${product.id}">
             <div class="product-image" style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; min-height: 180px;">
-                <span class="product-status status-disponible" style="color: white; ;position: absolute; top: 10px; right: 10px; background: #2d5016; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${categoria}</span>
+                <span class="product-status status-disponible" style="color: white ;position: absolute; top: 10px; right: 10px; background: #2d5016; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">${categoria}</span>
             </div>
             <div class="product-info" style="padding: 15px;">
                 <h3 class="product-name" style="margin-bottom: 5px; font-size: 1.2rem;">${product.nombre}</h3>
