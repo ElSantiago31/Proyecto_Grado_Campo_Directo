@@ -1950,12 +1950,14 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    height: 100%;
 }
 
 .chat-sidebar-header {
     padding: 1.2rem 1.2rem 1rem;
     background: #163009;
     border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
 }
 
 .chat-sidebar-header h3 {
@@ -1970,6 +1972,7 @@
 .chat-contacts-list {
     flex: 1;
     overflow-y: auto;
+    min-height: 0; /* Crucial para que flex: 1 funcione con scroll */
     padding: 0;
     margin: 0;
     list-style: none;
