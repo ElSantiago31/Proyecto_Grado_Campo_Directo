@@ -1369,13 +1369,18 @@ async function loadMessages(convId, isPolling = false) {
 function renderMessages(messages) {
     const area = document.getElementById('chatMessagesArea');
     
-    // Optimización muy básica de DOM para evitar flickers en el polling
+    // Optimización de polling: solo evitar re-render si es polling Y el convId Y el conteo son iguales
+    // NOTA: No usar solo el conteo, dos chats pueden tener el mismo número de mensajes
     const newLength = messages.length;
-    let oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
-    if (newLength === oldLength && newLength > 0) return; 
+    const storedConvId = area.dataset.convId ? parseInt(area.dataset.convId) : -1;
+    const oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
+    
+    // Saltar solo durante polling cuando el chat Y el conteo no cambiaron
+    if (newLength === oldLength && newLength > 0 && storedConvId === activeConversationId) return;
     
     area.innerHTML = '';
     area.dataset.msgCount = newLength;
+    area.dataset.convId = activeConversationId;
 
     if (!messages || messages.length === 0) {
         area.innerHTML = '<p style="text-align:center; color:#888; margin-top: 2rem;">Inicio de la conversación.</p>';
