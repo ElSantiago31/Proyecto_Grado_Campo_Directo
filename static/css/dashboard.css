@@ -1932,14 +1932,14 @@
 
 .chat-wrapper {
     display: flex;
-    height: 72vh;
-    min-height: 520px;
+    height: 75vh; /* Ajuste a 75vh para dar más espacio */
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.10);
     overflow: hidden;
     border: 1px solid #e8ede4;
     margin-top: 1rem;
+    min-height: 400px; /* Reducido para pantallas pequeñas */
 }
 
 /* ---- Sidebar ---- */
@@ -1951,6 +1951,7 @@
     flex-direction: column;
     flex-shrink: 0;
     height: 100%;
+    overflow: hidden; /* Importante para que el scroll sea interno */
 }
 
 .chat-sidebar-header {
@@ -1972,7 +1973,7 @@
 .chat-contacts-list {
     flex: 1;
     overflow-y: auto;
-    min-height: 0; /* Crucial para que flex: 1 funcione con scroll */
+    min-height: 0; /* Crucial para flexbox scroll */
     padding: 0;
     margin: 0;
     list-style: none;

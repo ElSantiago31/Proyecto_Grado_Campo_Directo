@@ -113,6 +113,11 @@ function setupNavigation() {
                     case 'my-orders':
                         loadOrders();
                         break;
+                    case 'messages':
+                        // Asegurar que se carguen las conversaciones al entrar
+                        console.log('[Dashboard Comprador] Cargando conversaciones para la sección de mensajes');
+                        loadConversations();
+                        break;
                 }
             }
         });
@@ -1343,6 +1348,14 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
 async function loadMessages(convId, isPolling = false) {
     try {
         const messages = await chatApi.getMessages(convId);
+        
+        // Guardia de sincronización: Verificar si el ID de la petición 
+        // coincide con la conversación activa actualmente
+        if (activeConversationId !== convId) {
+            console.debug(`[Chat] Ignorando mensajes de la conv ${convId} (activa: ${activeConversationId})`);
+            return;
+        }
+
         renderMessages(messages);
         
         if (!isPolling || document.visibilityState === 'visible') {
