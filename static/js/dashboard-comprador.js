@@ -1266,11 +1266,13 @@ function renderConversations(conversations) {
 
         const li = document.createElement('li');
         li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
+        li.dataset.id = conv.id;
+        li.dataset.name = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         
         // Identificar nombre de la contraparte a renderizar
         let counterPartName = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
-        let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
+        let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span class="unread-badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
         
         li.innerHTML = `
             <div class="chat-avatar">${counterPartName.charAt(0).toUpperCase()}</div>
@@ -1281,20 +1283,29 @@ function renderConversations(conversations) {
             ${unreadBadge}
         `;
         
-        li.addEventListener('click', () => {
-             // Actualizar UI del chat activo
-             document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
-             li.classList.add('active');
-             
-             if(conv.mensajes_no_leidos > 0) {
-                 li.querySelector('span')?.remove(); // quita el badge al clickear
-             }
-             
-             openChat(conv.id, counterPartName);
-        });
-        
         listEl.appendChild(li);
     });
+
+    // Delegación de eventos en el contenedor padre
+    listEl.onclick = (e) => {
+        const li = e.target.closest('.chat-contact');
+        if (!li) return;
+
+        const convId = parseInt(li.dataset.id);
+        const name = li.dataset.name;
+
+        console.log(`[Chat] Seleccionando conversación ID: ${convId}, Nombre: ${name}`);
+
+        // Actualizar UI activa
+        document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
+        li.classList.add('active');
+        
+        // Quitar badge si existe
+        const badge = li.querySelector('.unread-badge');
+        if (badge) badge.remove();
+        
+        openChat(convId, name);
+    };
 }
 
 function openChat(convId, counterPartName) {
