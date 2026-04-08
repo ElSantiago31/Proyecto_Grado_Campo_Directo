@@ -1260,22 +1260,27 @@ function renderConversations(conversations) {
         return;
     }
 
-    const isCampesino = window.location.pathname.includes('dashboard') && !window.location.pathname.includes('comprador');
+
 
     conversations.forEach(conv => {
+        // Determinar el rol del usuario en ESTA conversación específica,
+        // comparando el ID real del usuario con el campo campesino/comprador.
+        // Esto funciona correctamente aunque el campesino use el modo comprador.
+        const myId = window.currentUserId || myChatUserId;
+        const iAmCampesino = myId ? (conv.campesino === myId || conv.campesino === parseInt(myId)) : false;
+
         // Almacenamos nuestra propia ID para saber qué burbujas pintar verde/blanco luego
         if (!myChatUserId) {
-            // Usar ID global si existe, si no, intentar detectar
-            myChatUserId = window.currentUserId || (isCampesino ? conv.campesino : conv.comprador);
+            myChatUserId = myId || (iAmCampesino ? conv.campesino : conv.comprador);
         }
 
         const li = document.createElement('li');
         li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
         li.dataset.id = conv.id;
-        li.dataset.name = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
+        li.dataset.name = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         
         // Identificar nombre de la contraparte a renderizar
-        let counterPartName = isCampesino ? conv.comprador_nombre : conv.campesino_nombre;
+        let counterPartName = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
         let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span class="unread-badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
         
