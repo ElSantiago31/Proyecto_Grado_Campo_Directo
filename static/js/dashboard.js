@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         if (profile && profile.tipo_usuario === 'campesino') {
             console.log(`[Dashboard] Perfil cargado: ${profile.nombre} ${profile.apellido}`);
+            
+            // Guardar ID para el sistema de chat y otros componentes
+            window.currentUserId = profile.id;
 
             // Actualizar nombre en la UI
             const userNameElement = document.getElementById('userName');
@@ -2905,7 +2908,9 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
 // ==========================================================================
 let activeConversationId = null;
 let chatPollingInterval = null;
-let myChatUserId = null; // Guardará nuestro ID numérico usando los datos de las conversaciones
+// myChatUserId se inicializará con window.currentUserId si está disponible, 
+// o se autodetectará de la primera conversación como respaldo.
+let myChatUserId = window.currentUserId || null; 
 
 async function loadConversations() {
     try {
@@ -2931,7 +2936,8 @@ function renderConversations(conversations) {
     conversations.forEach(conv => {
         // Almacenamos nuestra propia ID para saber qué burbujas pintar verde/blanco luego
         if (!myChatUserId) {
-            myChatUserId = isCampesino ? conv.campesino : conv.comprador;
+            // Usar ID global si existe, si no, intentar detectar
+            myChatUserId = window.currentUserId || (isCampesino ? conv.campesino : conv.comprador);
         }
 
         const li = document.createElement('li');
