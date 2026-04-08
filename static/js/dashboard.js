@@ -2160,11 +2160,15 @@ function showSection(sectionName) {
         activeNavItem.classList.add('active');
     }
 
-    // Cargar contenido específico de la sección
     if (sectionName === 'products') {
         loadUserProducts();
     } else if (sectionName === 'orders') {
         loadCampesinoOrders();
+    } else if (sectionName === 'messages') {
+        // Asegurar que se carguen las conversaciones al entrar a la sección
+        // Esto es crítico para la navegación móvil que usa showSection directamente
+        console.log('[Dashboard] Cargando conversaciones para la sección de mensajes');
+        loadConversations();
     }
 }
 
@@ -3019,6 +3023,14 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
 async function loadMessages(convId, isPolling = false) {
     try {
         const messages = await chatApi.getMessages(convId);
+        
+        // Guardia de sincronización: Verificar si el ID de la petición 
+        // coincide con la conversación activa actualmente
+        if (activeConversationId !== convId) {
+            console.debug(`[Chat] Ignorando mensajes de la conv ${convId} (activa: ${activeConversationId})`);
+            return;
+        }
+
         renderMessages(messages);
         
         if (!isPolling || document.visibilityState === 'visible') {
