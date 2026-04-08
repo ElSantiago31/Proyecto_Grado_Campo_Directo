@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Verificar autenticación JWT
     if (!isAuthenticated()) {
-        console.log('[Dashboard Comprador] ❌ No hay token de autenticación, redirigiendo al login');
+        console.log('[Dashboard Comprador] No hay token de autenticación, redirigiendo al login');
         window.location.href = '/login/';
         return;
     }
 
-    console.log('[Dashboard Comprador] ✅ Token válido, verificando perfil...');
+    console.log('[Dashboard Comprador] Token válido, verificando perfil...');
 
     // Verificar que el usuario sea un comprador
     try {
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log('[Dashboard Comprador] Perfil obtenido:', profile);
 
         if (!profile || (profile.tipo_usuario !== 'comprador' && profile.tipo_usuario !== 'campesino')) {
-            console.log('[Dashboard Comprador] ❌ Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario);
+            console.log('[Dashboard Comprador] Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario);
             window.location.href = '/login/';
             return;
         }
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         // Guardar ID para el sistema de chat y otros componentes
         window.currentUserId = profile.id;
 
-        console.log(`[Dashboard Comprador] ✅ Usuario autenticado (${profile.tipo_usuario}): ${profile.nombre} ${profile.apellido}`);
+        console.log(`[Dashboard Comprador] Usuario autenticado (${profile.tipo_usuario}): ${profile.nombre} ${profile.apellido}`);
 
         // Actualizar nombre en la UI
         const userNameElement = document.getElementById('userName');
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
     } catch (error) {
-        console.error('[Dashboard Comprador] ❌ Error verificando perfil:', error);
+        console.error('[Dashboard Comprador] Error verificando perfil:', error);
 
         // Si es error de autenticación (401), redirigir al login
         if (error instanceof ApiError && error.isAuthError()) {
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupQuantityModal();
     setupRatingModal();
     setupOrderTabs();
-    
+
     // Inicializar contador real de favoritos almacenados
     if (typeof updateFavoriteProductsCount === 'function') {
         updateFavoriteProductsCount();
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Actualizar tarjeta de calificación con datos reales desde la API
     loadMyRatingCard();
 
-    console.log('[Dashboard Comprador] ✅ Dashboard comprador cargado correctamente');
+    console.log('[Dashboard Comprador] Dashboard comprador cargado correctamente');
     console.log('[Dashboard Comprador] === FIN DE INICIALIZACIÓN ===');
 });
 
@@ -145,11 +145,11 @@ function setupLogout() {
         const showSection = (sectionId, e) => {
             e.preventDefault();
             userDropdown.classList.remove('show');
-            
+
             // Remover 'active' de navegación lateral y todas las secciones
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            
+
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
@@ -332,7 +332,7 @@ function setupMarketplaceFilters() {
     }
 }
 
-window.updateFavoriteProductsCount = function() {
+window.updateFavoriteProductsCount = function () {
     let favorites = JSON.parse(localStorage.getItem('comprador_favorites') || '[]');
     const countElement = document.getElementById('favoriteProducts');
     if (countElement) {
@@ -340,7 +340,7 @@ window.updateFavoriteProductsCount = function() {
     }
 };
 
-window.toggleFavorite = function(btn, productId, productName, imageUrl, campesinoId) {
+window.toggleFavorite = function (btn, productId, productName, imageUrl, campesinoId) {
     let favorites = JSON.parse(localStorage.getItem('comprador_favorites') || '[]');
     const isFavorite = favorites.some(f => f.id === productId);
 
@@ -389,7 +389,7 @@ function openQuantityModal(productId) {
     const input = document.getElementById('quantityInput');
     const typeSelect = document.getElementById('purchaseType');
     const priceDisplay = document.getElementById('quantityTotalPrice');
-    
+
     if (input) {
         input.value = 1;
         input.max = maxStock;
@@ -495,18 +495,18 @@ function setupRatingModal() {
 
     if (closeBtn) closeBtn.addEventListener('click', closeRatingModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeRatingModal);
-    
+
     if (submitBtn) {
-        submitBtn.addEventListener('click', async function() {
+        submitBtn.addEventListener('click', async function () {
             const orderId = document.getElementById('ratingOrderId').value;
             const score = document.getElementById('ratingScore').value;
             const comment = document.getElementById('ratingComment').value;
-            
+
             if (!score || score === '0') return;
-            
+
             this.disabled = true;
             this.textContent = 'Enviando...';
-            
+
             try {
                 await orderApi.calificar(orderId, { calificacion: parseInt(score), comentario: comment });
                 showNotification('¡Gracias! Calificación enviada existosamente', 'success');
@@ -524,21 +524,21 @@ function setupRatingModal() {
 
     // Efectos de Hover y Click para estrellas
     stars.forEach(star => {
-        star.addEventListener('mouseover', function() {
+        star.addEventListener('mouseover', function () {
             const value = this.getAttribute('data-value');
             highlightStars(value);
         });
-        
-        star.addEventListener('mouseout', function() {
+
+        star.addEventListener('mouseout', function () {
             const currentScore = document.getElementById('ratingScore').value;
             highlightStars(currentScore);
         });
-        
-        star.addEventListener('click', function() {
+
+        star.addEventListener('click', function () {
             const value = this.getAttribute('data-value');
             document.getElementById('ratingScore').value = value;
             highlightStars(value);
-            
+
             // Habilitar botón de enviar
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -559,25 +559,25 @@ function highlightStars(count) {
     });
 }
 
-window.openRatingModal = function(orderId, targetName) {
+window.openRatingModal = function (orderId, targetName) {
     const modal = document.getElementById('ratingModal');
     if (!modal) return;
 
     document.getElementById('ratingTargetName').textContent = targetName;
     document.getElementById('ratingOrderId').value = orderId;
-    
+
     // Reset modal
     document.getElementById('ratingScore').value = "0";
     document.getElementById('ratingComment').value = "";
     highlightStars(0);
-    
+
     const submitBtn = document.getElementById('submitRatingBtn');
     if (submitBtn) submitBtn.disabled = true;
 
     modal.style.display = 'block';
 };
 
-window.closeRatingModal = function() {
+window.closeRatingModal = function () {
     const modal = document.getElementById('ratingModal');
     if (modal) modal.style.display = 'none';
 };
@@ -651,7 +651,7 @@ function renderCart() {
         if (cartActions) cartActions.style.display = 'none';
         list.innerHTML = `
         <div class="activity-item" style="text-align:center; padding: 20px;">
-            <span class="activity-icon">🛒</span>
+            <span class="activity-icon">🏪</span>
             <div class="activity-content">
                 <p><strong>Tu carrito de compras está vacío.</strong></p>
                 <small>Ve al Marketplace para agregar productos a tus pedidos.</small>
@@ -786,34 +786,34 @@ async function fetchRealOrders(type) {
 // ----------------------------------------------------
 // CANCELACIÓN DE PEDIDOS (COMPRADOR)
 // ----------------------------------------------------
-window.openCancelOrderModal = function(orderId) {
+window.openCancelOrderModal = function (orderId) {
     const modal = document.getElementById('cancelOrderModal');
     if (!modal) return;
-    
+
     document.getElementById('cancelOrderIdDisplay').textContent = `#${orderId}`;
     document.getElementById('cancelOrderIdHidden').value = orderId;
-    
+
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
 };
 
-window.closeCancelOrderModal = function() {
+window.closeCancelOrderModal = function () {
     const modal = document.getElementById('cancelOrderModal');
     if (modal) modal.style.display = 'none';
 };
 
 // Configurar eventos del modal de cancelación
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const closeBtn = document.getElementById('closeCancelOrderModal');
     const declineBtn = document.getElementById('declineCancelBtn');
     const confirmBtn = document.getElementById('confirmCancelBtn');
 
     if (closeBtn) closeBtn.addEventListener('click', closeCancelOrderModal);
     if (declineBtn) declineBtn.addEventListener('click', closeCancelOrderModal);
-    
+
     if (confirmBtn) {
-        confirmBtn.addEventListener('click', async function() {
+        confirmBtn.addEventListener('click', async function () {
             const orderId = document.getElementById('cancelOrderIdHidden').value;
             if (!orderId) return;
 
@@ -823,7 +823,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Llamada a la API para cancelar
                 await orderApi.cancelar(orderId);
-                
+
                 showNotification(`Pedido ${orderId} cancelado correctamente`, 'success');
                 closeCancelOrderModal();
                 loadOrders(); // Recarga la pestaña actual de pedidos
@@ -872,29 +872,29 @@ async function processPurchase() {
         }
     }
 
-        const profileData = await authApi.getProfile();
-        // Agrupar por campesino porque el backend exige que 1 pedido = 1 campesino
-        const ordersByCampesino = {};
-        cart.forEach(item => {
-            const campId = item.campesino_id;
-            if (!campId) return; // ignore invalid items
-            if (!ordersByCampesino[campId]) {
-                ordersByCampesino[campId] = {
-                    campesino: parseInt(campId),
-                    notas_comprador: "Pedido generado desde la web",
-                    metodo_pago: "efectivo",
-                    metodo_entrega: "recogida",
-                    direccion_entrega: profileData?.direccion || "Dirección no registrada",
-                    telefono_contacto: profileData?.telefono || "Teléfono no registrado",
-                    detalles: []
-                };
-            }
-            ordersByCampesino[campId].detalles.push({
-                producto: item.id,
-                cantidad: item.quantity,
-                precio_unitario: item.price
-            });
+    const profileData = await authApi.getProfile();
+    // Agrupar por campesino porque el backend exige que 1 pedido = 1 campesino
+    const ordersByCampesino = {};
+    cart.forEach(item => {
+        const campId = item.campesino_id;
+        if (!campId) return; // ignore invalid items
+        if (!ordersByCampesino[campId]) {
+            ordersByCampesino[campId] = {
+                campesino: parseInt(campId),
+                notas_comprador: "Pedido generado desde la web",
+                metodo_pago: "efectivo",
+                metodo_entrega: "recogida",
+                direccion_entrega: profileData?.direccion || "Dirección no registrada",
+                telefono_contacto: profileData?.telefono || "Teléfono no registrado",
+                detalles: []
+            };
+        }
+        ordersByCampesino[campId].detalles.push({
+            producto: item.id,
+            cantidad: item.quantity,
+            precio_unitario: item.price
         });
+    });
 
     const validOrders = Object.values(ordersByCampesino);
     if (validOrders.length === 0) {
@@ -930,10 +930,10 @@ async function processPurchase() {
             errMsg = error.message;
         }
         if (error.details) {
-             try {
-                 const detailStr = JSON.stringify(error.details);
-                 if (detailStr.length < 150) errMsg += `\n${detailStr}`;
-             } catch(e) {}
+            try {
+                const detailStr = JSON.stringify(error.details);
+                if (detailStr.length < 150) errMsg += `\n${detailStr}`;
+            } catch (e) { }
         }
         showNotification(errMsg, "error");
     } finally {
@@ -1011,7 +1011,7 @@ async function loadProfileData() {
                 const headerAvatarImg = document.getElementById('headerAvatarImg');
                 const placeholder = document.getElementById('profileAvatarPlaceholder');
                 const headerPlaceholder = document.getElementById('headerAvatarContainer');
-                
+
                 if (avatarImg) avatarImg.src = profile.avatar;
                 else if (placeholder) {
                     const container = document.getElementById('profileAvatarLarge');
@@ -1019,7 +1019,7 @@ async function loadProfileData() {
                         container.innerHTML = `<img src="${profile.avatar}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
                     }
                 }
-                
+
                 if (headerAvatarImg) headerAvatarImg.src = profile.avatar;
                 else if (headerPlaceholder) {
                     headerPlaceholder.innerHTML = `<img src="${profile.avatar}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
@@ -1032,7 +1032,7 @@ async function loadProfileData() {
                 deleteBtn.style.display = profile.avatar ? 'inline-block' : 'none';
             }
         }
-        
+
         // Configurar listener para la foto de perfil (solo una vez)
         setupProfilePhotoUpload();
     } catch (error) {
@@ -1043,14 +1043,14 @@ async function loadProfileData() {
 function setupProfilePhotoUpload() {
     const photoInput = document.getElementById('profilePhotoInput');
     const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
-    
+
     if (!photoInput || photoInput.dataset.initialized) return;
     photoInput.dataset.initialized = 'true';
-    
-    photoInput.addEventListener('change', async function() {
+
+    photoInput.addEventListener('change', async function () {
         const file = this.files[0];
         if (!file) return;
-        
+
         // Validar tipo (solo fotos, nada de gif o video)
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (!allowedTypes.includes(file.type)) {
@@ -1058,43 +1058,43 @@ function setupProfilePhotoUpload() {
             this.value = '';
             return;
         }
-        
+
         // Validar tamaño (máx 5MB)
         if (file.size > 5 * 1024 * 1024) {
             showNotification('La imagen es demasiado grande. Máximo 5MB.', 'error');
             return;
         }
-        
+
         // Mostrar previsualización inmediata y loading
         const avatarLarge = document.getElementById('profileAvatarLarge');
         const originalContent = avatarLarge.innerHTML;
         avatarLarge.style.opacity = '0.5';
-        
+
         const formData = new FormData();
         formData.append('avatar', file);
-        
+
         try {
             console.log('[Dashboard Comprador] Subiendo foto de perfil...');
             const response = await authApi.updateProfile(formData);
             console.log('[Dashboard Comprador] Foto de perfil actualizada:', response);
-            
+
             const userData = response.user || response;
             if (userData && userData.avatar) {
                 // Actualizar todas las imágenes en la UI
                 const newAvatarUrl = userData.avatar;
-                
+
                 // Avatar grande
                 avatarLarge.innerHTML = `<img src="${newAvatarUrl}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
-                
+
                 // Avatar en el header
                 const headerAvatarContainer = document.getElementById('headerAvatarContainer');
                 if (headerAvatarContainer) {
                     headerAvatarContainer.innerHTML = `<img src="${newAvatarUrl}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                 }
-                
+
                 // Mostrar botón eliminar
                 if (deleteBtn) deleteBtn.style.display = 'inline-block';
-                
+
                 showNotification('¡Foto de perfil actualizada!', 'success');
             }
         } catch (error) {
@@ -1109,30 +1109,30 @@ function setupProfilePhotoUpload() {
     });
 
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', async function() {
+        deleteBtn.addEventListener('click', async function () {
             if (!confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) return;
-            
+
             const originalText = this.textContent;
             this.disabled = true;
             this.textContent = 'Eliminando...';
-            
+
             try {
                 // Enviar null para eliminar la foto
                 const response = await authApi.updateProfile({ avatar: null });
                 console.log('[Dashboard Comprador] Foto de perfil eliminada:', response);
-                
+
                 // Actualizar UI al estado predeterminado
                 const avatarLarge = document.getElementById('profileAvatarLarge');
                 if (avatarLarge) {
-                    avatarLarge.innerHTML = '<span id="profileAvatarPlaceholder">🛒</span>';
+                    avatarLarge.innerHTML = '<span id="profileAvatarPlaceholder">👤</span>';
                 }
-                
+
                 const headerAvatarContainer = document.getElementById('headerAvatarContainer');
                 if (headerAvatarContainer) {
                     // Restaurar avatar predeterminado
-                    headerAvatarContainer.innerHTML = '🛒';
+                    headerAvatarContainer.innerHTML = '👤';
                 }
-                
+
                 this.style.display = 'none';
                 showNotification('Foto de perfil eliminada', 'success');
             } catch (error) {
@@ -1158,7 +1158,7 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         email: document.getElementById('profileEmail').value.trim(),
         direccion: document.getElementById('profileDireccion').value.trim()
     };
-    
+
     const fecha = document.getElementById('profileFechaNacimiento').value;
     if (fecha) {
         profileData.fecha_nacimiento = fecha;
@@ -1192,17 +1192,17 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
 // Manejo del Cambio de Contraseña
 document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const cp = document.getElementById('currentPassword').value;
     const np = document.getElementById('newPassword').value;
     const npc = document.getElementById('newPasswordConfirm').value;
-    
+
     if (np !== npc) {
         if (typeof showNotification === 'function') showNotification('Las nuevas contraseñas no coinciden', 'error');
         else alert('Las nuevas contraseñas no coinciden');
         return;
     }
-    
+
     const btn = document.getElementById('changePasswordBtn');
     btn.disabled = true;
     btn.textContent = 'Guardando...';
@@ -1213,10 +1213,10 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
             new_password: np,
             new_password_confirm: npc
         });
-        
+
         if (typeof showNotification === 'function') showNotification('Contraseña actualizada con éxito', 'success');
         else alert('Contraseña actualizada con éxito');
-        
+
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
         console.error("Error cambiando contraseña:", error);
@@ -1239,7 +1239,7 @@ let activeConversationId = null;
 let chatPollingInterval = null;
 // myChatUserId se inicializará con window.currentUserId si está disponible, 
 // o se autodetectará de la primera conversación como respaldo.
-let myChatUserId = window.currentUserId || null; 
+let myChatUserId = window.currentUserId || null;
 
 async function loadConversations() {
     try {
@@ -1247,14 +1247,14 @@ async function loadConversations() {
         renderConversations(response.results || response);
     } catch (error) {
         console.error("Error cargando conversaciones:", error);
-        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
+        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0, 100)}</small></li>`;
     }
 }
 
 function renderConversations(conversations) {
     const listEl = document.getElementById('chatContactsList');
     listEl.innerHTML = '';
-    
+
     if (!conversations || conversations.length === 0) {
         listEl.innerHTML = `<li style="padding: 20px; text-align: center; color: #888;">No hay chats iniciados. Cuando realices compras aparecerán aquí.</li>`;
         return;
@@ -1278,12 +1278,12 @@ function renderConversations(conversations) {
         li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
         li.dataset.id = conv.id;
         li.dataset.name = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
-        
+
         // Identificar nombre de la contraparte a renderizar
         let counterPartName = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
         let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span class="unread-badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
-        
+
         li.innerHTML = `
             <div class="chat-avatar">${counterPartName.charAt(0).toUpperCase()}</div>
             <div class="chat-contact-info">
@@ -1292,7 +1292,7 @@ function renderConversations(conversations) {
             </div>
             ${unreadBadge}
         `;
-        
+
         listEl.appendChild(li);
     });
 
@@ -1309,35 +1309,35 @@ function renderConversations(conversations) {
         // Actualizar UI activa
         document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
         li.classList.add('active');
-        
+
         // Quitar badge si existe
         const badge = li.querySelector('.unread-badge');
         if (badge) badge.remove();
-        
+
         openChat(convId, name);
     };
 }
 
 function openChat(convId, counterPartName) {
     activeConversationId = convId;
-    
+
     // Cambiar vistas
     document.getElementById('chatEmptyState').style.display = 'none';
     document.getElementById('chatMainArea').style.display = 'flex';
     document.getElementById('activeChatName').textContent = counterPartName;
     document.getElementById('activeChatAvatar').textContent = counterPartName.charAt(0).toUpperCase();
-    
+
     // Ajuste móvil
-    if(window.innerWidth <= 768) {
+    if (window.innerWidth <= 768) {
         document.querySelector('.chat-sidebar').style.display = 'none';
         document.getElementById('chatMobileBackBtn').style.display = 'block';
     }
-    
+
     // Carga inicial 
     loadMessages(convId);
-    
+
     // Iniciar el Polling por si responden en vivo (cada 4 segundos)
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     chatPollingInterval = setInterval(() => loadMessages(convId, true), 4000);
 }
 
@@ -1345,7 +1345,7 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
     document.querySelector('.chat-sidebar').style.display = 'flex';
     document.getElementById('chatMainArea').style.display = 'none';
     document.getElementById('chatMobileBackBtn').style.display = 'none';
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     activeConversationId = null;
     loadConversations();
 });
@@ -1353,7 +1353,7 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
 async function loadMessages(convId, isPolling = false) {
     try {
         const messages = await chatApi.getMessages(convId);
-        
+
         // Guardia de sincronización: Verificar si el ID de la petición 
         // coincide con la conversación activa actualmente
         if (activeConversationId !== convId) {
@@ -1362,7 +1362,7 @@ async function loadMessages(convId, isPolling = false) {
         }
 
         renderMessages(messages);
-        
+
         if (!isPolling || document.visibilityState === 'visible') {
             await chatApi.markAsRead(convId);
         }
@@ -1373,16 +1373,16 @@ async function loadMessages(convId, isPolling = false) {
 
 function renderMessages(messages) {
     const area = document.getElementById('chatMessagesArea');
-    
+
     // Optimización de polling: solo evitar re-render si es polling Y el convId Y el conteo son iguales
     // NOTA: No usar solo el conteo, dos chats pueden tener el mismo número de mensajes
     const newLength = messages.length;
     const storedConvId = area.dataset.convId ? parseInt(area.dataset.convId) : -1;
     const oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
-    
+
     // Saltar solo durante polling cuando el chat Y el conteo no cambiaron
     if (newLength === oldLength && newLength > 0 && storedConvId === activeConversationId) return;
-    
+
     area.innerHTML = '';
     area.dataset.msgCount = newLength;
     area.dataset.convId = activeConversationId;
@@ -1394,7 +1394,7 @@ function renderMessages(messages) {
 
     messages.forEach(msg => {
         const div = document.createElement('div');
-        
+
         let msgType = 'received';
         if (msg.tipo_mensaje === 'sistema') {
             // El mensaje sistema o autogenerado por el backend
@@ -1402,10 +1402,10 @@ function renderMessages(messages) {
         } else if (msg.remitente === myChatUserId) {
             msgType = 'sent';
         }
-        
+
         div.className = `chat-bubble-wrapper ${msgType}`;
-        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
+        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
         div.innerHTML = `
             <div class="chat-bubble">
                 <span style="white-space: pre-wrap;">${msg.contenido}</span>
@@ -1414,7 +1414,7 @@ function renderMessages(messages) {
         `;
         area.appendChild(div);
     });
-    
+
     // Auto-scroll the chat
     area.scrollTop = area.scrollHeight;
 }
@@ -1422,26 +1422,26 @@ function renderMessages(messages) {
 document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!activeConversationId) return;
-    
+
     const input = document.getElementById('chatInputMessage');
     const txt = input.value.trim();
-    if(!txt) return;
-    
+    if (!txt) return;
+
     input.value = '';
     input.disabled = true;
-    
+
     try {
         await chatApi.sendMessage(activeConversationId, {
             tipo_mensaje: 'texto',
             contenido: txt
         });
-        
+
         loadMessages(activeConversationId);
         loadConversations();
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         alert('Error enviando mensaje.');
-        input.value = txt; 
+        input.value = txt;
     } finally {
         input.disabled = false;
         input.focus();
@@ -1451,12 +1451,12 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
 // Listener extra para refrescar chats a demanda cuando se abre la ventana (al darle a Navegación -> Mensajes)
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
-        if(e.currentTarget.getAttribute('data-section') === 'messages') {
+        if (e.currentTarget.getAttribute('data-section') === 'messages') {
             updateMsgBadge(0);
             loadConversations();
         } else {
             // Si nos vamos a otra tab, apagamos el polling del chat activo
-            if(chatPollingInterval) clearInterval(chatPollingInterval);
+            if (chatPollingInterval) clearInterval(chatPollingInterval);
         }
     });
 });
@@ -1570,7 +1570,7 @@ function populateLocationFilter() {
     }
 
     // Ordenar departamentos alfabéticamente
-    const sortedData = [...window.colombiaData].sort((a, b) => 
+    const sortedData = [...window.colombiaData].sort((a, b) =>
         a.departamento.localeCompare(b.departamento)
     );
 
@@ -1578,7 +1578,7 @@ function populateLocationFilter() {
         const option = document.createElement('option');
         // Usamos el nombre del departamento en minúsculas como valor para el filtro JS
         option.value = item.departamento.toLowerCase();
-        
+
         // Asignar emoji temático según la región
         let emoji = '📍';
         const d = item.departamento.toLowerCase();
@@ -1592,7 +1592,7 @@ function populateLocationFilter() {
         else if (d.includes('quind') || d.includes('risaralda') || d.includes('caldas')) emoji = '☕';
         else if (d.includes('nar') || d.includes('cauca') || d.includes('putumayo')) emoji = '🌋';
         else if (d.includes('amazonas') || d.includes('guain') || d.includes('vaup')) emoji = '🌳';
-        
+
         option.textContent = `${emoji} ${item.departamento}`;
         locationFilter.appendChild(option);
     });
