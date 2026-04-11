@@ -229,7 +229,7 @@ class PedidoCreateSerializer(serializers.ModelSerializer):
                 mensaje_texto += f"🏠 Dirección de envío: {pedido.direccion_entrega}\n"
             if pedido.telefono_contacto:
                 mensaje_texto += f"📞 Teléfono: {pedido.telefono_contacto}\n"
-            mensaje_texto += "\n¡Quedo atento a la confirmación!"
+            mensaje_texto += "\n¡Quedo atento/a a la confirmación!"
                 
             Mensaje.objects.create(
                 conversacion=conversacion,
