@@ -387,14 +387,12 @@ function openQuantityModal(productId) {
 
     // 3. Resetear inputs
     const input = document.getElementById('quantityInput');
-    const typeSelect = document.getElementById('purchaseType');
     const priceDisplay = document.getElementById('quantityTotalPrice');
 
     if (input) {
         input.value = 1;
         input.max = maxStock;
     }
-    if (typeSelect) typeSelect.value = 'unidad';
 
     const idInput = document.getElementById('quantityProductId');
     if (idInput) idInput.value = productId;
@@ -402,16 +400,13 @@ function openQuantityModal(productId) {
     // 4. Lógica de cálculo reactivo abstracto
     const calculateTotal = () => {
         let qty = parseFloat(input.value) || 0;
-        // Si eligió por peso pero el precio es por Kg, se asume 1:1, etc.
         let total = qty * priceVal;
         priceDisplay.textContent = total.toLocaleString();
     };
 
     // Escuchar tipeo vivo
     input.removeEventListener('input', calculateTotal);
-    typeSelect.removeEventListener('change', calculateTotal);
     input.addEventListener('input', calculateTotal);
-    typeSelect.addEventListener('change', calculateTotal);
 
     // Calcular render inicial
     calculateTotal();
@@ -426,7 +421,6 @@ function closeQuantityModal() {
 function confirmQuantitySelection() {
     const productId = parseInt(document.getElementById('quantityProductId').value);
     const quantity = parseFloat(document.getElementById('quantityInput').value);
-    const method = document.getElementById('purchaseType').value;
     const product = allMarketplaceProducts.find(p => p.id === productId);
 
     if (!product) return;
