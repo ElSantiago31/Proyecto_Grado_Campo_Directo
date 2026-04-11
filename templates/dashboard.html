@@ -497,9 +497,24 @@
                         <!-- Las opciones se cargarán dinámicamente -->
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="productPrice">Precio por kg/unidad</label>
-                    <input type="number" id="productPrice" name="productPrice" min="0" step="any" required>
+                <div class="form-group" style="display: flex; gap: 1rem;">
+                    <div style="flex: 2;">
+                        <label for="productPrice">Precio por Unidad ($)</label>
+                        <input type="number" id="productPrice" name="productPrice" min="0" step="any" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="productUnit">Se vende por:</label>
+                        <select id="productUnit" name="productUnit" required style="width:100%; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                            <option value="kg" selected>Kilogramo (Kg)</option>
+                            <option value="libra">Libra</option>
+                            <option value="arroba">Arroba</option>
+                            <option value="gramo">Gramo</option>
+                            <option value="bulto">Bulto</option>
+                            <option value="caja">Caja</option>
+                            <option value="canasta">Canasta</option>
+                            <option value="unidad">Unidad (Ej: Pollo)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="productStock">Cantidad disponible</label>
@@ -543,9 +558,24 @@
                         <!-- Las opciones se cargarán dinámicamente -->
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="editProductPrice">Precio por kg/unidad</label>
-                    <input type="number" id="editProductPrice" name="productPrice" min="0" step="any" required>
+                <div class="form-group" style="display: flex; gap: 1rem;">
+                    <div style="flex: 2;">
+                        <label for="editProductPrice">Precio por Unidad ($)</label>
+                        <input type="number" id="editProductPrice" name="productPrice" min="0" step="any" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="editProductUnit">Se vende por:</label>
+                        <select id="editProductUnit" name="productUnit" required style="width:100%; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                            <option value="kg">Kilogramo (Kg)</option>
+                            <option value="libra">Libra</option>
+                            <option value="arroba">Arroba</option>
+                            <option value="gramo">Gramo</option>
+                            <option value="bulto">Bulto</option>
+                            <option value="caja">Caja</option>
+                            <option value="canasta">Canasta</option>
+                            <option value="unidad">Unidad (Ej: Pollo)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editProductStock">Cantidad disponible</label>
