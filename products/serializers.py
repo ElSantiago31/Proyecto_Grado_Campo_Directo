@@ -151,12 +151,15 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
                 "El peso mínimo debe ser menor que el peso máximo"
             )
             
-        # Validación de Límite SIPSA-DANE (130% máx del referencial local/nacional)
         precio = attrs.get('precio_por_kg')
         nombre = attrs.get('nombre')
         finca = attrs.get('finca')
+        unidad = attrs.get('unidad_medida', 'kg')
         
-        if precio and nombre:
+        # Validar límite SIPSA solo para medidas de peso exacto
+        unidades_peso = ['kg', 'libra', 'arroba', 'gramo']
+        
+        if precio and nombre and unidad in unidades_peso:
             # Extraemos la primera palabra (ej 'Papa')
             palabra_clave = nombre.split()[0].strip() if nombre else ''
             sipsa_qs = SipsaPrecio.objects.none()
@@ -193,21 +196,30 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
                         sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
                 
             if sipsa_val:
-                # El precio máximo permitido será un 130% (x1.3) del valor SIPSA
+                # Calcular el precio equivalente por kilogramo ingresado por el usuario
+                precio_equivalente_kg = precio
+                if unidad == 'libra':
+                    precio_equivalente_kg = precio * Decimal('2')
+                elif unidad == 'arroba':
+                    precio_equivalente_kg = precio / Decimal('12.5')
+                elif unidad == 'gramo':
+                    precio_equivalente_kg = precio * Decimal('1000')
+
+                # El precio máximo permitido será un 130% (x1.3) del valor SIPSA (por kg)
                 limite_maximo = sipsa_val.precio_promedio * Decimal('1.30')
-                if precio > limite_maximo:
+                if precio_equivalente_kg > limite_maximo:
                     if es_exacto or sipsa_val.producto.lower() == palabra_clave.lower():
                         mensaje = (
                             f'Precio demasiado alto. Referencia DANE para "{sipsa_val.producto}": '
-                            f'${sipsa_val.precio_promedio:,.0f} COP. '
-                            f'Limite maximo permitido (130% del referencial): ${limite_maximo:,.0f} COP. '
-                            f'Tu precio (${precio:,.0f}) supera ese limite.'
+                            f'${sipsa_val.precio_promedio:,.0f} COP/Kg. '
+                            f'Límite máximo permitido: ${limite_maximo:,.0f} COP/Kg. '
+                            f'Tu precio equivale a ${precio_equivalente_kg:,.0f} COP/Kg y supera el límite.'
                         )
                     else:
                         mensaje = (
-                            f'Tu variante no figura en el DANE, se uso la referencia mas alta de "{sipsa_val.producto}" '
-                            f'(${sipsa_val.precio_promedio:,.0f} COP). '
-                            f'El limite permitido es ${limite_maximo:,.0f} COP y tu precio (${precio:,.0f}) lo supera.'
+                            f'Tu variante no figura en el DANE, se usó la referencia más alta de "{sipsa_val.producto}" '
+                            f'(${sipsa_val.precio_promedio:,.0f} COP/Kg). '
+                            f'Límite permitido: ${limite_maximo:,.0f} COP/Kg. Tu equivalente es ${precio_equivalente_kg:,.0f} COP/Kg.'
                         )
 
                     raise serializers.ValidationError({

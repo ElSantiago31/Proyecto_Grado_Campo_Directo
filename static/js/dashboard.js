@@ -757,10 +757,10 @@ async function handleProductSubmit(e) {
         nombre: formData.get('productName'),
         categoria: parseInt(categoryId), // Debe ser un ID numérico
         precio_por_kg: parseFloat(formData.get('productPrice')), // Nombre correcto del campo
-        stock_disponible: parseInt(formData.get('productStock')), // Nombre correcto del campo
+        stock_disponible: parseInt(formData.get('productStock')),
         descripcion: formData.get('productDescription') || '',
-        unidad_medida: 'kg', // Valor por defecto
-        estado: 'disponible' // Valor por defecto
+        unidad_medida: formData.get('productUnit') || 'kg',
+        estado: 'disponible'
     };
 
     console.log('[Dashboard] Datos del producto preparados (sin finca):', productData);
@@ -1171,8 +1171,9 @@ async function editProduct(productId) {
 function fillEditForm(producto) {
     document.getElementById('editProductId').value = producto.id;
     document.getElementById('editProductName').value = producto.nombre;
-    document.getElementById('editProductCategory').value = producto.categoria;
+    document.getElementById('editProductCategory').value = producto.categoria || '';
     document.getElementById('editProductPrice').value = producto.precio_por_kg;
+    document.getElementById('editProductUnit').value = producto.unidad_medida || 'kg';
     document.getElementById('editProductStock').value = producto.stock_disponible;
     document.getElementById('editProductDescription').value = producto.descripcion || '';
     document.getElementById('editProductStatus').value = producto.estado;
@@ -1293,6 +1294,7 @@ async function handleEditSubmit(e) {
         precio_por_kg: parseFloat(formData.get('productPrice')),
         stock_disponible: parseInt(formData.get('productStock')),
         descripcion: formData.get('productDescription') || '',
+        unidad_medida: formData.get('productUnit') || 'kg',
         estado: formData.get('productStatus')
     };
 

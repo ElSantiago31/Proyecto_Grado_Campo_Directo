@@ -74,11 +74,14 @@ class Producto(models.Model):
     """
     
     UNIDAD_MEDIDA_CHOICES = [
-        ('kg', 'Kilogramo'),
-        ('gramo', 'Gramo'),
-        ('unidad', 'Unidad'),
+        ('kg', 'Kilogramo (Kg)'),
         ('libra', 'Libra'),
         ('arroba', 'Arroba'),
+        ('gramo', 'Gramo'),
+        ('bulto', 'Bulto'),
+        ('caja', 'Caja'),
+        ('canasta', 'Canasta'),
+        ('unidad', 'Unidad (Ej: Pollo)'),
     ]
     
     ESTADO_CHOICES = [
