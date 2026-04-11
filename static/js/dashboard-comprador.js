@@ -639,7 +639,12 @@ function updateCartBadge() {
 function renderCart() {
     const list = document.getElementById('buyerOrdersList');
     const cartActions = document.getElementById('cartActionsContainer');
-    const cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
+    let cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
+
+    const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
+    if (searchTerm) {
+        cart = cart.filter(item => item.name.toLowerCase().includes(searchTerm));
+    }
 
     if (cart.length === 0) {
         if (cartActions) cartActions.style.display = 'none';
@@ -693,6 +698,14 @@ async function fetchRealOrders(type) {
             if (counter) counter.textContent = filtered.length;
         } else {
             filtered = pedidos.filter(p => ['completed', 'cancelled'].includes(p.estado));
+        }
+
+        const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
+        if (searchTerm) {
+            filtered = filtered.filter(p => 
+                p.id.toString() === searchTerm || 
+                (p.detalles && p.detalles.some(d => d.nombre_producto_snapshot.toLowerCase().includes(searchTerm)))
+            );
         }
 
         if (filtered.length === 0) {
@@ -841,6 +854,17 @@ function setupOrderTabs() {
             loadOrders();
         });
     });
+
+    const orderSearch = document.getElementById('orderSearch');
+    if (orderSearch && !orderSearch.hasAttribute('data-listener')) {
+        orderSearch.addEventListener('input', function() {
+            clearTimeout(window.orderSearchTimeout);
+            window.orderSearchTimeout = setTimeout(() => {
+                loadOrders();
+            }, 300);
+        });
+        orderSearch.setAttribute('data-listener', 'true');
+    }
 
     const processBtn = document.getElementById('processPurchaseBtn');
     if (processBtn) processBtn.addEventListener('click', processPurchase);
