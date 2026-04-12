@@ -299,6 +299,133 @@ function updateStats(period = 'month') {
     if (ratingEl) ratingEl.textContent = dashboardData.stats.rating.toFixed(1);
 }
 
+// ============================================================
+// FUNCIONALIDAD: MIS RESEÑAS (CAMPESINO)
+// ============================================================
+async function abrirModalMisResenas() {
+    console.log('[Dashboard] Abriendo modal de Mis Reseñas...');
+    const modal = document.getElementById('misResenasModal');
+    const closeBtn = document.getElementById('closeMisResenasModal');
+    const container = document.getElementById('misResenasContainer');
+    
+    if (!modal) return;
+    
+    // Configurar cierre
+    if (closeBtn) {
+        closeBtn.onclick = () => modal.style.display = 'none';
+    }
+    
+    // Cerrar si hace clic fuera
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+    
+    // Mostrar modal con loader
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    container.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+            <span class="loader" style="width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #2d5016; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
+            <p style="margin-top: 15px; color: #666;">Cargando tus reseñas...</p>
+        </div>
+    `;
+    
+    try {
+        // Cargar reseñas utilizando el authApi genérico (o userApi)
+        let data;
+        let esAutor = false;
+        
+        try {
+            // Intentamos usar el endpoint del usuario campesino
+            const campesinoId = window.currentUserId;
+            if (campesinoId && window.userApi && window.userApi.getResenasCampesino) {
+                console.log(`[Dashboard] Obteniendo reseñas para campesino ID: ${campesinoId}`);
+                data = await window.userApi.getResenasCampesino(campesinoId);
+            } else if (window.userApi && window.userApi.getMisResenas) {
+                console.log(`[Dashboard] Obteniendo mis reseñas directamente`);
+                data = await window.userApi.getMisResenas();
+                esAutor = true;
+            } else {
+                throw new Error("No hay método disponible para cargar reseñas");
+            }
+        } catch (apiError) {
+            console.warn('[Dashboard] Falló getResenasCampesino, probando getMisResenas...', apiError);
+            if (window.userApi && window.userApi.getMisResenas) {
+                data = await window.userApi.getMisResenas();
+                esAutor = true;
+            } else {
+                throw apiError;
+            }
+        }
+        
+        const resenas = data.results || data;
+        
+        if (!resenas || resenas.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: #666;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">⭐</div>
+                    <h3>Aún no tienes calificaciones</h3>
+                    <p>Cuando un comprador califique tus productos, aparecerán aquí.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Estructura General:
+        let html = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+                <div>
+                    <div style="font-size: 3rem; font-weight: bold; color: #2d5016;">${dashboardData.stats.rating.toFixed(1)}</div>
+                </div>
+                <div>
+                    <div style="color: #ffc107; font-size: 1.5rem;">${'★'.repeat(Math.round(dashboardData.stats.rating))}${'☆'.repeat(5 - Math.round(dashboardData.stats.rating))}</div>
+                    <div style="color: #666; font-size: 0.9rem;">Basado en ${resenas.length} calificación(es)</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+        `;
+        
+        resenas.forEach(resena => {
+            // Manejar diferencias entre formatos de API
+            const stars = resena.calificacion || resena.estrellas || resena.calificacion_campesino || 5;
+            const text = resena.comentario || resena.comentario_calificacion || "Sin comentario adicional.";
+            // Si tiene pedido, podemos mostrar quién lo generó
+            let name = "Usuario Anónimo";
+            if (resena.comprador_nombre) name = resena.comprador_nombre;
+            else if (resena.autor) name = resena.autor;
+            
+            let date = resena.fecha ? new Date(resena.fecha).toLocaleDateString() : "";
+            
+            html += `
+                <div style="padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: #333;">${name}</strong>
+                        <span style="color: #888; font-size: 0.85rem;">${date}</span>
+                    </div>
+                    <div style="color: #ffc107; margin-bottom: 8px;">
+                        ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}
+                    </div>
+                    <p style="color: #555; margin: 0; font-size: 0.95rem; line-height: 1.4;">"${text}"</p>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+        container.innerHTML = html;
+        
+    } catch (e) {
+        console.error('[Dashboard] Error cargando reseñas:', e);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: #e74c3c;">
+                <p>Ocurrió un error al cargar tus reseñas.</p>
+                <small>${e.message}</small>
+            </div>
+        `;
+    }
+}
+
 /**
  * Renderiza el gráfico de ventas usando Chart.js
  */
