@@ -359,9 +359,9 @@ async function abrirModalMisResenas() {
             }
         }
         
-        const resenas = data.results || data;
+        const resenas = data.resenas || data.results || data;
         
-        if (!resenas || resenas.length === 0) {
+        if (!resenas || !Array.isArray(resenas) || resenas.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 30px; color: #666;">
                     <div style="font-size: 3rem; margin-bottom: 10px;">⭐</div>
