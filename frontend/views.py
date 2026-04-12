@@ -245,12 +245,32 @@ def render_comprador_dashboard_with_data(request):
                         else:
                             sipsa_val = max(matches_validos, key=lambda x: x.precio_promedio)
                             
-            # Precio estimado en supermercado = SIPSA mayorista × 1.5
-            # (el minorista típicamente cobra 40-70% más que el mayoreo)
+            # Multiplicadores para convertir el precio base de SIPSA (1 Kg) a la unidad vendida
+            kg_multipliers = {
+                'kg': Decimal('1.0'),
+                'libra': Decimal('0.5'),
+                'arroba': Decimal('12.5'),
+                'gramo': Decimal('0.001'),
+                'bulto': Decimal('50.0'),
+                'caja': Decimal('20.0'),
+                'canasta': Decimal('22.0'),
+                'unidad': Decimal('1.0'), # Conservador para piñas, lechugas, etc.
+            }
+            
+            # Precio estimado en supermercado = SIPSA mayorista × 1.3
+            # (el minorista típicamente cobra 30-50% más que el mayoreo)
             if sipsa_val:
-                precio_supermercado = sipsa_val.precio_promedio * Decimal('1.5')
-                if precio_supermercado > detalle.precio_unitario:
-                    ahorro_estimado += (precio_supermercado - detalle.precio_unitario) * detalle.cantidad
+                unidad_actual = getattr(detalle, 'unidad_medida_snapshot', 'kg')
+                if not unidad_actual:
+                    unidad_actual = 'kg'
+                factor = kg_multipliers.get(unidad_actual.lower(), Decimal('1.0'))
+                
+                # Precio equivalente en supermercado para esa presentación (Bulto, Caja, Kg, etc)
+                precio_supermercado_presentacion = sipsa_val.precio_promedio * factor * Decimal('1.3')
+                
+                # Si el super vende más caro que el campesino, hay ahorro
+                if precio_supermercado_presentacion > detalle.precio_unitario:
+                    ahorro_estimado += (precio_supermercado_presentacion - detalle.precio_unitario) * detalle.cantidad
     
     # Pedidos activos (no completados)
     pedidos_activos = usuario.pedidos_comprador.filter(

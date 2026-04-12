@@ -148,19 +148,11 @@
                         <div class="stat-icon">⭐</div>
                         <div class="stat-content">
                             <h3>Mi Calificación</h3>
-                            <div class="stat-number" id="myRatingValue">
-                                {% if usuario.total_calificaciones > 0 %}
-                                    {{ usuario.calificacion_promedio }}
-                                {% else %}
-                                    Nueva
-                                {% endif %}
+                            <div class="stat-number" id="myRatingValue" style="font-size: 1.5rem; color: #6c757d;">
+                                ...
                             </div>
                             <small style="color:#6c757d; font-size:0.7rem;">
-                                {% if usuario.total_calificaciones > 0 %}
-                                    según {{ usuario.total_calificaciones }} productor{{ usuario.total_calificaciones|pluralize:",es" }} · ver reseñas
-                                {% else %}
-                                    aún sin calificaciones · ver reseñas
-                                {% endif %}
+                                calculando reputación...
                             </small>
                         </div>
                     </div>
