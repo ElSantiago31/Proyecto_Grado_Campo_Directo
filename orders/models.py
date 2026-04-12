@@ -117,6 +117,35 @@ class Pedido(models.Model):
     
     comentario_calificacion = models.TextField(blank=True)
     
+    # ─── MÓDULO PRUEBA DE PAGO (Local - No subir al repositorio) ─────────────
+    # Permite al comprador subir el screenshot del comprobante Nequi/Transfencia
+    # y al campesino confirmarlo, eliminando la necesidad de una pasarela de pagos.
+    comprobante_pago = models.ImageField(
+        upload_to='comprobantes_pago/',
+        null=True,
+        blank=True,
+        help_text='Screenshot del comprobante Nequi o transferencia bancaria'
+    )
+    pago_confirmado_campesino = models.BooleanField(
+        default=False,
+        help_text='El campesino confirmó haber recibido el pago antes de despachar'
+    )
+    fecha_confirmacion_pago = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha y hora en que el campesino aceptó el comprobante'
+    )
+    disputa_abierta = models.BooleanField(
+        default=False,
+        help_text='True si alguna de las partes reportó un problema con este pedido'
+    )
+    motivo_disputa = models.TextField(
+        blank=True,
+        help_text='Descripción del problema reportado por comprador o campesino'
+    )
+    # ─────────────────────────────────────────────────────────────────────────
+
+    
     class Meta:
         verbose_name = 'Pedido'
         verbose_name_plural = 'Pedidos'
