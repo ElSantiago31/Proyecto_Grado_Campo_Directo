@@ -609,15 +609,30 @@ function loadFavorites() {
 
 // Cargar pestaña de Pedidos
 function loadOrders() {
-    const activeTabObj = document.querySelector('.order-tabs .tab-btn.active');
-    const activeTab = activeTabObj ? activeTabObj.dataset.tab : 'cart';
     const list = document.getElementById('buyerOrdersList');
     const cartActions = document.getElementById('cartActionsContainer');
+    const tabsContainer = document.getElementById('orderTabsContainer');
     if (!list) return;
 
     updateCartBadge();
 
+    const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
+    
     list.innerHTML = '<div style="text-align:center; padding: 2rem;">Cargando...</div>';
+
+    // 1. Si hay texto en el buscador, ignoramos las pestañas temporalmente
+    if (searchTerm) {
+        if (cartActions) cartActions.style.display = 'none';
+        if (tabsContainer) tabsContainer.style.opacity = '0.3';
+        fetchRealOrders('search');
+        return;
+    }
+
+    // 2. Comportamiento normal si no hay texto
+    if (tabsContainer) tabsContainer.style.opacity = '1';
+    
+    const activeTabObj = document.querySelector('.order-tabs .tab-btn.active');
+    const activeTab = activeTabObj ? activeTabObj.dataset.tab : 'cart';
 
     if (activeTab === 'cart') {
         renderCart();
@@ -696,8 +711,19 @@ async function fetchRealOrders(type) {
             filtered = pedidos.filter(p => ['pending', 'confirmed', 'preparing', 'ready'].includes(p.estado));
             const counter = document.getElementById('activeOrdersCount');
             if (counter) counter.textContent = filtered.length;
-        } else {
+        } else if (type === 'completed') {
             filtered = pedidos.filter(p => ['completed', 'cancelled'].includes(p.estado));
+        } else if (type === 'search') {
+            filtered = pedidos; // Busca en todos los pedidos sin importar el estado
+            
+            // Si el texto coincide con algo en el carrito, mostramos una alerta opcional
+            const cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
+            const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
+            if (searchTerm && cart.some(item => item.name.toLowerCase().includes(searchTerm))) {
+                list.innerHTML = `<div style="padding:10px; background:#e8f5e9; border:1px solid #2d5016; color:#2d5016; border-radius:8px; margin-bottom:15px; text-align:center;">💡 Encontramos coincidencias en tu <strong>Carrito</strong>. Borra el buscador y ve a la pestaña carrito para verlos.</div>`;
+            } else {
+                list.innerHTML = '';
+            }
         }
 
         const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
@@ -709,11 +735,15 @@ async function fetchRealOrders(type) {
         }
 
         if (filtered.length === 0) {
-            list.innerHTML = `<div style="text-align:center; padding: 2rem; color: #666;">No tienes pedidos ${type === 'active' ? 'en curso' : 'en tu historial'}.</div>`;
+            if (type === 'search') {
+                list.innerHTML += `<div style="text-align:center; padding: 2rem; color: #666;">No encontramos ningún pedido que coincida con tu búsqueda.</div>`;
+            } else {
+                list.innerHTML = `<div style="text-align:center; padding: 2rem; color: #666;">No tienes pedidos ${type === 'active' ? 'en curso' : 'en tu historial'}.</div>`;
+            }
             return;
         }
 
-        const statusColors = {
+        const appendHtml = filtered.map(pedido => {
             'pending': '#ffc107',
             'confirmed': '#17a2b8',
             'preparing': '#fd7e14',
@@ -783,6 +813,8 @@ async function fetchRealOrders(type) {
                  </div>
              </div>`;
         }).join('');
+        
+        list.innerHTML += appendHtml;
 
     } catch (error) {
         console.error("Error fetching orders:", error);

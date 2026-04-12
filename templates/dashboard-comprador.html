@@ -262,19 +262,19 @@
 
             <!-- Sección Mis Pedidos y Carrito -->
             <section id="my-orders" class="content-section">
-                <div class="section-header" style="margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
-                    <h2>Mis Pedidos y Carrito</h2>
-                    <div class="order-tabs">
-                        <button class="tab-btn active" data-tab="cart">Carrito (<span id="cartCountBadge">0</span>)</button>
-                        <button class="tab-btn" data-tab="active">En Curso (<span id="activeOrdersCount">0</span>)</button>
-                        <button class="tab-btn" data-tab="completed">Historial</button>
+                <div class="search-filters" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
+                    <div class="search-input-wrapper" style="width: 100%;">
+                        <span class="search-icon-hint">🔍</span>
+                        <input type="text" placeholder="Buscador Universal de Pedidos (Ej: 1004, papa...)" class="search-input" id="orderSearch" style="font-size: 1.1rem; padding: 10px 15px 10px 35px;">
                     </div>
                 </div>
 
-                <div class="search-filters" style="margin-bottom: 20px;">
-                    <div class="search-input-wrapper" style="width: 100%;">
-                        <span class="search-icon-hint">🔍</span>
-                        <input type="text" placeholder="Buscar pedido por N.º de Orden (Ej: 15) o producto..." class="search-input" id="orderSearch">
+                <div class="section-header" style="margin-bottom: 20px; border-bottom: none; padding-bottom: 0;">
+                    <h2>Gestionar Pedidos</h2>
+                    <div class="order-tabs" id="orderTabsContainer">
+                        <button class="tab-btn active" data-tab="cart">Carrito (<span id="cartCountBadge">0</span>)</button>
+                        <button class="tab-btn" data-tab="active">En Curso (<span id="activeOrdersCount">0</span>)</button>
+                        <button class="tab-btn" data-tab="completed">Historial</button>
                     </div>
                 </div>
 
