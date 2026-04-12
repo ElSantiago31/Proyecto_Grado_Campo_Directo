@@ -131,11 +131,12 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card">
+                    <div class="stat-card" style="cursor: pointer; position: relative; transition: transform 0.2s; border: 1px solid transparent;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#88bf4b';" onmouseout="this.style.transform='none'; this.style.borderColor='transparent';" onclick="abrirModalMisResenas()">
                         <div class="stat-icon">⭐</div>
                         <div class="stat-content">
                             <h3>Calificación</h3>
                             <div class="stat-number" id="rating">{{ estadisticas.calificacion|floatformat:1 }}</div>
+                            <small style="color: #6c757d; font-size: 0.8rem; text-decoration: underline; margin-top: 5px; display: inline-block;">Ver mis reseñas</small>
                         </div>
                     </div>
                 </div>
@@ -622,6 +623,26 @@
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="cancelDelete">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver Mis Reseñas -->
+    <div id="misResenasModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Mis Reseñas y Calificaciones</h2>
+                <span class="close" id="closeMisResenasModal">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div id="misResenasContainer" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    <!-- Las reseñas se insertarán aquí por JavaScript -->
+                    <div style="text-align: center; padding: 30px;">
+                        <span class="loader" style="width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #2d5016; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
+                        <p style="margin-top: 15px; color: #666;">Cargando tus reseñas...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
