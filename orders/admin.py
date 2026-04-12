@@ -35,14 +35,15 @@ class PedidoAdmin(admin.ModelAdmin):
     ]
     
     readonly_fields = [
-        'fecha_pedido', 'fecha_confirmacion', 'fecha_preparacion',
+        'id', 'fecha_pedido', 'fecha_confirmacion', 'fecha_preparacion',
         'fecha_entrega', 'fecha_completado', 'codigo_seguimiento',
-        'estado_display_color', 'puede_ser_cancelado'
+        'estado_display_color', 'puede_ser_cancelado',
+        'fecha_confirmacion_pago', 'comprobante_preview'  # campos del módulo local
     ]
     
     fieldsets = (
         ('Información del Pedido', {
-            'fields': ('id', 'codigo_seguimiento', 'comprador', 'campesino', 'total')
+            'fields': ('codigo_seguimiento', 'comprador', 'campesino', 'total')
         }),
         ('Estado y Seguimiento', {
             'fields': ('estado', 'estado_display_color', 'puede_ser_cancelado', 'metodo_pago')
@@ -69,6 +70,16 @@ class PedidoAdmin(admin.ModelAdmin):
             'fields': ('calificacion_comprador', 'calificacion_campesino', 'comentario_calificacion'),
             'classes': ('collapse',)
         }),
+        # ─── MÓDULO LOCAL: Prueba de Pago Directo Nequi ───────────────────────────────────
+        ('Prueba de Pago (Nequi / Transferencia)', {
+            'fields': (
+                'comprobante_pago', 'comprobante_preview',
+                'pago_confirmado_campesino', 'fecha_confirmacion_pago',
+                'disputa_abierta', 'motivo_disputa'
+            ),
+            'description': 'El comprador sube el screenshot del pago. El campesino confirma antes de despachar.',
+        }),
+        # ──────────────────────────────────────────────────────────────────────────
     )
     
     inlines = [DetallePedidoInline]
@@ -105,6 +116,20 @@ class PedidoAdmin(admin.ModelAdmin):
         )
     
     estado_display.short_description = 'Estado'
+
+    def comprobante_preview(self, obj):
+        """Muestra el comprobante de pago como imagen en el admin"""
+        if obj.comprobante_pago:
+            return format_html(
+                '<a href="{}" target="_blank">'
+                '<img src="{}" style="max-width:400px; max-height:300px; border:1px solid #ccc; border-radius:4px;"/>'
+                '</a><br><small>Haz clic para ver en tamaño completo</small>',
+                obj.comprobante_pago.url,
+                obj.comprobante_pago.url
+            )
+        return format_html('<span style="color:#999;">Sin comprobante subido aún</span>')
+    
+    comprobante_preview.short_description = 'Vista previa del comprobante'
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(

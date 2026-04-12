@@ -298,7 +298,9 @@ class DetallePedido(models.Model):
     @property
     def subtotal(self):
         """Calcula el subtotal de este detalle"""
-        return self.cantidad * self.precio_unitario
+        if self.cantidad and self.precio_unitario:
+            return self.cantidad * self.precio_unitario
+        return 0
     
     def save(self, *args, **kwargs):
         # Capturar snapshot del producto
