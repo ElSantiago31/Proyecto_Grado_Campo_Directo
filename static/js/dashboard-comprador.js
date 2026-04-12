@@ -703,7 +703,7 @@ async function fetchRealOrders(type) {
         const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
         if (searchTerm) {
             filtered = filtered.filter(p => 
-                p.id.toString() === searchTerm || 
+                p.id.toString().toLowerCase().includes(searchTerm) || 
                 (p.detalles && p.detalles.some(d => d.nombre_producto_snapshot.toLowerCase().includes(searchTerm)))
             );
         }

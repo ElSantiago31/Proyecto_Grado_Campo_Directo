@@ -134,10 +134,18 @@ class Pedido(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.id:
-            # Generar ID personalizado
-            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            random_suffix = str(uuid.uuid4().int)[:4]
-            self.id = f"ORD-{timestamp[-8:]}{random_suffix}"
+            # Generar un ID numérico corto (a partir de 1000) en formato string
+            # Esto mantiene la integridad de la base de datos sin necesitar migraciones
+            contador = Pedido.objects.count()
+            base_id = 1000 + contador + 1
+            
+            nuevo_id = str(base_id)
+            # Garantizar unicidad
+            while Pedido.objects.filter(id=nuevo_id).exists():
+                base_id += 1
+                nuevo_id = str(base_id)
+                
+            self.id = nuevo_id
             
         if not self.codigo_seguimiento:
             # Generar código de seguimiento
