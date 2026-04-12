@@ -29,6 +29,14 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         # Permisos de escritura solo para el propietario
         return obj.usuario == request.user
 
+class IsCampesinoForCreate(permissions.BasePermission):
+    """
+    Permiso que bloquea la inyección (POST) si el usuario autenticado no es explícitamente un 'campesino'.
+    """
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return bool(request.user and request.user.is_authenticated and request.user.tipo_usuario == 'campesino')
+        return True
 
 class CategoriaProductoViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -69,7 +77,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     """
     ViewSet para productos con todas las operaciones CRUD
     """
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsCampesinoForCreate, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'estado', 'calidad', 'unidad_medida', 'disponible_entrega_inmediata']
     search_fields = ['nombre', 'descripcion', 'tags', 'usuario__nombre', 'usuario__apellido']
