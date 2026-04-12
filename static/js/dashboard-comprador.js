@@ -743,7 +743,7 @@ async function fetchRealOrders(type) {
             return;
         }
 
-        const appendHtml = filtered.map(pedido => {
+        const statusColors = {
             'pending': '#ffc107',
             'confirmed': '#17a2b8',
             'preparing': '#fd7e14',
@@ -760,7 +760,7 @@ async function fetchRealOrders(type) {
             'cancelled': 'Cancelado'
         };
 
-        list.innerHTML = filtered.map(pedido => {
+        const appendHtml = filtered.map(pedido => {
             const dateObj = new Date(pedido.fecha_pedido);
             const date = dateObj.toLocaleDateString('es-CO');
             const time = dateObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
