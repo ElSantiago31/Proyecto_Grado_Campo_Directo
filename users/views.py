@@ -116,7 +116,20 @@ class LoginView(APIView):
             # Crear sesión Django para el usuario (para que funcione con @login_required)
             login(request, user)
             
-            # Generar tokens JWT
+            # --- PROTECCIÓN ANTI-DUPLICIDAD DE SESIÓN (Producción) ---
+            # Si un campesino inicia sesión en Celular B, quemamos los tokens del Celular A
+            try:
+                from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+                tokens_viejos = OutstandingToken.objects.filter(user=user)
+                for token in tokens_viejos:
+                    # Añadir a Blacklist revoca instantáneamente su capacidad de ser refrescados
+                    BlacklistedToken.objects.get_or_create(token=token)
+            except Exception as e:
+                import logging
+                logging.error(f"Error revocando sesiones antiguas: {str(e)}")
+            # --------------------------------------------------------
+            
+            # Generar tokens JWT nuevos y únicos para este nuevo dispositivo
             refresh = RefreshToken.for_user(user)
             
             return Response({
