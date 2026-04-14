@@ -139,7 +139,9 @@ class LoginView(APIView):
                 'refresh': str(refresh)
             }, status=status.HTTP_200_OK)
             
-        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # Retornar 400 (Bad Request) para errores de validación (como suspensiones)
+        # para que el frontend los identifique correctamente.
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfileView(APIView):

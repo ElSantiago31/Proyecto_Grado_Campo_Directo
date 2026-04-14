@@ -175,10 +175,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (error instanceof ApiError) {
                         if (customErrorMessage) {
-                            showError(passwordInput, passwordError, customErrorMessage);
+                            showError(passwordInput, passwordError, 'Acceso restringido');
+                            showNotification(customErrorMessage, 'error');
                         } else if (error.status === 401) {
                             showError(passwordInput, passwordError, 'Usuario o contraseña incorrectos');
                         } else if (error.status === 403) {
+                            showNotification('Tu cuenta está restringida. Contacta a soporte.', 'error');
                             showError(passwordInput, passwordError, 'Usuario inactivo o suspendido');
                         } else {
                             showError(passwordInput, passwordError, 'Credenciales denegadas por el servidor.');
