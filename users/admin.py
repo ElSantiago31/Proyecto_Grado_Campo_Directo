@@ -22,7 +22,11 @@ class UsuarioAdmin(UserAdmin):
     
     search_fields = ['email', 'nombre', 'apellido', 'telefono']
     
-    actions = ['suspender_usuarios', 'activar_usuarios']
+    actions = [
+        'suspender_3_dias', 'suspender_7_dias', 
+        'suspender_15_dias', 'suspender_30_dias', 
+        'suspender_permanente', 'activar_usuarios'
+    ]
     
     readonly_fields = ['fecha_registro', 'fecha_actualizacion', 'last_login']
     
@@ -82,21 +86,46 @@ class UsuarioAdmin(UserAdmin):
         return super().get_queryset(request).select_related()
 
     # Acciones masivas
-    def suspender_usuarios(self, request, queryset):
-        """Suspende a los usuarios seleccionados"""
-        # Al actualizar el estado, nuestro método save() se encargará de poner is_active=False
+    def _suspender_por_tiempo(self, request, queryset, dias=None):
+        """Método auxiliar para aplicar suspensiones por tiempo"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        hasta = timezone.now() + timedelta(days=dias) if dias else None
+        
         for usuario in queryset:
             usuario.estado = 'suspendido'
+            usuario.suspendido_hasta = hasta
             usuario.save()
-        
-        self.message_user(request, f"{queryset.count()} usuarios han sido suspendidos correctamente.")
-    
-    suspender_usuarios.short_description = "🚫 Suspender usuarios seleccionados"
+            
+        duracion = f"{dias} días" if dias else "de forma permanente"
+        self.message_user(request, f"{queryset.count()} usuarios han sido suspendidos por {duracion}.")
+
+    def suspender_3_dias(self, request, queryset):
+        self._suspender_por_tiempo(request, queryset, 3)
+    suspender_3_dias.short_description = "🕒 Suspender por 3 días"
+
+    def suspender_7_dias(self, request, queryset):
+        self._suspender_por_tiempo(request, queryset, 7)
+    suspender_7_dias.short_description = "🗓️ Suspender por 7 días"
+
+    def suspender_15_dias(self, request, queryset):
+        self._suspender_por_tiempo(request, queryset, 15)
+    suspender_15_dias.short_description = "📅 Suspender por 15 días"
+
+    def suspender_30_dias(self, request, queryset):
+        self._suspender_por_tiempo(request, queryset, 30)
+    suspender_30_dias.short_description = "⚖️ Suspender por 30 días"
+
+    def suspender_permanente(self, request, queryset):
+        self._suspender_por_tiempo(request, queryset, None)
+    suspender_permanente.short_description = "⛓️ Suspender Permanentemente"
 
     def activar_usuarios(self, request, queryset):
         """Activa a los usuarios seleccionados"""
         for usuario in queryset:
             usuario.estado = 'activo'
+            usuario.suspendido_hasta = None
             usuario.save()
         
         self.message_user(request, f"{queryset.count()} usuarios han sido activados correctamente.")

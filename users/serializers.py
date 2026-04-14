@@ -177,6 +177,26 @@ class LoginSerializer(serializers.Serializer):
                             f'Demasiados intentos fallidos. Cuenta bloqueada por {BLOQUEO_MINUTOS} minutos.',
                             code='visual_2fa_bloqueado'
                         )
+            
+            # --- NUEVA REGLA: VALIDACIÓN DE SANCIONES (SUSPENSIONES) ---
+            if not user.is_activo:
+                if user.estado == 'suspendido':
+                    if user.suspendido_hasta:
+                        fecha_str = user.suspendido_hasta.strftime('%d/%m/%Y %H:%M')
+                        raise serializers.ValidationError(
+                            f'Tu cuenta se encuentra suspendida temporalmente hasta el {fecha_str} por incumplimiento de nuestras políticas de comunidad.',
+                            code='account_suspended'
+                        )
+                    else:
+                        raise serializers.ValidationError(
+                            'Tu cuenta ha sido suspendida permanentemente de Campo Directo.',
+                            code='account_banned'
+                        )
+                elif user.estado == 'inactivo':
+                    raise serializers.ValidationError(
+                        'Esta cuenta se encuentra inactiva.',
+                        code='account_inactive'
+                    )
                     
                     user.save(update_fields=['intentos_2fa_fallidos'])
                     restantes = MAX_INTENTOS - user.intentos_2fa_fallidos

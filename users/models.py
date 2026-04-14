@@ -123,6 +123,12 @@ class Usuario(AbstractUser):
         help_text='Fecha/hora hasta la que está bloqueada la cuenta por contraseña incorrecta repetida'
     )
     
+    suspendido_hasta = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha y hora hasta la cual el usuario está sancionado. Si es nulo y el estado es Suspendido, es permanente.'
+    )
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     ultimo_login = models.DateTimeField(null=True, blank=True)
@@ -187,7 +193,17 @@ class Usuario(AbstractUser):
     
     @property
     def is_activo(self):
-        """Verifica si el usuario está activo"""
+        """
+        Verifica si el usuario está activo y no tiene sanciones vigentes.
+        """
+        if self.estado == 'suspendido':
+            if self.suspendido_hasta:
+                from django.utils import timezone
+                if timezone.now() < self.suspendido_hasta:
+                    return False # Sigue sancionado
+                # Si la fecha ya pasó, el usuario está virtualmente activo
+                return True
+            return False # Suspensión permanente
         return self.estado == 'activo' and self.is_active
     
     def actualizar_calificacion(self, nueva_calificacion):
@@ -247,10 +263,11 @@ class Usuario(AbstractUser):
 
     def save(self, *args, **kwargs):
         """
-        Sobrescribimos save para sincronizar el estado legible con el is_active de Django.
-        Esto garantiza que las sanciones (suspensiones) bloqueen realmente el acceso.
+        Mantenemos is_active=True por defecto para permitir que el login intercepte
+        al usuario y le muestre un mensaje de "Estás suspendido" en lugar de uno genérico.
+        Solo se pone False si el estado es 'inactivo' permanentemente.
         """
-        if self.estado in ['suspendido', 'inactivo']:
+        if self.estado == 'inactivo':
             self.is_active = False
         else:
             self.is_active = True
