@@ -7,6 +7,9 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 import json
+import io
+from PIL import Image as PilImage
+from django.core.files.base import ContentFile
 from users.models import Usuario
 from utils.file_handlers import image_upload_handler, validate_image_file
 
@@ -220,6 +223,42 @@ class Producto(models.Model):
     
     def __str__(self):
         return f"{self.nombre} - {self.usuario.get_full_name()}"
+
+    def save(self, *args, **kwargs):
+        """
+        Comprime y convierte la imagen_principal a WebP al guardar.
+        Reduce el tamaño de ~2MB a ~40KB automaticamente.
+        """
+        if self.imagen_principal:
+            try:
+                img = PilImage.open(self.imagen_principal)
+
+                # Conservar modo RGBA para transparencias, sino RGB
+                if img.mode not in ('RGB', 'RGBA'):
+                    img = img.convert('RGB')
+
+                # Solo redimensionar si es más grande que 800x800
+                max_size = (800, 800)
+                img.thumbnail(max_size, PilImage.LANCZOS)
+
+                # Guardar en memoria como WebP
+                buffer = io.BytesIO()
+                save_format = 'WEBP'
+                img.save(buffer, format=save_format, quality=85, optimize=True)
+                buffer.seek(0)
+
+                # Reemplazar el archivo con el WebP comprimido
+                nombre_sin_ext = self.imagen_principal.name.rsplit('.', 1)[0]
+                nuevo_nombre = f"{nombre_sin_ext.split('/')[-1]}.webp"
+                self.imagen_principal.save(
+                    nuevo_nombre,
+                    ContentFile(buffer.read()),
+                    save=False  # evitar recursion
+                )
+            except Exception:
+                pass  # Si falla la compresion, guarda la imagen original sin romper el flujo
+
+        super().save(*args, **kwargs)
     
     @property
     def is_disponible(self):
