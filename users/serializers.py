@@ -177,7 +177,19 @@ class LoginSerializer(serializers.Serializer):
                             f'Demasiados intentos fallidos. Cuenta bloqueada por {BLOQUEO_MINUTOS} minutos.',
                             code='visual_2fa_bloqueado'
                         )
-            
+                    
+                    user.save(update_fields=['intentos_2fa_fallidos'])
+                    restantes = MAX_INTENTOS - user.intentos_2fa_fallidos
+                    raise serializers.ValidationError(
+                        f'PIN Visual incorrecto. Te quedan {restantes} intento(s) antes del bloqueo.',
+                        code='visual_2fa_failed'
+                    )
+                
+                # 3. PIN correcto: resetear contador
+                user.intentos_2fa_fallidos = 0
+                user.bloqueado_2fa_hasta = None
+                user.save(update_fields=['intentos_2fa_fallidos', 'bloqueado_2fa_hasta'])
+
             # --- NUEVA REGLA: VALIDACIÓN DE SANCIONES (SUSPENSIONES) ---
             if not user.is_activo:
                 if user.estado == 'suspendido':
@@ -197,24 +209,11 @@ class LoginSerializer(serializers.Serializer):
                         'Esta cuenta se encuentra inactiva.',
                         code='account_inactive'
                     )
-                    
-                    user.save(update_fields=['intentos_2fa_fallidos'])
-                    restantes = MAX_INTENTOS - user.intentos_2fa_fallidos
+                else:
+                    # Fallback por si acaso
                     raise serializers.ValidationError(
-                        f'PIN Visual incorrecto. Te quedan {restantes} intento(s) antes del bloqueo.',
-                        code='visual_2fa_failed'
+                        'La cuenta de usuario está deshabilitada'
                     )
-                
-                # 3. PIN correcto: resetear contador
-                user.intentos_2fa_fallidos = 0
-                user.bloqueado_2fa_hasta = None
-                user.save(update_fields=['intentos_2fa_fallidos', 'bloqueado_2fa_hasta'])
-
-            if not user.is_activo:
-                raise serializers.ValidationError(
-                    'La cuenta de usuario está deshabilitada'
-                )
-
             attrs['user'] = user
             return attrs
         else:
