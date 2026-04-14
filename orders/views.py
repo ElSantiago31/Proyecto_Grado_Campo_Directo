@@ -15,6 +15,7 @@ from .serializers import (
     PedidoListSerializer, PedidoDetailSerializer, PedidoCreateSerializer,
     PedidoUpdateEstadoSerializer, CalificacionSerializer
 )
+from .notifications import notificar_nuevo_pedido, notificar_cambio_estado
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -75,6 +76,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
             raise permissions.PermissionDenied("No tienes permisos para crear pedidos")
         
         serializer.save()
+        # Enviar correo de confirmación al comprador y aviso al campesino
+        pedido = serializer.instance
+        notificar_nuevo_pedido(pedido)
 
     @swagger_auto_schema(
         operation_description="Actualizar estado de un pedido",
@@ -107,6 +111,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
             nuevo_estado = serializer.validated_data['nuevo_estado']
             notas = serializer.validated_data.get('notas', '')
             
+            # Guardar el estado anterior ANTES de actualizarlo
+            estado_anterior = pedido.estado
+            
             # Actualizar estado y timestamps
             pedido.actualizar_estado(nuevo_estado)
             
@@ -114,6 +121,9 @@ class PedidoViewSet(viewsets.ModelViewSet):
             if notas:
                 pedido.notas_campesino = notas
                 pedido.save()
+            
+            # Notificar al comprador sobre el cambio de estado
+            notificar_cambio_estado(pedido, estado_anterior)
             
             return Response({
                 'message': 'Estado actualizado correctamente',

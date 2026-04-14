@@ -284,17 +284,20 @@ CACHES = {
     }
 }
 
-# Email Configuration (para notificaciones)
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email Configuration (para notificaciones de pedidos)
+# En producción usar SMTP; en desarrollo cae a consola si no hay credenciales.
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Campo Directo <noreply@campodirecto.com>')
+
+# Si no hay credenciales de correo configuradas, usamos la consola (sin errores en dev)
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Authentication URLs
 LOGIN_URL = '/login/'
