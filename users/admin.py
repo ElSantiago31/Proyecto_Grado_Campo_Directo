@@ -22,6 +22,8 @@ class UsuarioAdmin(UserAdmin):
     
     search_fields = ['email', 'nombre', 'apellido', 'telefono']
     
+    actions = ['suspender_usuarios', 'activar_usuarios']
+    
     readonly_fields = ['fecha_registro', 'fecha_actualizacion', 'last_login']
     
     fieldsets = (
@@ -78,3 +80,25 @@ class UsuarioAdmin(UserAdmin):
     def get_queryset(self, request):
         """Optimizar consultas"""
         return super().get_queryset(request).select_related()
+
+    # Acciones masivas
+    def suspender_usuarios(self, request, queryset):
+        """Suspende a los usuarios seleccionados"""
+        # Al actualizar el estado, nuestro método save() se encargará de poner is_active=False
+        for usuario in queryset:
+            usuario.estado = 'suspendido'
+            usuario.save()
+        
+        self.message_user(request, f"{queryset.count()} usuarios han sido suspendidos correctamente.")
+    
+    suspender_usuarios.short_description = "🚫 Suspender usuarios seleccionados"
+
+    def activar_usuarios(self, request, queryset):
+        """Activa a los usuarios seleccionados"""
+        for usuario in queryset:
+            usuario.estado = 'activo'
+            usuario.save()
+        
+        self.message_user(request, f"{queryset.count()} usuarios han sido activados correctamente.")
+    
+    activar_usuarios.short_description = "✅ Activar/Reactivar usuarios seleccionados"
