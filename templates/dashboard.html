@@ -16,7 +16,10 @@
     <header class="dashboard-header">
         <nav class="dashboard-nav">
             <div class="nav-left">
-                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="dashboard-logo">
+                <picture>
+                    <source srcset="{% static 'images/LogoCampoDirecto.webp' %}" type="image/webp">
+                    <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="dashboard-logo">
+                </picture>
                 <h1 class="dashboard-title">Panel del Campesino</h1>
             </div>
             <div class="nav-right">
