@@ -25,7 +25,7 @@
     {% endblock %}
     
     <!-- Scripts base -->
-    <script src="{% static 'js/config/api.js' %}?v={% now 'U' %}"></script>
+    <script src="{% static 'js/config/api.js' %}?v={% now 'U' %}" defer></script>
     
     <!-- Scripts específicos por página -->
     {% block extra_js %}{% endblock %}

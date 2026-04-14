@@ -512,6 +512,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/colombia.js' %}"></script>
-<script src="{% static 'js/dashboard-comprador.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/colombia.js' %}" defer></script>
+<script src="{% static 'js/dashboard-comprador.js' %}?v={% now 'U' %}" defer></script>
 {% endblock %}
