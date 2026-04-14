@@ -179,8 +179,11 @@ class Pedido(models.Model):
         return self.estado == 'completed' and not self.calificacion_campesino
     
     def actualizar_estado(self, nuevo_estado, usuario=None):
-        """Actualiza el estado del pedido y registra timestamps"""
+        """Actualiza el estado del pedido, registra timestamps y crea log de auditoría."""
         from django.utils import timezone
+        
+        # Guarda el estado anterior para el log ANTES de sobreescribirlo
+        estado_anterior_log = self.estado
         
         if nuevo_estado == 'confirmed' and not self.fecha_confirmacion:
             self.fecha_confirmacion = timezone.now()
@@ -196,6 +199,14 @@ class Pedido(models.Model):
                 
         self.estado = nuevo_estado
         self.save()
+
+        # Registrar en el log de auditoría (RNF14 - Trazabilidad)
+        AuditLogPedido.objects.create(
+            pedido=self,
+            usuario=usuario,
+            estado_anterior=estado_anterior_log,
+            estado_nuevo=nuevo_estado,
+        )
     
     def calcular_total_desde_detalles(self):
         """Calcula el total basado en los detalles del pedido"""
@@ -216,6 +227,49 @@ class Pedido(models.Model):
             for detalle in self.detalles.all()
         ]
 
+
+class AuditLogPedido(models.Model):
+    """
+    Registro de auditoría de cambios de estado en pedidos.
+    Garantiza trazabilidad verificable (RNF14).
+    Cada fila es INMUTABLE: nunca se edita, solo se crea.
+    """
+
+    pedido = models.ForeignKey(
+        Pedido,
+        on_delete=models.CASCADE,
+        related_name='auditoria'
+    )
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text='Usuario que realizó el cambio'
+    )
+    estado_anterior = models.CharField(max_length=10, blank=True)
+    estado_nuevo = models.CharField(max_length=10)
+    notas = models.TextField(
+        blank=True,
+        help_text='Notas o razón del cambio'
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text='IP desde donde se realizó el cambio'
+    )
+
+    class Meta:
+        verbose_name = 'Log de Auditoría'
+        verbose_name_plural = 'Logs de Auditoría'
+        ordering = ['-timestamp']
+        # Nadie puede editar estos registros desde el admin
+        default_permissions = ('view',)
+
+    def __str__(self):
+        usuario_str = self.usuario.email if self.usuario else 'Sistema'
+        return f'[{self.timestamp.strftime("%d/%m/%Y %H:%M")}] Pedido {self.pedido.id}: {self.estado_anterior} → {self.estado_nuevo} por {usuario_str}'
 
 class DetallePedido(models.Model):
     """

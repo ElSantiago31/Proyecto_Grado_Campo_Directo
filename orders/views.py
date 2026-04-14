@@ -10,7 +10,7 @@ from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from .models import Pedido, DetallePedido
+from .models import Pedido, DetallePedido, AuditLogPedido
 from .serializers import (
     PedidoListSerializer, PedidoDetailSerializer, PedidoCreateSerializer,
     PedidoUpdateEstadoSerializer, CalificacionSerializer
@@ -114,8 +114,8 @@ class PedidoViewSet(viewsets.ModelViewSet):
             # Guardar el estado anterior ANTES de actualizarlo
             estado_anterior = pedido.estado
             
-            # Actualizar estado y timestamps
-            pedido.actualizar_estado(nuevo_estado)
+            # Actualizar estado pasando el usuario autenticado para el log de auditoría
+            pedido.actualizar_estado(nuevo_estado, usuario=request.user)
             
             # Añadir notas si se proporcionaron
             if notas:

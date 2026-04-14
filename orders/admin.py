@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Pedido, DetallePedido
+from .models import Pedido, DetallePedido, AuditLogPedido
 
 
 class DetallePedidoInline(admin.TabularInline):
@@ -11,6 +11,23 @@ class DetallePedidoInline(admin.TabularInline):
     extra = 0
     readonly_fields = ['subtotal']
     fields = ['producto', 'cantidad', 'precio_unitario', 'subtotal']
+
+
+class AuditLogInline(admin.TabularInline):
+    """
+    Inline para mostrar el historial de cambios de un pedido (solo lectura)
+    """
+    model = AuditLogPedido
+    extra = 0
+    can_delete = False
+    readonly_fields = ['timestamp', 'usuario', 'estado_anterior', 'estado_nuevo', 'notas', 'ip_address']
+    fields = ['timestamp', 'usuario', 'estado_anterior', 'estado_nuevo', 'notas']
+    ordering = ['timestamp']
+    verbose_name = 'Entrada de Auditoría'
+    verbose_name_plural = '📜 Historial de Cambios'
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Pedido)
@@ -71,7 +88,7 @@ class PedidoAdmin(admin.ModelAdmin):
         }),
     )
     
-    inlines = [DetallePedidoInline]
+    inlines = [DetallePedidoInline, AuditLogInline]
     
     def comprador_display(self, obj):
         """Muestra el comprador"""
@@ -119,7 +136,7 @@ class PedidoAdmin(admin.ModelAdmin):
         updated = 0
         for pedido in queryset:
             if pedido.estado == 'pending':
-                pedido.actualizar_estado('confirmed')
+                pedido.actualizar_estado('confirmed', usuario=request.user)
                 updated += 1
         
         self.message_user(
@@ -133,7 +150,7 @@ class PedidoAdmin(admin.ModelAdmin):
         updated = 0
         for pedido in queryset:
             if pedido.estado == 'ready':
-                pedido.actualizar_estado('completed')
+                pedido.actualizar_estado('completed', usuario=request.user)
                 updated += 1
         
         self.message_user(
@@ -173,3 +190,40 @@ class DetallePedidoAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'pedido', 'producto'
         )
+
+
+@admin.register(AuditLogPedido)
+class AuditLogPedidoAdmin(admin.ModelAdmin):
+    """
+    Vista de sólo lectura del log de auditoría de pedidos (RNF14).
+    Estos registros son inmutables: no se pueden crear, editar ni borrar desde el admin.
+    """
+    list_display = ['timestamp', 'pedido', 'usuario_display', 'estado_anterior', 'flecha', 'estado_nuevo', 'notas_preview']
+    list_filter = ['estado_nuevo', 'timestamp']
+    search_fields = ['pedido__id', 'usuario__email', 'usuario__nombre']
+    readonly_fields = ['pedido', 'usuario', 'estado_anterior', 'estado_nuevo', 'notas', 'timestamp', 'ip_address']
+    date_hierarchy = 'timestamp'
+    ordering = ['-timestamp']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def usuario_display(self, obj):
+        return obj.usuario.email if obj.usuario else '— Sistema —'
+    usuario_display.short_description = 'Realizado por'
+
+    def flecha(self, obj):
+        return '→'
+    flecha.short_description = ''
+
+    def notas_preview(self, obj):
+        if obj.notas:
+            return obj.notas[:60] + ('...' if len(obj.notas) > 60 else '')
+        return '—'
+    notas_preview.short_description = 'Notas'
