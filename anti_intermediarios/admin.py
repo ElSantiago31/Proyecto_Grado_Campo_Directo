@@ -63,7 +63,7 @@ class ConversacionAdmin(admin.ModelAdmin):
     def campesino_link(self, obj):
         """Link al campesino"""
         if obj.campesino:
-            url = reverse('admin:accounts_usuario_change', args=[obj.campesino.id])
+            url = reverse('admin:users_usuario_change', args=[obj.campesino.id])
             return format_html('<a href="{}">{}</a>', url, obj.campesino.nombre)
         return '-'
     campesino_link.short_description = 'Campesino'
@@ -71,7 +71,7 @@ class ConversacionAdmin(admin.ModelAdmin):
     def comprador_link(self, obj):
         """Link al comprador"""
         if obj.comprador:
-            url = reverse('admin:accounts_usuario_change', args=[obj.comprador.id])
+            url = reverse('admin:users_usuario_change', args=[obj.comprador.id])
             return format_html('<a href="{}">{}</a>', url, obj.comprador.nombre)
         return '-'
     comprador_link.short_description = 'Comprador'
@@ -163,7 +163,7 @@ class MensajeAdmin(admin.ModelAdmin):
     def remitente_link(self, obj):
         """Link al remitente"""
         if obj.remitente:
-            url = reverse('admin:accounts_usuario_change', args=[obj.remitente.id])
+            url = reverse('admin:users_usuario_change', args=[obj.remitente.id])
             return format_html('<a href="{}">{}</a>', url, obj.remitente.nombre)
         return '-'
     remitente_link.short_description = 'Remitente'
