@@ -58,7 +58,8 @@ class CategoriaProductoViewSet(viewsets.ReadOnlyModelViewSet):
     def productos(self, request, pk=None):
         """Obtener productos de una categoría"""
         categoria = self.get_object()
-        productos = categoria.productos.filter(estado='disponible')
+        # Solo mostrar productos de campesinos activos y productos disponibles
+        productos = categoria.productos.filter(estado='disponible', usuario__estado='activo')
         
         # Aplicar filtros adicionales
         search = request.query_params.get('search')
@@ -86,7 +87,8 @@ class ProductoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Optimizar consultas y filtros"""
-        queryset = Producto.objects.select_related(
+        # Filtrar por defecto solo productos de usuarios ACTIVOS (Sanciones)
+        queryset = Producto.objects.filter(usuario__estado='activo').select_related(
             'usuario', 'finca', 'categoria'
         )
         

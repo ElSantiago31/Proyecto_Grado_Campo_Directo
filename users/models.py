@@ -244,3 +244,14 @@ class Usuario(AbstractUser):
         if not self.is_campesino:
             return 0
         return self.pedidos_campesino.count()
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescribimos save para sincronizar el estado legible con el is_active de Django.
+        Esto garantiza que las sanciones (suspensiones) bloqueen realmente el acceso.
+        """
+        if self.estado in ['suspendido', 'inactivo']:
+            self.is_active = False
+        else:
+            self.is_active = True
+        super().save(*args, **kwargs)
