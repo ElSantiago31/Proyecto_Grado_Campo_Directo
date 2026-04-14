@@ -98,13 +98,15 @@
                     </div>
 
                     <!-- Contraseña -->
-                    <div class="form-group">
-                        <input type="password" id="password" name="password" placeholder="Contraseña" required minlength="6">
+                    <div class="form-group" style="position: relative;">
+                        <input type="password" id="password" name="password" placeholder="Contraseña" required minlength="6" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                        <button type="button" onclick="togglePassword('password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;" title="Mostrar/Ocultar contraseña">👁️</button>
                     </div>
 
                     <!-- Confirmar contraseña -->
-                    <div class="form-group">
-                        <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirmar contraseña" required minlength="6">
+                    <div class="form-group" style="position: relative;">
+                        <input type="password" id="passwordConfirm" name="passwordConfirm" placeholder="Confirmar contraseña" required minlength="6" style="padding-right: 40px; width: 100%; box-sizing: border-box;">
+                        <button type="button" onclick="togglePassword('passwordConfirm', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;" title="Mostrar/Ocultar contraseña">👁️</button>
                     </div>
                     
                     <!-- Doble Factor Visual -->
@@ -151,6 +153,18 @@
 <script>
 // Hacer el CSRF token disponible para JavaScript
 window.csrfToken = '{{ csrf_token }}';
+
+// Función para mostrar/ocultar la contraseña
+function togglePassword(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈'; // Monito tapándose los ojos (o el icono de cerrar)
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+    }
+}
 </script>
 <script src="{% static 'js/colombia.js' %}?v={% now 'U' %}"></script>
 <script src="{% static 'js/registro.js' %}?v={% now 'U' %}"></script>
