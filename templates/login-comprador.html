@@ -243,11 +243,17 @@
         <!-- Sección izquierda con logo y ilustración -->
         <div class="login-left-section">
             <div class="logo-section">
-                <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="main-logo">
+                <picture>
+                    <source srcset="{% static 'images/LogoCampoDirecto.webp' %}" type="image/webp">
+                    <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="main-logo">
+                </picture>
             </div>
             
             <div class="illustration-section">
-                <img src="{% static 'images/comprador_transparente.png' %}" alt="Comprador ilustración" class="comprador-illustration">
+                <picture>
+                    <source srcset="{% static 'images/comprador_transparente.webp' %}" type="image/webp">
+                    <img src="{% static 'images/comprador_transparente.png' %}" alt="Comprador ilustracion" class="comprador-illustration">
+                </picture>
             </div>
         </div>
         

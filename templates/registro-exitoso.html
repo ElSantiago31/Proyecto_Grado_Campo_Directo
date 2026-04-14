@@ -13,7 +13,10 @@
         <div class="success-container">
             <!-- Logo Campo Directo en la parte superior -->
             <div class="header-logo">
-                <img src="{% static 'images/logo.png' %}" alt="Campo Directo" class="logo-img">
+                <picture>
+                    <source srcset="{% static 'images/logo.webp' %}" type="image/webp">
+                    <img src="{% static 'images/logo.png' %}" alt="Campo Directo" class="logo-img">
+                </picture>
                 <div class="logo-text">
                     <span class="campo">CAMPO</span><br>
                     <span class="directo">DIRECTO</span>
@@ -24,7 +27,10 @@
             <div class="main-content">
                 <div class="left-side">
                     <div class="farmers-illustration">
-                        <img src="{% static 'images/LogoRegistroExitoso.png' %}" alt="Campesinos Campo Directo" class="farmers-img">
+                        <picture>
+                            <source srcset="{% static 'images/LogoRegistroExitoso.webp' %}" type="image/webp">
+                            <img src="{% static 'images/LogoRegistroExitoso.png' %}" alt="Campesinos Campo Directo" class="farmers-img">
+                        </picture>
                     </div>
                 </div>
 
