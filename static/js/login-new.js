@@ -168,8 +168,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Contraseña incorrecta, inactivo, servidor caído...
                     if(visual2faModal) visual2faModal.style.display = 'none';
                     
+                    let customErrorMessage = null;
+                    if (error.details && error.details.non_field_errors) {
+                        customErrorMessage = error.details.non_field_errors[0];
+                    }
+
                     if (error instanceof ApiError) {
-                        if (error.status === 401) {
+                        if (customErrorMessage) {
+                            showError(passwordInput, passwordError, customErrorMessage);
+                        } else if (error.status === 401) {
                             showError(passwordInput, passwordError, 'Usuario o contraseña incorrectos');
                         } else if (error.status === 403) {
                             showError(passwordInput, passwordError, 'Usuario inactivo o suspendido');
