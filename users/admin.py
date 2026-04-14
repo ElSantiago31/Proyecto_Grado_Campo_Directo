@@ -61,10 +61,14 @@ class UsuarioAdmin(UserAdmin):
         """Muestra la calificación promedio con estrellas"""
         if obj.total_calificaciones > 0:
             estrellas = '⭐' * int(obj.calificacion_promedio)
+            # Formateamos el número a string antes de pasarlo a format_html
+            # porque en Django 5.x format_html escapa los argumentos primero, 
+            # convirtiéndolos en SafeStrings que no aceptan el código de formato :.1f
+            promedio_fmt = f"{obj.calificacion_promedio:.1f}"
             return format_html(
-                '{} <small>({:.1f} - {} calificaciones)</small>',
+                '{} <small>({} - {} calificaciones)</small>',
                 estrellas,
-                obj.calificacion_promedio,
+                promedio_fmt,
                 obj.total_calificaciones
             )
         return format_html('<span style="color: #999;">Sin calificaciones</span>')
