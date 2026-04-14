@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
             compradorField.classList.add('hidden');
             direccionInput.required = false;
             direccionInput.value = '';
-        } else {
+        } else if (compradorRadio.checked) {
             campesinFields.forEach(el => el.classList.add('hidden'));
             nombreFincaInput.required = false;
             nombreFincaInput.value = '';
@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             compradorField.classList.remove('hidden');
             direccionInput.required = true;
+        } else {
+            // Ninguno seleccionado
+            campesinFields.forEach(el => el.classList.add('hidden'));
+            compradorField.classList.add('hidden');
+            nombreFincaInput.required = false;
+            direccionInput.required = false;
         }
     }
 
@@ -176,6 +182,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateForm(data) {
         let isValid = true;
         const errors = [];
+
+        // Validar que se seleccionó un tipo de usuario
+        if (!data.tipoUsuario) {
+            errors.push('Por favor selecciona si eres Campesino o Comprador');
+            isValid = false;
+        }
 
         // Validar nombre y apellido
         if (!data.nombre || data.nombre.length < 2) {

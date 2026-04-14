@@ -64,7 +64,7 @@
                     <!-- Radio buttons para tipo de usuario -->
                     <div class="form-group radio-group">
                         <div class="radio-option">
-                            <input type="radio" id="campesino" name="tipoUsuario" value="campesino" checked>
+                            <input type="radio" id="campesino" name="tipoUsuario" value="campesino">
                             <label for="campesino">Soy Campesino</label>
                         </div>
                         
@@ -79,11 +79,11 @@
                     </div>
                     
                     <!-- Campo específico para campesinos -->
-                    <div class="form-group campesino-field">
+                    <div class="form-group campesino-field hidden">
                         <input type="text" id="nombreFinca" name="nombreFinca" placeholder="Nombre de Finca" required>
                     </div>
                     
-                    <div class="form-group campesino-field date-group" style="display: flex; gap: 10px;">
+                    <div class="form-group campesino-field date-group hidden" style="display: flex; gap: 10px;">
                         <select id="departamentoFinca" name="departamentoFinca" style="width: 50%;">
                             <option value="">Departamento</option>
                         </select>
@@ -93,7 +93,7 @@
                     </div>
                     
                     <!-- Campo específico para compradores -->
-                    <div class="form-group comprador-field">
+                    <div class="form-group comprador-field hidden">
                         <input type="text" id="direccion" name="direccion" placeholder="Dirección de envío">
                     </div>
 

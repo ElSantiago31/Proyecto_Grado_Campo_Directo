@@ -131,8 +131,8 @@
     display: block;
 }
 
-.campesino-field.hidden {
-    display: none;
+.campesino-field.hidden, .comprador-field.hidden, .hidden {
+    display: none !important;
 }
 
 /* Campo de fecha */
