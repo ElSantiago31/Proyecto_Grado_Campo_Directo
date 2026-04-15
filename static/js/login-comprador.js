@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 // Token inválido, continuar con el login
-                // console.log('Token inválido, requiere nuevo login')log
+log
                 // Limpiar tokens inválidos
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            // console.error('Error en login:', error)error
+error
             
             // Restore button state
             loginBtn.innerHTML = originalText;

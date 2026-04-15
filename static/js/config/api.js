@@ -434,7 +434,7 @@ function handleAuthError() {
     // Redirigir al login unificado si no estamos ya ahí
     const currentPath = window.location.pathname;
     if (!currentPath.includes('login') && !currentPath.includes('registro')) {
-        // console.log('Token inválido, redirigiendo al login')log
+log
         window.location.href = '/login/';
     }
 }
@@ -453,11 +453,10 @@ api.request = async function (endpoint, options = {}) {
         if (error instanceof ApiError && error.isAuthError()) {
             // Evitar bucles infinitos para endpoints de auth
             if (endpoint.includes('/auth/') || options._isRetry) {
-                // console.log(`[API] Error de auth en ${endpoint}, no interceptando`)log
+log
                 throw error;
             }
-
-            // console.log(`[API] Error de autenticación interceptado en ${endpoint}`)log
+log
 
             // Si ya estamos renovando el token, esperar
             if (isRefreshingToken && refreshPromise) {
@@ -467,7 +466,7 @@ api.request = async function (endpoint, options = {}) {
                     options._isRetry = true;
                     return await originalRequest.call(this, endpoint, options);
                 } catch (refreshError) {
-                    // console.log('[API] Error renovando token, activando handleAuthError')log
+log
                     handleAuthError();
                     throw error;
                 }
@@ -476,7 +475,7 @@ api.request = async function (endpoint, options = {}) {
             // Intentar renovar el token automáticamente
             const refreshToken = localStorage.getItem('refreshToken');
             if (refreshToken && !isRefreshingToken) {
-                // console.log('[API] Intentando renovar token...')log
+log
                 isRefreshingToken = true;
                 refreshPromise = authApi.refreshToken();
 
@@ -484,20 +483,19 @@ api.request = async function (endpoint, options = {}) {
                     await refreshPromise;
                     isRefreshingToken = false;
                     refreshPromise = null;
-
-                    // console.log('[API] Token renovado exitosamente, reintentando petición')log
+log
                     // Reintentar la petición original con el nuevo token
                     options._isRetry = true;
                     return await originalRequest.call(this, endpoint, options);
                 } catch (refreshError) {
-                    // console.log('[API] Error renovando token:', refreshError)log
+log
                     isRefreshingToken = false;
                     refreshPromise = null;
                     handleAuthError();
                     throw error;
                 }
             } else {
-                // console.log('[API] No hay refresh token o ya estamos renovando, activando handleAuthError')log
+log
                 handleAuthError();
                 throw error;
             }
@@ -505,8 +503,7 @@ api.request = async function (endpoint, options = {}) {
         throw error;
     }
 };
-
-// console.log('[API] Interceptor activado con fix para compradores')log
+log
 
 // Exportar para uso global
 window.api = api;

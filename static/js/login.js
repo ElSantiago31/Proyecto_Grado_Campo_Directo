@@ -174,7 +174,7 @@
                 }, 500);
             }
         } catch (error) {
-            // console.error('Error during login:', error)error
+error
 
             // Restore button state
             loginBtn.textContent = originalText;

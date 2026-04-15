@@ -53,7 +53,7 @@ function displayUserData() {
             localStorage.removeItem('registroUsuario');
         }
     } catch (error) {
-        // console.log('No hay datos de usuario para mostrar')log
+log
     }
 }
 
