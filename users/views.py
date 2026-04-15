@@ -50,14 +50,9 @@ class RegisterView(APIView):
         }
     )
     def post(self, request):
-        # Debug: Log de datos recibidos
-        print(f"🔍 [DEBUG REGISTRO] Datos recibidos: {json.dumps(request.data, indent=2, default=str)}")
-        print(f"🔍 [DEBUG REGISTRO] Content-Type: {request.content_type}")
-        print(f"🔍 [DEBUG REGISTRO] Headers: {dict(request.headers)}")
-        
+
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            print(f"✅ [DEBUG REGISTRO] Serializer válido")
             user = serializer.save()
             
             # Crear sesión Django para el usuario (para que de los permisos de @login_required)
@@ -73,7 +68,6 @@ class RegisterView(APIView):
                 'refresh': str(refresh)
             }, status=status.HTTP_201_CREATED)
         
-        print(f"❌ [DEBUG REGISTRO] Errores de validación: {json.dumps(serializer.errors, indent=2, default=str)}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
