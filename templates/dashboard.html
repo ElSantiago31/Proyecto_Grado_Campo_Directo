@@ -197,7 +197,7 @@
                             <p class="stat-number" id="activeProducts">0</p>
                         </div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="abrirModalMisResenas()" style="cursor: pointer;">
                         <div class="stat-icon">⭐</div>
                         <div class="stat-content">
                             <h3>Calificación</h3>
@@ -210,6 +210,19 @@
                     <h3>Actividad Reciente</h3>
                     <div class="activity-list" id="recentActivityList">
                         <p class="no-activity">Cargando actividad reciente...</p>
+                    </div>
+                </div>
+
+                <!-- MODAL DE MIS RESEÑAS -->
+                <div id="misResenasModal" class="modal-unico">
+                    <div class="modal-content-unico" style="max-width: 600px;">
+                        <div class="modal-header-unico">
+                            <h3>Mis Calificaciones</h3>
+                            <button id="closeMisResenasModal" class="modal-close-unico">&times;</button>
+                        </div>
+                        <div id="misResenasContainer" class="modal-body-unico">
+                            <!-- Se poblará vía JS -->
+                        </div>
                     </div>
                 </div>
             </section>
