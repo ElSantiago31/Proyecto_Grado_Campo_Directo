@@ -39,22 +39,45 @@ class DetallePedidoCreateSerializer(serializers.ModelSerializer):
         # Se calcula siempre desde la base de datos en validate().
         fields = ['producto', 'cantidad']
     
+    def validate_cantidad(self, value):
+        """La cantidad debe ser un numero positivo valido"""
+        if value is None or value <= 0:
+            raise serializers.ValidationError(
+                "La cantidad debe ser un numero positivo."
+            )
+        return value
+
     def validate(self, attrs):
-        """Validaciones para el detalle del pedido"""
+        """Validaciones de seguridad para el detalle del pedido"""
         producto = attrs['producto']
         cantidad = attrs['cantidad']
 
         # SEGURIDAD: El precio SIEMPRE se toma de la base de datos.
-        # NUNCA se acepta el precio enviado por el cliente para evitar
-        # ataques de price manipulation.
+        # NUNCA se acepta el precio enviado por el cliente.
         attrs['precio_unitario'] = producto.precio_por_kg
 
-        # Verificar disponibilidad del producto
-        disponible, mensaje = producto.puede_ser_comprado_por_cantidad(cantidad)
-        if not disponible:
-            raise serializers.ValidationError(f"Producto {producto.nombre}: {mensaje}")
+        # Verificar que la cantidad cumple el minimo de compra
+        if cantidad < producto.peso_minimo_venta:
+            raise serializers.ValidationError(
+                f"La cantidad minima para '{producto.nombre}' "
+                f"es {producto.peso_minimo_venta} {producto.unidad_medida}."
+            )
+
+        # Verificar que hay stock suficiente
+        if cantidad > producto.stock_disponible:
+            raise serializers.ValidationError(
+                f"Stock insuficiente para '{producto.nombre}'. "
+                f"Disponible: {producto.stock_disponible} {producto.unidad_medida}."
+            )
+
+        # Verificar disponibilidad general del producto
+        if not producto.is_disponible:
+            raise serializers.ValidationError(
+                f"El producto '{producto.nombre}' no esta disponible actualmente."
+            )
 
         return attrs
+
 
 
 class PedidoListSerializer(serializers.ModelSerializer):
