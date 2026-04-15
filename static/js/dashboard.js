@@ -1,4 +1,4 @@
-﻿// Dashboard JavaScript - Campo Directo (Campesinos)
+// Dashboard JavaScript - Campo Directo (Campesinos)
 
 document.addEventListener('DOMContentLoaded', async function () {
 log
@@ -3011,6 +3011,20 @@ error
 // ==========================================================================
 // MÓDULO DE CHAT (ANTI-INTERMEDIARIOS)
 // ==========================================================================
+
+/**
+ * SEGURIDAD: Escapa caracteres HTML para prevenir XSS.
+ * SIEMPRE usar esta función antes de insertar texto de usuario en innerHTML.
+ */
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 let activeConversationId = null;
 let chatPollingInterval = null;
 // myChatUserId se inicializará con window.currentUserId si está disponible, 
@@ -3059,10 +3073,10 @@ function renderConversations(conversations) {
         let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span class="unread-badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
         
         li.innerHTML = `
-            <div class="chat-avatar">${counterPartName.charAt(0).toUpperCase()}</div>
+            <div class="chat-avatar">${escapeHTML(counterPartName.charAt(0).toUpperCase())}</div>
             <div class="chat-contact-info">
-                <h4 class="chat-contact-name">${counterPartName}</h4>
-                <p class="chat-contact-preview">${lastMsg}</p>
+                <h4 class="chat-contact-name">${escapeHTML(counterPartName)}</h4>
+                <p class="chat-contact-preview">${escapeHTML(lastMsg)}</p>
             </div>
             ${unreadBadge}
         `;
@@ -3179,10 +3193,11 @@ function renderMessages(messages) {
         div.className = `chat-bubble-wrapper ${msgType}`;
         const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
+        // SEGURIDAD: Usar escapeHTML() para prevenir XSS en mensajes del chat
         div.innerHTML = `
             <div class="chat-bubble">
-                <span style="white-space: pre-wrap;">${msg.contenido}</span>
-                <span class="chat-time">${timeStr}</span>
+                <span style="white-space: pre-wrap;">${escapeHTML(msg.contenido)}</span>
+                <span class="chat-time">${escapeHTML(timeStr)}</span>
             </div>
         `;
         area.appendChild(div);

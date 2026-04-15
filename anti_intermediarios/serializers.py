@@ -44,6 +44,19 @@ class MensajeCreateSerializer(serializers.ModelSerializer):
             'conversacion': {'required': False, 'allow_null': True},
         }
     
+    def validate_contenido(self, value):
+        """
+        SEGURIDAD: Sanitizar el contenido del mensaje para prevenir XSS almacenado.
+        Se elimina cualquier etiqueta HTML antes de guardar en la base de datos.
+        """
+        import re
+        if value:
+            # Eliminar todas las etiquetas HTML
+            value = re.sub(r'<[^>]+>', '', value)
+            # Limitar longitud para evitar DoS
+            value = value[:2000]
+        return value
+
     def validate(self, attrs):
         """Validaciones para mensajes"""
         tipo_mensaje = attrs.get('tipo_mensaje')
@@ -63,6 +76,7 @@ class MensajeCreateSerializer(serializers.ModelSerializer):
         # Asignar remitente automáticamente
         validated_data['remitente'] = self.context['request'].user
         return Mensaje.objects.create(**validated_data)
+
 
 
 class ConversacionListSerializer(serializers.ModelSerializer):
