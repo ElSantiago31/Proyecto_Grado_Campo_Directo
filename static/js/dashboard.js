@@ -2629,9 +2629,9 @@ function openChat(convId, counterPartName) {
     document.getElementById('activeChatName').textContent = counterPartName;
     document.getElementById('activeChatAvatar').textContent = counterPartName.charAt(0).toUpperCase();
 
-    // Ajuste móvil
+    // Ajuste móvil tipo WhatsApp
     if (window.innerWidth <= 768) {
-        document.querySelector('.chat-sidebar').style.display = 'none';
+        document.getElementById('chatWrapper')?.classList.add('chat-active');
         document.getElementById('chatMobileBackBtn').style.display = 'block';
     }
 
@@ -2644,8 +2644,7 @@ function openChat(convId, counterPartName) {
 }
 
 document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
-    document.querySelector('.chat-sidebar').style.display = 'flex';
-    document.getElementById('chatMainArea').style.display = 'none';
+    document.getElementById('chatWrapper')?.classList.remove('chat-active');
     document.getElementById('chatMobileBackBtn').style.display = 'none';
     if (chatPollingInterval) clearInterval(chatPollingInterval);
     activeConversationId = null;
