@@ -791,8 +791,10 @@ async function getUserFinca() {
                     const todasLasFincas = Array.isArray(fallbackData) ? fallbackData : (fallbackData.results || []);
 
                     // Filtrar solo las fincas que pertenecen al usuario actual
-                    const misFincas = todasLasFincas.filter(finca =>
-                        finca.campesino_nombre && finca.campesino_nombre.includes('Juan Carlos')
+                    // Filtrar fincas que pertenecen al usuario actual (Ronald u otros)
+                    const userNameStr = document.getElementById('userName')?.textContent || '';
+                    const misFincas = todasLasFincas.filter(finca => 
+                        !userNameStr || (finca.campesino_nombre && finca.campesino_nombre.toLowerCase().includes(userNameStr.toLowerCase().split(' ')[0]))
                     );
                     if (misFincas.length > 0) {
                         return misFincas[0].id;
@@ -952,6 +954,7 @@ async function handleProductSubmit(e) {
         }
 
     } catch (error) {
+        console.error('Error durante handleProductSubmit:', error);
         showNotification('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'error');
     } finally {
         // Restaurar botón
@@ -1177,9 +1180,12 @@ async function editProduct(productId) {
             // Mostrar el modal
             showEditModal();
         } else {
-            showNotification('Error al cargar los datos del producto', 'error');
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Error al cargar producto:', response.status, errorData);
+            showNotification(`Error ${response.status}: No se pudo obtener la información del producto`, 'error');
         }
     } catch (error) {
+        console.error('Error de conexión en editProduct:', error);
         showNotification('Error de conexión al cargar el producto', 'error');
     }
 }

@@ -94,6 +94,8 @@ class ProductoDetailSerializer(serializers.ModelSerializer):
         }
     
     def get_finca(self, obj):
+        if not obj.finca:
+            return None
         return {
             'id': obj.finca.id,
             'nombre': obj.finca.nombre_finca,
