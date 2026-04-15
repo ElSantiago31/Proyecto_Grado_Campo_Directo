@@ -1,27 +1,27 @@
-// Dashboard JavaScript - Campo Directo (Compradores)
+﻿// Dashboard JavaScript - Campo Directo (Compradores)
 
 document.addEventListener('DOMContentLoaded', async function () {
-    console.log('[Dashboard Comprador] === INICIANDO DASHBOARD COMPRADOR ===');
-    console.log('[Dashboard Comprador] URL actual:', window.location.href);
+    // console.log('[Dashboard Comprador] === INICIANDO DASHBOARD COMPRADOR ===')log
+    // console.log('[Dashboard Comprador] URL actual:', window.location.href)log
     console.log('[Dashboard Comprador] Token presente:', !!localStorage.getItem('authToken'));
 
     // Verificar autenticación JWT
     if (!isAuthenticated()) {
-        console.log('[Dashboard Comprador] No hay token de autenticación, redirigiendo al login');
+        // console.log('[Dashboard Comprador] No hay token de autenticación, redirigiendo al login')log
         window.location.href = '/login/';
         return;
     }
 
-    console.log('[Dashboard Comprador] Token válido, verificando perfil...');
+    // console.log('[Dashboard Comprador] Token válido, verificando perfil...')log
 
     // Verificar que el usuario sea un comprador
     try {
-        console.log('[Dashboard Comprador] Obteniendo perfil del usuario...');
+        // console.log('[Dashboard Comprador] Obteniendo perfil del usuario...')log
         const profile = await authApi.getProfile();
-        console.log('[Dashboard Comprador] Perfil obtenido:', profile);
+        // console.log('[Dashboard Comprador] Perfil obtenido:', profile)log
 
         if (!profile || (profile.tipo_usuario !== 'comprador' && profile.tipo_usuario !== 'campesino')) {
-            console.log('[Dashboard Comprador] Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario);
+            // console.log('[Dashboard Comprador] Usuario no tiene permisos de compra, tipo:', profile?.tipo_usuario)log
             window.location.href = '/login/';
             return;
         }
@@ -38,17 +38,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
     } catch (error) {
-        console.error('[Dashboard Comprador] Error verificando perfil:', error);
+        // console.error('[Dashboard Comprador] Error verificando perfil:', error)error
 
         // Si es error de autenticación (401), redirigir al login
         if (error instanceof ApiError && error.isAuthError()) {
-            console.log('[Dashboard Comprador] Error de autenticación, redirigiendo...');
+            // console.log('[Dashboard Comprador] Error de autenticación, redirigiendo...')log
             window.location.href = '/login/';
             return;
         }
 
         // Para otros errores, continuar con datos por defecto
-        console.warn('[Dashboard Comprador] Continuando con datos por defecto debido a error:', error.message);
+        // console.warn('[Dashboard Comprador] Continuando con datos por defecto debido a error:', error.message)warn
     }
 
     // Mostrar la aplicación
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Inicializar funciones básicas
-    console.log('[Dashboard Comprador] Inicializando navegación y logout...');
+    // console.log('[Dashboard Comprador] Inicializando navegación y logout...')log
     setupNavigation();
     setupLogout();
     loadMarketplace();
@@ -74,8 +74,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Actualizar tarjeta de calificación con datos reales desde la API
     loadMyRatingCard();
 
-    console.log('[Dashboard Comprador] Dashboard comprador cargado correctamente');
-    console.log('[Dashboard Comprador] === FIN DE INICIALIZACIÓN ===');
+    // console.log('[Dashboard Comprador] Dashboard comprador cargado correctamente')log
+    // console.log('[Dashboard Comprador] === FIN DE INICIALIZACIÓN ===')log
 });
 
 // La variable compradorData simulada fue eliminada permanentemente.
@@ -115,7 +115,7 @@ function setupNavigation() {
                         break;
                     case 'messages':
                         // Asegurar que se carguen las conversaciones al entrar
-                        console.log('[Dashboard Comprador] Cargando conversaciones para la sección de mensajes');
+                        // console.log('[Dashboard Comprador] Cargando conversaciones para la sección de mensajes')log
                         loadConversations();
                         break;
                 }
@@ -173,15 +173,15 @@ function setupLogout() {
 }
 
 async function handleLogout() {
-    console.log('[Dashboard Comprador] Iniciando proceso de logout...');
+    // console.log('[Dashboard Comprador] Iniciando proceso de logout...')log
     try {
         await authApi.logout();
 
         // Usar endpoint Django para logout de sesión
-        console.log('[Dashboard Comprador] Redirigiendo a /logout/ para cerrar sesión Django');
+        // console.log('[Dashboard Comprador] Redirigiendo a /logout/ para cerrar sesión Django')log
         window.location.href = '/logout/';
     } catch (error) {
-        console.warn('[Dashboard Comprador] Error al redirigir a logout:', error);
+        // console.warn('[Dashboard Comprador] Error al redirigir a logout:', error)warn
         window.location.href = '/logout/';
     }
 }
@@ -194,7 +194,7 @@ async function loadMarketplace() {
     if (!grid) return;
 
     try {
-        console.log('[Dashboard Comprador] Cargando productos reales desde el backend...');
+        // console.log('[Dashboard Comprador] Cargando productos reales desde el backend...')log
         grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">Cargando productos del marketplace...</div>';
 
         // Petición al backend
@@ -214,7 +214,7 @@ async function loadMarketplace() {
         renderMarketplaceProducts(allMarketplaceProducts);
 
     } catch (error) {
-        console.error('[Dashboard Comprador] Error al cargar marketplace:', error);
+        // console.error('[Dashboard Comprador] Error al cargar marketplace:', error)error
         grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: red; padding: 2rem;">Hubo un error cargando los productos. Por favor intenta de nuevo más tarde.</div>';
     }
 }
@@ -507,7 +507,7 @@ function setupRatingModal() {
                 closeRatingModal();
                 loadOrders(); // Recarga la pestaña actual
             } catch (error) {
-                console.error("Error al enviar calificación:", error);
+                // console.error("Error al enviar calificación:", error)error
                 showNotification(error.message || 'Error al enviar calificación', 'error');
             } finally {
                 this.disabled = false;
@@ -817,7 +817,7 @@ async function fetchRealOrders(type) {
         list.innerHTML += appendHtml;
 
     } catch (error) {
-        console.error("Error fetching orders:", error);
+        // console.error("Error fetching orders:", error)error
         list.innerHTML = '<div style="color:red; text-align:center;">Error al cargar los pedidos desde el servidor.</div>';
     }
 }
@@ -867,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeCancelOrderModal();
                 loadOrders(); // Recarga la pestaña actual de pedidos
             } catch (error) {
-                console.error("Error al cancelar pedido:", error);
+                // console.error("Error al cancelar pedido:", error)error
                 showNotification(error.message || 'No se pudo cancelar el pedido', 'error');
             } finally {
                 this.disabled = false;
@@ -974,7 +974,7 @@ async function processPurchase() {
         else loadOrders();
 
     } catch (error) {
-        console.error("Error procesando compra:", error);
+        // console.error("Error procesando compra:", error)error
         let errMsg = "Hubo un error al procesar el pedido. Verifica el stock.";
         if (error.message) {
             errMsg = error.message;
@@ -1086,7 +1086,7 @@ async function loadProfileData() {
         // Configurar listener para la foto de perfil (solo una vez)
         setupProfilePhotoUpload();
     } catch (error) {
-        console.error("Error al cargar perfil:", error);
+        // console.error("Error al cargar perfil:", error)error
     }
 }
 
@@ -1124,9 +1124,9 @@ function setupProfilePhotoUpload() {
         formData.append('avatar', file);
 
         try {
-            console.log('[Dashboard Comprador] Subiendo foto de perfil...');
+            // console.log('[Dashboard Comprador] Subiendo foto de perfil...')log
             const response = await authApi.updateProfile(formData);
-            console.log('[Dashboard Comprador] Foto de perfil actualizada:', response);
+            // console.log('[Dashboard Comprador] Foto de perfil actualizada:', response)log
 
             const userData = response.user || response;
             if (userData && userData.avatar) {
@@ -1148,7 +1148,7 @@ function setupProfilePhotoUpload() {
                 showNotification('¡Foto de perfil actualizada!', 'success');
             }
         } catch (error) {
-            console.error('[Dashboard Comprador] Error subiendo foto:', error);
+            // console.error('[Dashboard Comprador] Error subiendo foto:', error)error
             avatarLarge.innerHTML = originalContent;
             showNotification('Error al subir la foto: ' + error.message, 'error');
         } finally {
@@ -1169,7 +1169,7 @@ function setupProfilePhotoUpload() {
             try {
                 // Enviar null para eliminar la foto
                 const response = await authApi.updateProfile({ avatar: null });
-                console.log('[Dashboard Comprador] Foto de perfil eliminada:', response);
+                // console.log('[Dashboard Comprador] Foto de perfil eliminada:', response)log
 
                 // Actualizar UI al estado predeterminado
                 const avatarLarge = document.getElementById('profileAvatarLarge');
@@ -1186,7 +1186,7 @@ function setupProfilePhotoUpload() {
                 this.style.display = 'none';
                 showNotification('Foto de perfil eliminada', 'success');
             } catch (error) {
-                console.error('[Dashboard Comprador] Error eliminando foto:', error);
+                // console.error('[Dashboard Comprador] Error eliminando foto:', error)error
                 showNotification('Error al eliminar la foto', 'error');
                 this.textContent = originalText;
                 this.disabled = false;
@@ -1227,7 +1227,7 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         if (userNameElement) userNameElement.textContent = profileData.nombre + ' ' + profileData.apellido;
 
     } catch (error) {
-        console.error("Error al guardar perfil:", error);
+        // console.error("Error al guardar perfil:", error)error
         if (typeof showNotification === 'function') {
             showNotification('Error al guardar el perfil: ' + error.message, 'error');
         } else {
@@ -1269,7 +1269,7 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
 
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
-        console.error("Error cambiando contraseña:", error);
+        // console.error("Error cambiando contraseña:", error)error
         let msgDetalle = error.message;
         if (error.details) {
             try { msgDetalle += " - " + JSON.stringify(error.details); } catch (ex) { }
@@ -1296,7 +1296,7 @@ async function loadConversations() {
         const response = await chatApi.getConversations();
         renderConversations(response.results || response);
     } catch (error) {
-        console.error("Error cargando conversaciones:", error);
+        // console.error("Error cargando conversaciones:", error)error
         document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0, 100)}</small></li>`;
     }
 }
@@ -1354,7 +1354,7 @@ function renderConversations(conversations) {
         const convId = parseInt(li.dataset.id);
         const name = li.dataset.name;
 
-        console.log(`[Chat] Seleccionando conversación ID: ${convId}, Nombre: ${name}`);
+        // console.log(`[Chat] Seleccionando conversación ID: ${convId}, Nombre: ${name}`)log
 
         // Actualizar UI activa
         document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
@@ -1417,7 +1417,7 @@ async function loadMessages(convId, isPolling = false) {
             await chatApi.markAsRead(convId);
         }
     } catch (error) {
-        console.error("Error al cargar mensajes:", error);
+        // console.error("Error al cargar mensajes:", error)error
     }
 }
 
@@ -1489,7 +1489,7 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
         loadMessages(activeConversationId);
         loadConversations();
     } catch (err) {
-        console.error(err);
+        // console.error(err)error
         alert('Error enviando mensaje.');
         input.value = txt;
     } finally {
@@ -1546,7 +1546,7 @@ async function pollUnreadMessages() {
         }
         _lastUnreadCount = totalUnread;
     } catch (e) {
-        console.debug('[ChatPoller] Error silenciado:', e.message);
+        // console.debug('[ChatPoller] Error silenciado:', e.message)debug
     }
 }
 
@@ -1601,16 +1601,16 @@ async function populateCategoryFilter() {
             categoryFilter.appendChild(option);
         });
 
-        console.log(`[Marketplace] Filtro de categorías actualizado con ${data.length} categorías.`);
+        // console.log(`[Marketplace] Filtro de categorías actualizado con ${data.length} categorías.`)log
     } catch (error) {
-        console.error('[Marketplace] Error al poblar el filtro de categorías:', error);
+        // console.error('[Marketplace] Error al poblar el filtro de categorías:', error)error
     }
 }
 
 function populateLocationFilter() {
     const locationFilter = document.getElementById('locationFilter');
     if (!locationFilter || !window.colombiaData) {
-        console.warn('[Marketplace] No se pudo cargar colombiaData o no se encontró el selector de ubicación.');
+        // console.warn('[Marketplace] No se pudo cargar colombiaData o no se encontró el selector de ubicación.')warn
         return;
     }
 
@@ -1646,7 +1646,7 @@ function populateLocationFilter() {
         option.textContent = `${emoji} ${item.departamento}`;
         locationFilter.appendChild(option);
     });
-    console.log(`[Marketplace] Filtro de ubicación poblado con ${sortedData.length} departamentos colombianos.`);
+    // console.log(`[Marketplace] Filtro de ubicación poblado con ${sortedData.length} departamentos colombianos.`)log
 }
 
 // Carga silenciosa de la calificación real del comprador para actualizar la tarjeta del resumen
@@ -1728,6 +1728,6 @@ async function showMyReviewsModal() {
 
     } catch (err) {
         lista.innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">❌ No se pudieron cargar las reseñas. Inténtalo luego.</p>';
-        console.error('Error cargando mis reseñas:', err);
+        // console.error('Error cargando mis reseñas:', err)error
     }
 }

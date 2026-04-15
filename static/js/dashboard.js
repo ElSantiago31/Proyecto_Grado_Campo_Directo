@@ -1,23 +1,23 @@
-// Dashboard JavaScript - Campo Directo (Campesinos)
+﻿// Dashboard JavaScript - Campo Directo (Campesinos)
 
 document.addEventListener('DOMContentLoaded', async function () {
-    console.log('[Dashboard] Iniciando dashboard campesino con autenticación JWT');
+    // console.log('[Dashboard] Iniciando dashboard campesino con autenticación JWT')log
 
     // Verificar autenticación JWT (solo si no estamos ya en dashboard cargado por Django)
-    console.log('[Dashboard] Verificando estado de autenticación...');
+    // console.log('[Dashboard] Verificando estado de autenticación...')log
 
     // Si estamos aquí, es porque Django ya verificó la autenticación en el servidor
     // No necesitamos redirigir, pero podemos intentar usar JWT si está disponible
     const hasJwtToken = isAuthenticated();
-    console.log('[Dashboard] JWT Token disponible:', hasJwtToken);
+    // console.log('[Dashboard] JWT Token disponible:', hasJwtToken)log
 
     // Intentar obtener perfil usando API (funciona con JWT O con Cookie de Sesión de Django gracias a credentials: 'include')
     try {
-        console.log('[Dashboard] Intentando obtener perfil de forma asíncrona...');
+        // console.log('[Dashboard] Intentando obtener perfil de forma asíncrona...')log
         const profile = await authApi.getProfile();
 
         if (profile && profile.tipo_usuario === 'campesino') {
-            console.log(`[Dashboard] Perfil cargado: ${profile.nombre} ${profile.apellido}`);
+            // console.log(`[Dashboard] Perfil cargado: ${profile.nombre} ${profile.apellido}`)log
             
             // Guardar ID para el sistema de chat y otros componentes
             window.currentUserId = profile.id;
@@ -29,22 +29,22 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             // Cargar datos reales del dashboard
-            console.log('[Dashboard] Iniciando carga de datos reales...');
+            // console.log('[Dashboard] Iniciando carga de datos reales...')log
             await loadRealDashboardData();
-            console.log('[Dashboard] Carga de datos reales completada.');
+            // console.log('[Dashboard] Carga de datos reales completada.')log
         } else if (profile && profile.tipo_usuario !== 'campesino') {
-            console.log('[Dashboard] Usuario no es campesino, ignorando datos de dashboard');
+            // console.log('[Dashboard] Usuario no es campesino, ignorando datos de dashboard')log
         }
 
     } catch (error) {
-        console.warn('[Dashboard] Error obteniendo perfil de la API, puede ser sesión no válida o sin permisos:', error);
+        // console.warn('[Dashboard] Error obteniendo perfil de la API, puede ser sesión no válida o sin permisos:', error)warn
         
         // Aún así, intentamos cargar los datos del dashboard en caso de que sea sólo el perfil lo que falló
         try {
-            console.log('[Dashboard] Fallback: Intentando cargar datos reales del dashboard directamente...');
+            // console.log('[Dashboard] Fallback: Intentando cargar datos reales del dashboard directamente...')log
             await loadRealDashboardData();
         } catch (e) {
-            console.error('[Dashboard] Error definitivo al cargar datos.', e);
+            // console.error('[Dashboard] Error definitivo al cargar datos.', e)error
         }
     }
 
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const salesPeriodSelect = document.getElementById('salesPeriod');
     if (salesPeriodSelect) {
         salesPeriodSelect.addEventListener('change', async function(e) {
-            console.log('[Dashboard] Cambiando periodo de ventas a:', e.target.value);
+            // console.log('[Dashboard] Cambiando periodo de ventas a:', e.target.value)log
             await loadRealDashboardData(e.target.value);
             
             // Si la vista está en "ventas", necesitamos volver a renderizar con la nueva información
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Cargar productos del usuario
     await loadUserProducts();
 
-    console.log('[Dashboard] Dashboard campesino cargado');
+    // console.log('[Dashboard] Dashboard campesino cargado')log
 });
 
 let salesChart = null;
@@ -103,12 +103,12 @@ let dashboardData = {
 async function loadRealDashboardData(period = 'month') {
     try {
         console.log(`[Dashboard] Cargando datos reales del usuario (periodo: ${period})...`);
-        console.log('[Dashboard] URL del endpoint:', '/api/users/dashboard/');
+        // console.log('[Dashboard] URL del endpoint:', '/api/users/dashboard/')log
 
         // Obtener datos del dashboard del usuario
         console.log('[Dashboard] Haciendo petición a la API con authApi.getDashboard()...');
         const data = await authApi.getDashboard(period);
-        console.log('[Dashboard] Datos obtenidos:', data);
+        // console.log('[Dashboard] Datos obtenidos:', data)log
 
         if (data) {
             // Actualizar datos del dashboard
@@ -129,22 +129,22 @@ async function loadRealDashboardData(period = 'month') {
             updateRecentActivity();
             
             // Renderizar gráfico si hay datos
-            console.log('[Dashboard] Datos para grafico:', dashboardData.stats.ventas_grafico);
+            // console.log('[Dashboard] Datos para grafico:', dashboardData.stats.ventas_grafico)log
             if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
-                console.log('[Dashboard] Intentando renderizado inicial del grafico...');
+                // console.log('[Dashboard] Intentando renderizado inicial del grafico...')log
                 renderSalesChart(dashboardData.stats.ventas_grafico);
             }
 
-            console.log('[Dashboard] Datos actualizados en la UI');
+            // console.log('[Dashboard] Datos actualizados en la UI')log
         } else {
-            console.warn('[Dashboard] No se pudieron cargar datos del dashboard, respuesta:', response.status);
-            console.log('[Dashboard] Usuario probablemente autenticado por sesión Django, usando datos del template');
+            // console.warn('[Dashboard] No se pudieron cargar datos del dashboard, respuesta:', response.status)warn
+            // console.log('[Dashboard] Usuario probablemente autenticado por sesión Django, usando datos del template')log
             // No llamar updateStats() para no sobrescribir datos del template Django
         }
     } catch (error) {
-        console.error('[Dashboard] Error cargando datos del dashboard:', error);
-        console.error('[Dashboard] Detalles del error:', error.message, error.stack);
-        console.log('[Dashboard] No se pueden cargar datos vía API, usando datos del template Django');
+        // console.error('[Dashboard] Error cargando datos del dashboard:', error)error
+        // console.error('[Dashboard] Detalles del error:', error.message, error.stack)error
+        // console.log('[Dashboard] No se pueden cargar datos vía API, usando datos del template Django')log
         // No llamar updateStats() para preservar datos del template Django
     }
 }
@@ -233,19 +233,19 @@ function setupLogout() {
 }
 
 async function handleLogout() {
-    console.log('[Dashboard] Iniciando proceso de logout...');
+    // console.log('[Dashboard] Iniciando proceso de logout...')log
 
     // Limpiar tokens JWT inmediatamente
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
-    console.log('[Dashboard] Tokens JWT eliminados');
+    // console.log('[Dashboard] Tokens JWT eliminados')log
 
     try {
         // Usar endpoint Django para logout de sesión
-        console.log('[Dashboard] Redirigiendo a /logout/ para cerrar sesión Django');
+        // console.log('[Dashboard] Redirigiendo a /logout/ para cerrar sesión Django')log
         window.location.href = '/logout/';
     } catch (error) {
-        console.warn('[Dashboard] Error al redirigir a logout:', error);
+        // console.warn('[Dashboard] Error al redirigir a logout:', error)warn
         // Fallback: redirigir directamente al home
         window.location.href = '/';
     }
@@ -303,7 +303,7 @@ function updateStats(period = 'month') {
 // FUNCIONALIDAD: MIS RESEÑAS (CAMPESINO)
 // ============================================================
 async function abrirModalMisResenas() {
-    console.log('[Dashboard] Abriendo modal de Mis Reseñas...');
+    // console.log('[Dashboard] Abriendo modal de Mis Reseñas...')log
     const modal = document.getElementById('misResenasModal');
     const closeBtn = document.getElementById('closeMisResenasModal');
     const container = document.getElementById('misResenasContainer');
@@ -340,17 +340,17 @@ async function abrirModalMisResenas() {
             // Intentamos usar el endpoint del usuario campesino
             const campesinoId = window.currentUserId;
             if (campesinoId && window.userApi && window.userApi.getResenasCampesino) {
-                console.log(`[Dashboard] Obteniendo reseñas para campesino ID: ${campesinoId}`);
+                // console.log(`[Dashboard] Obteniendo reseñas para campesino ID: ${campesinoId}`)log
                 data = await window.userApi.getResenasCampesino(campesinoId);
             } else if (window.userApi && window.userApi.getMisResenas) {
-                console.log(`[Dashboard] Obteniendo mis reseñas directamente`);
+                // console.log(`[Dashboard] Obteniendo mis reseñas directamente`)log
                 data = await window.userApi.getMisResenas();
                 esAutor = true;
             } else {
                 throw new Error("No hay método disponible para cargar reseñas");
             }
         } catch (apiError) {
-            console.warn('[Dashboard] Falló getResenasCampesino, probando getMisResenas...', apiError);
+            // console.warn('[Dashboard] Falló getResenasCampesino, probando getMisResenas...', apiError)warn
             if (window.userApi && window.userApi.getMisResenas) {
                 data = await window.userApi.getMisResenas();
                 esAutor = true;
@@ -416,7 +416,7 @@ async function abrirModalMisResenas() {
         container.innerHTML = html;
         
     } catch (e) {
-        console.error('[Dashboard] Error cargando reseñas:', e);
+        // console.error('[Dashboard] Error cargando reseñas:', e)error
         container.innerHTML = `
             <div style="text-align: center; padding: 30px; color: #e74c3c;">
                 <p>Ocurrió un error al cargar tus reseñas.</p>
@@ -430,23 +430,23 @@ async function abrirModalMisResenas() {
  * Renderiza el gráfico de ventas usando Chart.js
  */
 function renderSalesChart(data) {
-    console.log('[Chart] Iniciando renderizado con:', data);
+    // console.log('[Chart] Iniciando renderizado con:', data)log
     
     if (typeof Chart === 'undefined') {
-        console.error('[Chart] ERROR: La librería Chart.js no está cargada.');
+        // console.error('[Chart] ERROR: La librería Chart.js no está cargada.')error
         return;
     }
 
     const ctx = document.getElementById('salesChart');
     if (!ctx) {
-        console.error('[Chart] ERROR: No se encontró el elemento canvas #salesChart');
+        // console.error('[Chart] ERROR: No se encontró el elemento canvas #salesChart')error
         return;
     }
     
-    console.log('[Chart] Canvas encontrado, dimensiones:', ctx.offsetWidth, 'x', ctx.offsetHeight);
+    // console.log('[Chart] Canvas encontrado, dimensiones:', ctx.offsetWidth, 'x', ctx.offsetHeight)log
 
     if (salesChart) {
-        console.log('[Chart] Destruyendo gráfico previo');
+        // console.log('[Chart] Destruyendo gráfico previo')log
         salesChart.destroy();
     }
 
@@ -526,9 +526,9 @@ function renderSalesChart(data) {
             }
         }
     });
-        console.log('[Chart] Gráfico renderizado exitosamente');
+        // console.log('[Chart] Gráfico renderizado exitosamente')log
     } catch (error) {
-        console.error('[Chart] ERROR fatal renderizando gráfico:', error);
+        // console.error('[Chart] ERROR fatal renderizando gráfico:', error)error
     }
 }
 
@@ -586,7 +586,7 @@ function formatCurrency(amount) {
 // ============================================================
 
 function setupProductModal() {
-    console.log('[Dashboard] Configurando modal de productos...');
+    // console.log('[Dashboard] Configurando modal de productos...')log
 
     // Elementos del modal
     const addProductBtn = document.getElementById('addProductBtn');
@@ -628,20 +628,20 @@ function setupProductModal() {
         productForm.addEventListener('submit', handleProductSubmit);
     }
 
-    console.log('[Dashboard] Modal de productos configurado');
+    // console.log('[Dashboard] Modal de productos configurado')log
 
     // Configurar otros modales
     setupEditModal();
     setupDeleteModal();
 
-    console.log('[Dashboard] Todos los modales configurados');
+    // console.log('[Dashboard] Todos los modales configurados')log
 
     // Inicializar sistema de notificaciones
     initNotificationSystem();
 }
 
 async function openProductModal() {
-    console.log('[Dashboard] Abriendo modal de productos...');
+    // console.log('[Dashboard] Abriendo modal de productos...')log
 
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
@@ -668,7 +668,7 @@ async function openProductModal() {
 }
 
 function closeProductModal() {
-    console.log('[Dashboard] Cerrando modal de productos...');
+    // console.log('[Dashboard] Cerrando modal de productos...')log
 
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
@@ -685,13 +685,13 @@ function closeProductModal() {
 }
 
 async function loadProductCategories() {
-    console.log('[Dashboard] Cargando categorías de productos...');
+    // console.log('[Dashboard] Cargando categorías de productos...')log
 
     const categorySelect = document.getElementById('productCategory');
     if (!categorySelect) return;
 
     try {
-        console.log('[Dashboard] Intentando cargar categorías desde la API...');
+        // console.log('[Dashboard] Intentando cargar categorías desde la API...')log
 
         // Intentar cargar directamente sin usar authApi para evitar problemas con JWT
         let response;
@@ -704,19 +704,19 @@ async function loadProductCategories() {
                 },
                 credentials: 'include'
             });
-            console.log('[Dashboard] Respuesta de categorías:', response.status, response.statusText);
+            // console.log('[Dashboard] Respuesta de categorías:', response.status, response.statusText)log
         } catch (fetchError) {
-            console.error('[Dashboard] Error en fetch de categorías:', fetchError);
+            // console.error('[Dashboard] Error en fetch de categorías:', fetchError)error
             throw fetchError;
         }
 
         if (response.ok) {
             const categories = await response.json();
-            console.log('[Dashboard] Categorías cargadas desde API:', categories);
+            // console.log('[Dashboard] Categorías cargadas desde API:', categories)log
 
             // La respuesta puede ser un array directo o tener results
             const categoryList = Array.isArray(categories) ? categories : (categories.results || []);
-            console.log('[Dashboard] Lista de categorías procesada:', categoryList);
+            // console.log('[Dashboard] Lista de categorías procesada:', categoryList)log
 
             if (categoryList.length > 0) {
                 // Limpiar opciones existentes
@@ -731,17 +731,17 @@ async function loadProductCategories() {
                     console.log(`[Dashboard] Añadida categoría: ${category.nombre} (ID: ${category.id})`);
                 });
 
-                console.log('[Dashboard] Categorías cargadas exitosamente desde la API');
+                // console.log('[Dashboard] Categorías cargadas exitosamente desde la API')log
                 return;
             } else {
-                console.warn('[Dashboard] No se encontraron categorías en la API, usando fallback');
+                // console.warn('[Dashboard] No se encontraron categorías en la API, usando fallback')warn
             }
         } else {
-            console.warn(`[Dashboard] Error ${response.status} cargando categorías, usando fallback`);
+            // console.warn(`[Dashboard] Error ${response.status} cargando categorías, usando fallback`)warn
         }
 
         // Fallback: categorías hardcodeadas con IDs reales de la DB
-        console.log('[Dashboard] Usando categorías por defecto con IDs de la DB...');
+        // console.log('[Dashboard] Usando categorías por defecto con IDs de la DB...')log
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
             <option value="13">Vegetales y Hortalizas</option>
@@ -759,10 +759,10 @@ async function loadProductCategories() {
         `;
 
     } catch (error) {
-        console.error('[Dashboard] Error cargando categorías:', error);
+        // console.error('[Dashboard] Error cargando categorías:', error)error
 
         // Usar categorías por defecto en caso de error con IDs reales de la DB
-        console.log('[Dashboard] Usando categorías de fallback con IDs reales');
+        // console.log('[Dashboard] Usando categorías de fallback con IDs reales')log
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
             <option value="13">Vegetales y Hortalizas</option>
@@ -783,14 +783,14 @@ async function loadProductCategories() {
 
 // Crear categorías por defecto si no existen
 async function createDefaultCategories() {
-    console.log('[Dashboard] Verificando/creando categorías por defecto...');
+    // console.log('[Dashboard] Verificando/creando categorías por defecto...')log
     // Esta función podría hacer una llamada a la API para crear categorías si no existen
     // Por ahora es solo un placeholder
 }
 
 // Obtener la finca principal del usuario campesino
 async function getUserFinca() {
-    console.log('[Dashboard] Obteniendo finca del usuario...');
+    // console.log('[Dashboard] Obteniendo finca del usuario...')log
 
     try {
         // Intentar obtener la finca del endpoint de fincas
@@ -808,26 +808,26 @@ async function getUserFinca() {
 
         if (response.ok) {
             const data = await response.json();
-            console.log('[Dashboard] Respuesta de mis_fincas:', data);
+            // console.log('[Dashboard] Respuesta de mis_fincas:', data)log
             const fincas = Array.isArray(data) ? data : (data.results || data);
 
-            console.log('[Dashboard] Mis fincas procesadas:', fincas);
+            // console.log('[Dashboard] Mis fincas procesadas:', fincas)log
 
             if (fincas.length > 0) {
                 const miFinca = fincas[0];
-                console.log('[Dashboard] Mi finca encontrada:', miFinca);
-                console.log('[Dashboard] ID de mi finca:', miFinca.id);
+                // console.log('[Dashboard] Mi finca encontrada:', miFinca)log
+                // console.log('[Dashboard] ID de mi finca:', miFinca.id)log
                 return miFinca.id;
             } else {
-                console.warn('[Dashboard] Usuario no tiene fincas registradas');
+                // console.warn('[Dashboard] Usuario no tiene fincas registradas')warn
                 return null;
             }
         } else {
             const responseText = await response.text();
-            console.error('[Dashboard] Error obteniendo mis fincas:', response.status, response.statusText, responseText);
+            // console.error('[Dashboard] Error obteniendo mis fincas:', response.status, response.statusText, responseText)error
 
             // Fallback: intentar con el endpoint general si el específico falla
-            console.log('[Dashboard] Intentando fallback con endpoint general...');
+            // console.log('[Dashboard] Intentando fallback con endpoint general...')log
             try {
                 const fallbackResponse = await fetch('/api/farms/fincas/', {
                     method: 'GET',
@@ -844,28 +844,28 @@ async function getUserFinca() {
                         finca.campesino_nombre && finca.campesino_nombre.includes('Juan Carlos')
                     );
 
-                    console.log('[Dashboard] Fallback - Mis fincas filtradas:', misFincas);
+                    // console.log('[Dashboard] Fallback - Mis fincas filtradas:', misFincas)log
 
                     if (misFincas.length > 0) {
-                        console.log('[Dashboard] Fallback - Finca encontrada:', misFincas[0]);
+                        // console.log('[Dashboard] Fallback - Finca encontrada:', misFincas[0])log
                         return misFincas[0].id;
                     }
                 }
             } catch (fallbackError) {
-                console.error('[Dashboard] Error en fallback:', fallbackError);
+                // console.error('[Dashboard] Error en fallback:', fallbackError)error
             }
 
             return null;
         }
     } catch (error) {
-        console.error('[Dashboard] Error en getUserFinca:', error);
+        // console.error('[Dashboard] Error en getUserFinca:', error)error
         return null;
     }
 }
 
 async function handleProductSubmit(e) {
     e.preventDefault();
-    console.log('[Dashboard] Enviando formulario de producto...');
+    // console.log('[Dashboard] Enviando formulario de producto...')log
 
     // Limpiar errores anteriores
     clearFormErrors();
@@ -878,7 +878,7 @@ async function handleProductSubmit(e) {
     const selectedOption = categorySelect.options[categorySelect.selectedIndex];
     const categoryId = selectedOption ? selectedOption.value : null;
 
-    console.log('[Dashboard] Categoría seleccionada:', categoryId, selectedOption?.text);
+    // console.log('[Dashboard] Categoría seleccionada:', categoryId, selectedOption?.text)log
 
     const productData = {
         nombre: formData.get('productName'),
@@ -893,7 +893,7 @@ async function handleProductSubmit(e) {
     console.log('[Dashboard] Datos del producto preparados (sin finca):', productData);
 
     // Obtener ID de finca del usuario
-    console.log('[Dashboard] Obteniendo finca del usuario...');
+    // console.log('[Dashboard] Obteniendo finca del usuario...')log
     const fincaId = await getUserFinca();
 
     if (!fincaId) {
@@ -903,8 +903,8 @@ async function handleProductSubmit(e) {
 
     // Agregar la finca a los datos del producto
     productData.finca = fincaId;
-    console.log('[Dashboard] ID de finca obtenido y agregado:', fincaId);
-    console.log('[Dashboard] Datos completos del producto:', productData);
+    // console.log('[Dashboard] ID de finca obtenido y agregado:', fincaId)log
+    // console.log('[Dashboard] Datos completos del producto:', productData)log
 
     // Validación básica
     const validation = validateProductData(productData);
@@ -928,9 +928,9 @@ async function handleProductSubmit(e) {
             const value = productData[key];
             if (value !== null && value !== undefined) {
                 submitData.append(key, value);
-                console.log(`[Dashboard] Agregando campo ${key}:`, value, typeof value);
+                // console.log(`[Dashboard] Agregando campo ${key}:`, value, typeof value)log
             } else {
-                console.warn(`[Dashboard] Campo ${key} es null/undefined:`, value);
+                // console.warn(`[Dashboard] Campo ${key} es null/undefined:`, value)warn
             }
         });
 
@@ -938,12 +938,12 @@ async function handleProductSubmit(e) {
         const imageFile = formData.get('productImage');
         if (imageFile && imageFile.size > 0) {
             submitData.append('imagen_principal', imageFile); // Usar el nombre correcto del campo
-            console.log('[Dashboard] Imagen agregada:', imageFile.name, imageFile.size, 'bytes');
+            // console.log('[Dashboard] Imagen agregada:', imageFile.name, imageFile.size, 'bytes')log
         }
 
         // Obtener CSRF token
         const csrfToken = getCsrfToken();
-        console.log('[Dashboard] CSRF Token:', csrfToken ? 'Encontrado' : 'No encontrado');
+        // console.log('[Dashboard] CSRF Token:', csrfToken ? 'Encontrado' : 'No encontrado')log
 
         // Configurar headers base
         const headers = {
@@ -954,33 +954,33 @@ async function handleProductSubmit(e) {
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
-            console.log('[Dashboard] Usando autenticación JWT');
+            // console.log('[Dashboard] Usando autenticación JWT')log
         } else {
-            console.log('[Dashboard] Usando autenticación de sesión Django');
+            // console.log('[Dashboard] Usando autenticación de sesión Django')log
         }
 
-        console.log('[Dashboard] Enviando request a /api/products/productos/');
-        console.log('[Dashboard] Headers que se enviarán:', headers);
+        // console.log('[Dashboard] Enviando request a /api/products/productos/')log
+        // console.log('[Dashboard] Headers que se enviarán:', headers)log
 
         // Verificar estado de autenticación adicional
         const sessionInfo = document.querySelector('[data-user-authenticated]');
         if (sessionInfo) {
-            console.log('[Dashboard] Usuario autenticado por sesión Django:', sessionInfo.dataset.userAuthenticated);
+            // console.log('[Dashboard] Usuario autenticado por sesión Django:', sessionInfo.dataset.userAuthenticated)log
         }
 
         // Verificar información del usuario desde el DOM
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
-            console.log('[Dashboard] Nombre de usuario desde DOM:', userNameElement.textContent);
+            // console.log('[Dashboard] Nombre de usuario desde DOM:', userNameElement.textContent)log
         }
 
         // Verificar datos del usuario desde el contexto Django
         if (window.dashboardData) {
-            console.log('[Dashboard] Datos completos del usuario:', window.dashboardData.usuario);
-            console.log('[Dashboard] Tipo de usuario:', window.dashboardData.usuario.tipo_usuario);
-            console.log('[Dashboard] Es campesino:', window.dashboardData.usuario.tipo_usuario === 'campesino');
-            console.log('[Dashboard] Tiene finca:', window.dashboardData.finca.tiene_finca);
-            console.log('[Dashboard] Autenticado:', window.dashboardData.usuario.is_authenticated);
+            // console.log('[Dashboard] Datos completos del usuario:', window.dashboardData.usuario)log
+            // console.log('[Dashboard] Tipo de usuario:', window.dashboardData.usuario.tipo_usuario)log
+            // console.log('[Dashboard] Es campesino:', window.dashboardData.usuario.tipo_usuario === 'campesino')log
+            // console.log('[Dashboard] Tiene finca:', window.dashboardData.finca.tiene_finca)log
+            // console.log('[Dashboard] Autenticado:', window.dashboardData.usuario.is_authenticated)log
         }
 
         // Enviar a la API
@@ -991,12 +991,12 @@ async function handleProductSubmit(e) {
             body: submitData
         });
 
-        console.log('[Dashboard] Respuesta del servidor:', response.status, response.statusText);
+        // console.log('[Dashboard] Respuesta del servidor:', response.status, response.statusText)log
         console.log('[Dashboard] Headers de respuesta:', Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
             const result = await response.json();
-            console.log('[Dashboard] Producto creado exitosamente:', result);
+            // console.log('[Dashboard] Producto creado exitosamente:', result)log
 
             showNotification('¡Producto agregado exitosamente!', 'success');
             closeProductModal();
@@ -1011,30 +1011,30 @@ async function handleProductSubmit(e) {
             }
 
         } else {
-            console.error('[Dashboard] Error - Status:', response.status, 'StatusText:', response.statusText);
+            // console.error('[Dashboard] Error - Status:', response.status, 'StatusText:', response.statusText)error
 
             let errorData;
             try {
                 const responseText = await response.text();
-                console.log('[Dashboard] Respuesta completa del servidor:', responseText);
+                // console.log('[Dashboard] Respuesta completa del servidor:', responseText)log
 
                 // Intentar parsear como JSON
                 if (responseText) {
                     try {
                         errorData = JSON.parse(responseText);
                     } catch (parseError) {
-                        console.error('[Dashboard] Error parseando JSON:', parseError);
+                        // console.error('[Dashboard] Error parseando JSON:', parseError)error
                         errorData = { detail: responseText };
                     }
                 } else {
                     errorData = { detail: `Error ${response.status}: ${response.statusText}` };
                 }
             } catch (readError) {
-                console.error('[Dashboard] Error leyendo respuesta:', readError);
+                // console.error('[Dashboard] Error leyendo respuesta:', readError)error
                 errorData = { detail: `Error de conexión (${response.status})` };
             }
 
-            console.error('[Dashboard] Error procesado:', errorData);
+            // console.error('[Dashboard] Error procesado:', errorData)error
 
             if (response.status === 400 && errorData) {
                 // Errores de validación del servidor
@@ -1050,7 +1050,7 @@ async function handleProductSubmit(e) {
         }
 
     } catch (error) {
-        console.error('[Dashboard] Error al enviar producto:', error);
+        // console.error('[Dashboard] Error al enviar producto:', error)error
         showNotification('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'error');
     } finally {
         // Restaurar botón
@@ -1155,7 +1155,7 @@ function clearFormErrors() {
 
 // Función para cargar productos del usuario
 async function loadUserProducts() {
-    console.log('[Dashboard] Cargando productos del usuario...');
+    // console.log('[Dashboard] Cargando productos del usuario...')log
 
     try {
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -1172,15 +1172,15 @@ async function loadUserProducts() {
 
         if (response.ok) {
             const productos = await response.json();
-            console.log('[Dashboard] Productos cargados:', productos);
+            // console.log('[Dashboard] Productos cargados:', productos)log
             displayProducts(productos);
             updateProductStats(productos.length);
         } else {
-            console.error('[Dashboard] Error cargando productos:', response.status, response.statusText);
+            // console.error('[Dashboard] Error cargando productos:', response.status, response.statusText)error
             displayNoProducts();
         }
     } catch (error) {
-        console.error('[Dashboard] Error en loadUserProducts:', error);
+        // console.error('[Dashboard] Error en loadUserProducts:', error)error
         displayNoProducts();
     }
 }
@@ -1256,7 +1256,7 @@ function updateProductStats(count) {
 
 // Funciones placeholder para acciones de productos
 async function editProduct(productId) {
-    console.log('[Dashboard] Abriendo modal de edición para producto:', productId);
+    // console.log('[Dashboard] Abriendo modal de edición para producto:', productId)log
 
     try {
         // Obtener datos del producto
@@ -1274,7 +1274,7 @@ async function editProduct(productId) {
 
         if (response.ok) {
             const producto = await response.json();
-            console.log('[Dashboard] Datos del producto obtenidos:', producto);
+            // console.log('[Dashboard] Datos del producto obtenidos:', producto)log
 
             // Cargar categorías en el modal de edición
             await loadCategoriesForEdit();
@@ -1285,11 +1285,11 @@ async function editProduct(productId) {
             // Mostrar el modal
             showEditModal();
         } else {
-            console.error('[Dashboard] Error obteniendo producto:', response.status);
+            // console.error('[Dashboard] Error obteniendo producto:', response.status)error
             showNotification('Error al cargar los datos del producto', 'error');
         }
     } catch (error) {
-        console.error('[Dashboard] Error en editProduct:', error);
+        // console.error('[Dashboard] Error en editProduct:', error)error
         showNotification('Error de conexión al cargar el producto', 'error');
     }
 }
@@ -1330,7 +1330,7 @@ async function loadCategoriesForEdit() {
             });
         }
     } catch (error) {
-        console.error('[Dashboard] Error cargando categorías para edición:', error);
+        // console.error('[Dashboard] Error cargando categorías para edición:', error)error
         // Usar categorías de fallback
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
@@ -1410,7 +1410,7 @@ function setupEditModal() {
 // Manejar envío de formulario de edición
 async function handleEditSubmit(e) {
     e.preventDefault();
-    console.log('[Dashboard] Enviando formulario de edición...');
+    // console.log('[Dashboard] Enviando formulario de edición...')log
 
     const formData = new FormData(e.target);
     const productId = formData.get('productId');
@@ -1425,7 +1425,7 @@ async function handleEditSubmit(e) {
         estado: formData.get('productStatus')
     };
 
-    console.log('[Dashboard] Datos de edición preparados:', productData);
+    // console.log('[Dashboard] Datos de edición preparados:', productData)log
 
     // Mostrar loading en el botón
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1462,7 +1462,7 @@ async function handleEditSubmit(e) {
 
         if (response.ok) {
             const result = await response.json();
-            console.log('[Dashboard] Producto actualizado exitosamente:', result);
+            // console.log('[Dashboard] Producto actualizado exitosamente:', result)log
 
             showNotification('Producto actualizado exitosamente', 'success');
             hideEditModal();
@@ -1471,7 +1471,7 @@ async function handleEditSubmit(e) {
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-            console.error('[Dashboard] Error actualizando producto:', errorData);
+            // console.error('[Dashboard] Error actualizando producto:', errorData)error
 
             if (response.status === 400) {
                 // Mostrar errores específicos si los hay
@@ -1492,7 +1492,7 @@ async function handleEditSubmit(e) {
             }
         }
     } catch (error) {
-        console.error('[Dashboard] Error en handleEditSubmit:', error);
+        // console.error('[Dashboard] Error en handleEditSubmit:', error)error
         showNotification('Error de conexión al actualizar el producto', 'error');
     } finally {
         // Restaurar botón
@@ -1503,7 +1503,7 @@ async function handleEditSubmit(e) {
 
 // Mostrar modal de confirmación para eliminar
 async function deleteProduct(productId) {
-    console.log('[Dashboard] Preparando eliminación de producto:', productId);
+    // console.log('[Dashboard] Preparando eliminación de producto:', productId)log
 
     try {
         // Obtener datos del producto para mostrar el nombre
@@ -1526,7 +1526,7 @@ async function deleteProduct(productId) {
             showDeleteModal(productId, 'Producto desconocido');
         }
     } catch (error) {
-        console.error('[Dashboard] Error obteniendo datos del producto:', error);
+        // console.error('[Dashboard] Error obteniendo datos del producto:', error)error
         showDeleteModal(productId, 'Producto');
     }
 }
@@ -1563,7 +1563,7 @@ function hideDeleteModal() {
 
 // Confirmar eliminación del producto
 async function confirmDeleteProduct(productId) {
-    console.log('[Dashboard] Confirmando eliminación de producto:', productId);
+    // console.log('[Dashboard] Confirmando eliminación de producto:', productId)log
 
     // Cerrar modal
     hideDeleteModal();
@@ -1588,18 +1588,18 @@ async function confirmDeleteProduct(productId) {
         closeNotification(processingNotification);
 
         if (response.ok) {
-            console.log('[Dashboard] Producto eliminado exitosamente');
+            // console.log('[Dashboard] Producto eliminado exitosamente')log
             showNotification('Producto eliminado exitosamente', 'success');
 
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-            console.error('[Dashboard] Error eliminando producto:', errorData);
+            // console.error('[Dashboard] Error eliminando producto:', errorData)error
             showNotification('Error al eliminar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
         }
     } catch (error) {
-        console.error('[Dashboard] Error en confirmDeleteProduct:', error);
+        // console.error('[Dashboard] Error en confirmDeleteProduct:', error)error
         closeNotification(processingNotification);
         showNotification('Error de conexión al eliminar el producto', 'error');
     }
@@ -1630,7 +1630,7 @@ function setupDeleteModal() {
 
 // Función para cambiar el estado de un producto
 async function changeProductStatus(productId, newStatus) {
-    console.log(`[Dashboard] Cambiando estado del producto ${productId} a ${newStatus}`);
+    // console.log(`[Dashboard] Cambiando estado del producto ${productId} a ${newStatus}`)log
 
     const statusNames = {
         'disponible': 'disponible',
@@ -1664,18 +1664,18 @@ async function changeProductStatus(productId, newStatus) {
         });
 
         if (response.ok) {
-            console.log('[Dashboard] Estado del producto actualizado exitosamente');
+            // console.log('[Dashboard] Estado del producto actualizado exitosamente')log
             showNotification(`Producto ${actionNames[newStatus]} exitosamente`, 'success');
 
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-            console.error('[Dashboard] Error actualizando estado del producto:', errorData);
+            // console.error('[Dashboard] Error actualizando estado del producto:', errorData)error
             showNotification('Error al actualizar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
         }
     } catch (error) {
-        console.error('[Dashboard] Error en changeProductStatus:', error);
+        // console.error('[Dashboard] Error en changeProductStatus:', error)error
         showNotification('Error de conexión al actualizar el producto', 'error');
     }
 }
@@ -1685,34 +1685,34 @@ function initNotificationSystem() {
     // Verificar si el contenedor existe
     let container = document.getElementById('notificationContainer');
     if (container) {
-        console.log('[Dashboard] Container de notificaciones encontrado en HTML');
-        console.log('[Dashboard] Container classes:', container.className);
+        // console.log('[Dashboard] Container de notificaciones encontrado en HTML')log
+        // console.log('[Dashboard] Container classes:', container.className)log
 
         // Asegurarse de que tiene la clase correcta
         if (!container.classList.contains('notification-container')) {
-            console.log('[Dashboard] Añadiendo clase notification-container');
+            // console.log('[Dashboard] Añadiendo clase notification-container')log
             container.classList.add('notification-container');
         }
 
         // Verificar estilos
         const computedStyle = window.getComputedStyle(container);
-        console.log('[Dashboard] Position:', computedStyle.position);
-        console.log('[Dashboard] Z-index:', computedStyle.zIndex);
-        console.log('[Dashboard] Top:', computedStyle.top);
-        console.log('[Dashboard] Right:', computedStyle.right);
+        // console.log('[Dashboard] Position:', computedStyle.position)log
+        // console.log('[Dashboard] Z-index:', computedStyle.zIndex)log
+        // console.log('[Dashboard] Top:', computedStyle.top)log
+        // console.log('[Dashboard] Right:', computedStyle.right)log
     } else {
-        console.log('[Dashboard] Container no encontrado, creando...');
+        // console.log('[Dashboard] Container no encontrado, creando...')log
         container = document.createElement('div');
         container.id = 'notificationContainer';
         container.className = 'notification-container';
         document.body.appendChild(container);
-        console.log('[Dashboard] Container creado y añadido al body');
+        // console.log('[Dashboard] Container creado y añadido al body')log
     }
 
     // Forzar estilos CSS críticos si no se están aplicando
     const computedStyle = window.getComputedStyle(container);
     if (computedStyle.position === 'static') {
-        console.warn('[Dashboard] Los estilos CSS no se están aplicando. Forzando estilos...');
+        // console.warn('[Dashboard] Los estilos CSS no se están aplicando. Forzando estilos...')warn
         container.style.cssText = `
             position: fixed !important;
             top: 20px !important;
@@ -1763,7 +1763,7 @@ function initNotificationSystem() {
         document.head.appendChild(animationStyles);
     }
 
-    console.log('[Dashboard] Sistema de notificaciones inicializado');
+    // console.log('[Dashboard] Sistema de notificaciones inicializado')log
 }
 
 function showNotification(message, type = 'info', title = null, duration = 4000) {
@@ -1771,24 +1771,24 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
 
     // Asegurar que el contenedor existe
     let container = document.getElementById('notificationContainer');
-    console.log('[Dashboard] Container encontrado:', !!container);
+    // console.log('[Dashboard] Container encontrado:', !!container)log
 
     if (!container) {
-        console.warn('[Dashboard] Container de notificaciones no encontrado, creando...');
+        // console.warn('[Dashboard] Container de notificaciones no encontrado, creando...')warn
         initNotificationSystem();
         container = document.getElementById('notificationContainer');
-        console.log('[Dashboard] Container después de init:', !!container);
+        // console.log('[Dashboard] Container después de init:', !!container)log
     }
 
     if (!container) {
-        console.error('[Dashboard] Error crítico: No se pudo crear el contenedor de notificaciones');
+        // console.error('[Dashboard] Error crítico: No se pudo crear el contenedor de notificaciones')error
         // Fallback: usar alert como último recurso
         alert(`${title || type.toUpperCase()}: ${message}`);
         return null;
     }
 
-    console.log('[Dashboard] Container final classes:', container.className);
-    console.log('[Dashboard] Container parent:', container.parentElement);
+    // console.log('[Dashboard] Container final classes:', container.className)log
+    // console.log('[Dashboard] Container parent:', container.parentElement)log
     console.log('[Dashboard] Container computed position:', window.getComputedStyle(container).position);
 
     const notification = document.createElement('div');
@@ -1838,8 +1838,8 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
 
     container.appendChild(notification);
 
-    console.log('[Dashboard] Notificación creada y añadida al container');
-    console.log('[Dashboard] Notification classes:', notification.className);
+    // console.log('[Dashboard] Notificación creada y añadida al container')log
+    // console.log('[Dashboard] Notification classes:', notification.className)log
     console.log('[Dashboard] Notification computed styles:', {
         position: window.getComputedStyle(notification).position,
         display: window.getComputedStyle(notification).display,
@@ -2062,7 +2062,7 @@ if (!document.querySelector('#modal-styles')) {
 
 // Inicializar dashboard cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('[Dashboard] DOM loaded, inicializando...');
+    // console.log('[Dashboard] DOM loaded, inicializando...')log
 
     // Verificar elementos críticos del DOM
     const productsGrid = document.getElementById('productsGrid');
@@ -2070,27 +2070,27 @@ document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.querySelector('.dashboard-sidebar');
     const navItems = document.querySelectorAll('.nav-item');
 
-    console.log('[Dashboard] productsGrid encontrado:', !!productsGrid);
-    console.log('[Dashboard] notificationContainer encontrado:', !!notificationContainer);
-    console.log('[Dashboard] sidebar encontrado:', !!sidebar);
-    console.log('[Dashboard] nav items encontrados:', navItems.length);
-    console.log('[Dashboard] Ancho de ventana:', window.innerWidth);
+    // console.log('[Dashboard] productsGrid encontrado:', !!productsGrid)log
+    // console.log('[Dashboard] notificationContainer encontrado:', !!notificationContainer)log
+    // console.log('[Dashboard] sidebar encontrado:', !!sidebar)log
+    // console.log('[Dashboard] nav items encontrados:', navItems.length)log
+    // console.log('[Dashboard] Ancho de ventana:', window.innerWidth)log
 
     // Verificar si estamos en móvil
     if (window.innerWidth <= 768) {
-        console.log('[Dashboard] Modo móvil detectado');
+        // console.log('[Dashboard] Modo móvil detectado')log
         if (sidebar) {
             const computedStyles = window.getComputedStyle(sidebar);
-            console.log('[Dashboard] Sidebar computed styles:', {
+            // console.log('[Dashboard] Sidebar computed styles:', {
                 position: computedStyles.position,
                 width: computedStyles.width,
                 display: computedStyles.display,
                 visibility: computedStyles.visibility
-            });
+            })log
 
             // Forzar estilos de navegación móvil si no se están aplicando
             if (computedStyles.width !== '100%' || computedStyles.position !== 'sticky') {
-                console.warn('[Dashboard] CSS móvil no aplicado, forzando estilos...');
+                // console.warn('[Dashboard] CSS móvil no aplicado, forzando estilos...')warn
 
                 // Forzar estilos del sidebar
                 sidebar.style.cssText = `
@@ -2149,7 +2149,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
 
-                console.log('[Dashboard] Estilos móvil forzados aplicados');
+                // console.log('[Dashboard] Estilos móvil forzados aplicados')log
             }
         }
     }
@@ -2174,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Probar notificación inicial y estado del sistema después de 3 segundos
     setTimeout(() => {
-        console.log('[Dashboard] Probando notificación inicial...');
+        // console.log('[Dashboard] Probando notificación inicial...')log
         showNotification('Sistema inicializado correctamente', 'success', '¡Bienvenido!');
 
         // Debug adicional sobre el estado del DOM
@@ -2182,12 +2182,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const container = document.getElementById('notificationContainer');
             const productsGrid = document.getElementById('productsGrid');
 
-            console.log('[Dashboard] === DEBUG DEL ESTADO ===');
-            console.log('Container de notificaciones:', container);
-            console.log('Productos grid:', productsGrid);
-            console.log('Children del container:', container ? container.children.length : 'N/A');
-            console.log('Children del products grid:', productsGrid ? productsGrid.children.length : 'N/A');
-            console.log('=================================');
+            // console.log('[Dashboard] === DEBUG DEL ESTADO ===')log
+            // console.log('Container de notificaciones:', container)log
+            // console.log('Productos grid:', productsGrid)log
+            // console.log('Children del container:', container ? container.children.length : 'N/A')log
+            // console.log('Children del products grid:', productsGrid ? productsGrid.children.length : 'N/A')log
+            // console.log('=================================')log
         }, 1000);
 
     }, 3000);
@@ -2202,13 +2202,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Listener para redimensionado de ventana
     window.addEventListener('resize', function () {
-        console.log('[Dashboard] Ventana redimensionada:', window.innerWidth);
+        // console.log('[Dashboard] Ventana redimensionada:', window.innerWidth)log
         setTimeout(() => {
             applyMobileNavigation();
         }, 100);
     });
 
-    console.log('[Dashboard] Inicialización completa');
+    // console.log('[Dashboard] Inicialización completa')log
 });
 
 // ============================================================
@@ -2217,7 +2217,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Configurar autenticación
 function setupAuthentication() {
-    console.log('[Dashboard] Configurando autenticación...');
+    // console.log('[Dashboard] Configurando autenticación...')log
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -2233,7 +2233,7 @@ function setupAuthentication() {
 
 // Configurar navegación
 function setupNavigation() {
-    console.log('[Dashboard] Configurando navegación...');
+    // console.log('[Dashboard] Configurando navegación...')log
 
     const navItems = document.querySelectorAll('.nav-item[data-section]');
     navItems.forEach(item => {
@@ -2264,7 +2264,7 @@ function setupNavigation() {
 
 // Mostrar sección
 function showSection(sectionName) {
-    console.log('[Dashboard] Mostrando sección:', sectionName);
+    // console.log('[Dashboard] Mostrando sección:', sectionName)log
 
     // Ocultar todas las secciones
     const sections = document.querySelectorAll('.content-section');
@@ -2296,7 +2296,7 @@ function showSection(sectionName) {
     } else if (sectionName === 'messages') {
         // Asegurar que se carguen las conversaciones al entrar a la sección
         // Esto es crítico para la navegación móvil que usa showSection directamente
-        console.log('[Dashboard] Cargando conversaciones para la sección de mensajes');
+        // console.log('[Dashboard] Cargando conversaciones para la sección de mensajes')log
         loadConversations();
     }
 }
@@ -2304,7 +2304,7 @@ function showSection(sectionName) {
 // Aplicar navegación móvil
 function applyMobileNavigation() {
     if (window.innerWidth <= 768) {
-        console.log('[Dashboard] Aplicando navegación móvil...');
+        // console.log('[Dashboard] Aplicando navegación móvil...')log
 
         const sidebar = document.querySelector('.dashboard-sidebar');
         if (sidebar) {
@@ -2381,14 +2381,14 @@ function applyMobileNavigation() {
                 }
             });
 
-            console.log('[Dashboard] Navegación móvil aplicada exitosamente');
+            // console.log('[Dashboard] Navegación móvil aplicada exitosamente')log
         }
     }
 }
 
 // Cargar datos iniciales
 function loadInitialData() {
-    console.log('[Dashboard] Cargando datos iniciales...');
+    // console.log('[Dashboard] Cargando datos iniciales...')log
 
     // Aplicar navegación móvil
     applyMobileNavigation();
@@ -2590,7 +2590,7 @@ async function loadCampesinoOrders() {
         }).join('');
 
     } catch (error) {
-        console.error("Error fetching campesino orders:", error);
+        // console.error("Error fetching campesino orders:", error)error
         list.innerHTML = '<div style="color:red; text-align:center;">Error al cargar tus pedidos de la base de datos.</div>';
     }
 }
@@ -2619,7 +2619,7 @@ window.changeOrderStatus = async function (orderId, newStatus) {
         }
 
     } catch (error) {
-        console.error("Error changing order status:", error);
+        // console.error("Error changing order status:", error)error
 
         // Mejor manejo para mostrar la causa raíz al usuario
         let msgDetalle = error.message;
@@ -2664,7 +2664,7 @@ function setupRatingModal() {
                 closeRatingModal();
                 loadCampesinoOrders(); // Recarga la pestaña actual
             } catch (error) {
-                console.error("Error al enviar calificación:", error);
+                // console.error("Error al enviar calificación:", error)error
                 showNotification(error.message || 'Error al enviar calificación', 'error');
             } finally {
                 this.disabled = false;
@@ -2830,7 +2830,7 @@ async function loadProfileData() {
         // Configurar listener para la foto de perfil (solo una vez)
         setupProfilePhotoUpload();
     } catch (error) {
-        console.error("Error al cargar perfil:", error);
+        // console.error("Error al cargar perfil:", error)error
     }
 }
 
@@ -2868,9 +2868,9 @@ function setupProfilePhotoUpload() {
         formData.append('avatar', file);
         
         try {
-            console.log('[Dashboard] Subiendo foto de perfil...');
+            // console.log('[Dashboard] Subiendo foto de perfil...')log
             const response = await authApi.updateProfile(formData);
-            console.log('[Dashboard] Foto de perfil actualizada:', response);
+            // console.log('[Dashboard] Foto de perfil actualizada:', response)log
             
             const userData = response.user || response;
             if (userData && userData.avatar) {
@@ -2892,7 +2892,7 @@ function setupProfilePhotoUpload() {
                 showNotification('¡Foto de perfil actualizada!', 'success');
             }
         } catch (error) {
-            console.error('[Dashboard] Error subiendo foto:', error);
+            // console.error('[Dashboard] Error subiendo foto:', error)error
             avatarLarge.innerHTML = originalContent;
             showNotification('Error al subir la foto: ' + error.message, 'error');
         } finally {
@@ -2913,7 +2913,7 @@ function setupProfilePhotoUpload() {
             try {
                 // Enviar null para eliminar la foto
                 const response = await authApi.updateProfile({ avatar: null });
-                console.log('[Dashboard] Foto de perfil eliminada:', response);
+                // console.log('[Dashboard] Foto de perfil eliminada:', response)log
                 
                 // Actualizar UI al estado predeterminado
                 const avatarLarge = document.getElementById('profileAvatarLarge');
@@ -2930,7 +2930,7 @@ function setupProfilePhotoUpload() {
                 this.style.display = 'none';
                 showNotification('Foto de perfil eliminada', 'success');
             } catch (error) {
-                console.error('[Dashboard] Error eliminando foto:', error);
+                // console.error('[Dashboard] Error eliminando foto:', error)error
                 showNotification('Error al eliminar la foto', 'error');
                 this.textContent = originalText;
                 this.disabled = false;
@@ -2981,7 +2981,7 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         if (userNameElement) userNameElement.textContent = profileData.nombre + ' ' + profileData.apellido;
 
     } catch (error) {
-        console.error("Error al guardar perfil:", error);
+        // console.error("Error al guardar perfil:", error)error
         if (typeof showNotification === 'function') {
             showNotification('Error al guardar el perfil: ' + error.message, 'error');
         } else {
@@ -3023,7 +3023,7 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
         
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
-        console.error("Error cambiando contraseña:", error);
+        // console.error("Error cambiando contraseña:", error)error
         let msgDetalle = error.message;
         if (error.details) {
             try { msgDetalle += " - " + JSON.stringify(error.details); } catch (ex) { }
@@ -3050,7 +3050,7 @@ async function loadConversations() {
         const response = await chatApi.getConversations();
         renderConversations(response.results || response);
     } catch (error) {
-        console.error("Error cargando conversaciones:", error);
+        // console.error("Error cargando conversaciones:", error)error
         document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
     }
 }
@@ -3106,7 +3106,7 @@ function renderConversations(conversations) {
         const convId = parseInt(li.dataset.id);
         const name = li.dataset.name;
 
-        console.log(`[Chat] Seleccionando conversación ID: ${convId}, Nombre: ${name}`);
+        // console.log(`[Chat] Seleccionando conversación ID: ${convId}, Nombre: ${name}`)log
 
         // Actualizar UI activa
         document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
@@ -3169,7 +3169,7 @@ async function loadMessages(convId, isPolling = false) {
             await chatApi.markAsRead(convId);
         }
     } catch (error) {
-        console.error("Error al cargar mensajes:", error);
+        // console.error("Error al cargar mensajes:", error)error
     }
 }
 
@@ -3241,7 +3241,7 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
         loadMessages(activeConversationId);
         loadConversations();
     } catch(err) {
-        console.error(err);
+        // console.error(err)error
         alert('Error enviando mensaje.');
         input.value = txt; 
     } finally {
@@ -3311,7 +3311,7 @@ async function pollUnreadMessages() {
 
     } catch (e) {
         // Silenciar errores del poller para no distraer con alertas en pantalla
-        console.debug('[ChatPoller] Error silenciado:', e.message);
+        // console.debug('[ChatPoller] Error silenciado:', e.message)debug
     }
 }
 

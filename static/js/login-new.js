@@ -1,4 +1,4 @@
-// Login JavaScript - Campo Directo (Versión con API)
+﻿// Login JavaScript - Campo Directo (Versión con API)
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // entonces NO debemos auto-redireccionar usando el JWT, pues creará un loop infinito.
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('next')) {
-            console.warn("Detectado 'next' en URL: Django rechazó la Cookie de Sesión. Limpiando JWT fantasma...");
+            // console.warn("Detectado 'next' en URL: Django rechazó la Cookie de Sesión. Limpiando JWT fantasma...")warn
             localStorage.removeItem('refreshToken');
             if (authApi) authApi.setAuthToken(null); // Assuming 'authApi' is the correct global/available API object
             return; // Detener auto-login
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             } catch (error) {
                 // Token inválido, continuar con el login
-                console.log('Token inválido, requiere nuevo login');
+                // console.log('Token inválido, requiere nuevo login')log
                 // Limpiar tokens inválidos
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new ApiError('Respuesta de login inválida', 400);
                 }
             } catch (error) {
-                console.error('Error de login o 2FA:', error);
+                // console.error('Error de login o 2FA:', error)error
                 
                 // Analizar si el rechazo fue por 2FA (401 + mensaje específico) o si fue contraseña
                 let isVisualError = false;

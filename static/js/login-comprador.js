@@ -1,4 +1,4 @@
-// Login JavaScript - Campo Directo (Compradores)
+﻿// Login JavaScript - Campo Directo (Compradores)
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 // Token inválido, continuar con el login
-                console.log('Token inválido, requiere nuevo login');
+                // console.log('Token inválido, requiere nuevo login')log
                 // Limpiar tokens inválidos
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            console.error('Error en login:', error);
+            // console.error('Error en login:', error)error
             
             // Restore button state
             loginBtn.innerHTML = originalText;

@@ -1,4 +1,4 @@
-// Funcionalidad para la página de registro exitoso
+﻿// Funcionalidad para la página de registro exitoso
 
 document.addEventListener('DOMContentLoaded', function() {
     // Mostrar datos del usuario si están disponibles
@@ -53,7 +53,7 @@ function displayUserData() {
             localStorage.removeItem('registroUsuario');
         }
     } catch (error) {
-        console.log('No hay datos de usuario para mostrar');
+        // console.log('No hay datos de usuario para mostrar')log
     }
 }
 

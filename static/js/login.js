@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, 500);
             }
         } catch (error) {
-            console.error('Error during login:', error);
+            // console.error('Error during login:', error)error
 
             // Restore button state
             loginBtn.textContent = originalText;
