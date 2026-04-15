@@ -6,16 +6,83 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v={% now 'U' %}">
+<style>
+    /* ============================================================
+       RESTAURACIÓN DE ESCRITORIO Y FIX MÓVIL AISLADO
+       ============================================================ */
+    
+    /* Reglas Base (Escritorio) */
+    .dashboard-main-unico {
+        display: flex !important; /* Restaurar Flexbox original en escritorio */
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: calc(100vh - 100px);
+    }
+
+    .sidebar-unico {
+        width: 250px !important;
+        background: white;
+        border-right: 1px solid #e9ecef;
+        padding: 2rem 0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+
+    /* Reglas Móviles (Sólo afectan pantallas < 992px) */
+    @media (max-width: 992px) {
+        .dashboard-main-unico {
+            display: block !important; /* Apilar en móvil */
+            position: relative !important;
+            padding: 0 !important;
+        }
+
+        .sidebar-unico {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: -280px !important;
+            width: 280px !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+            visibility: hidden !important;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.3) !important;
+            padding-top: 80px !important;
+            transition: left 0.3s ease-in-out !important;
+            margin: 0 !important;
+        }
+
+        .sidebar-unico.active {
+            left: 0 !important;
+            visibility: visible !important;
+        }
+
+        .nav-items-verticales {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        #mobileMenuBtn {
+            display: flex !important;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block body_class %}dashboard-body{% endblock %}
 
 {% block content %}
     <div id="appContainer">
-    <!-- Header con navegación del dashboard -->
+    <!-- Header con navegación -->
     <header class="dashboard-header">
         <nav class="dashboard-nav">
             <div class="nav-left">
+                <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Abrir menú">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 <picture>
                     <source srcset="{% static 'images/LogoCampoDirecto.webp' %}" type="image/webp">
                     <img src="{% static 'images/LogoCampoDirecto.png' %}" alt="Campo Directo Logo" class="dashboard-logo">
@@ -24,14 +91,14 @@
             </div>
             <div class="nav-right">
                 <div class="user-info">
-                    <span class="user-greeting">¡Hola, <span id="userName">{% if usuario %}{{ usuario.nombre }}{% else %}Usuario{% endif %}</span>!</span>
+                    <span class="user-greeting">¡Hola, <span id="userName">{{ usuario.nombre }}</span>!</span>
                     <div class="user-menu">
                         <button class="user-menu-btn" id="userMenuBtn">
                             <span class="user-avatar" id="headerAvatarContainer">
                                 {% if usuario.avatar %}
                                     <img src="{{ usuario.avatar.url }}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                                 {% else %}
-                                    🌱
+                                    👤
                                 {% endif %}
                             </span>
                         </button>
@@ -46,12 +113,11 @@
         </nav>
     </header>
 
-    <!-- Contenido principal del dashboard -->
-    <main class="dashboard-main">
-        <!-- Sidebar de navegación -->
-        <aside class="dashboard-sidebar">
-            <nav class="sidebar-nav">
-                <ul class="nav-items">
+    <!-- Eliminados estilos en línea destructivos de main y aside -->
+    <main class="dashboard-main-unico">
+        <aside class="sidebar-unico" id="dashboardSidebar">
+            <nav class="sidebar-nav-unico">
+                <ul class="nav-items-verticales" style="display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; list-style: none !important;">
                     <li>
                         <a href="#overview" class="nav-item active" data-section="overview">
                             <span class="nav-icon">📊</span>
@@ -67,617 +133,114 @@
                     <li>
                         <a href="#orders" class="nav-item" data-section="orders">
                             <span class="nav-icon">📦</span>
-                            Pedidos
+                            Mis Ventas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#farm" class="nav-item" data-section="farm">
+                            <span class="nav-icon">🚜</span>
+                            Mi Finca
                         </a>
                     </li>
                     <li>
                         <a href="#messages" class="nav-item" data-section="messages" id="navMessagesLink">
                             <span class="nav-icon">💬</span>
                             Mensajes
-                            <span id="msgNavBadge" style="display:none; background:#e74c3c; color:#fff; border-radius:50%; font-size:0.7rem; padding:1px 6px; margin-left:auto; font-weight:700;">0</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#farm" class="nav-item" data-section="farm">
-                            <span class="nav-icon">🏡</span>
-                            Mi Finca
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#sales" class="nav-item" data-section="sales">
-                            <span class="nav-icon">💰</span>
-                            Ventas
                         </a>
                     </li>
                     <li style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
-                        <a href="/dashboard-comprador/" class="nav-link-external" style="display: flex; align-items: center; padding: 0.8rem 1rem; color: #2d5016; text-decoration: none; border-radius: 8px; background: #f0f7ed; font-weight: bold; transition: all 0.3s; border: 1px solid #2d501633;">
-                            <span class="nav-icon" style="margin-right: 10px; font-size: 1.2rem;">🛒</span>
-                            Modo Comprador
+                        <a href="#profile" class="nav-item" data-section="profile" onclick="document.getElementById('profileLink').click()">
+                            <span class="nav-icon">👤</span>
+                            Mi Perfil y Seguridad
                         </a>
                     </li>
+                    {% if usuario.is_campesino %}
+                    <li style="margin-top: 1rem;">
+                        <a href="/dashboard-comprador/" class="nav-link-external-unico" style="display: flex !important; align-items: center !important; padding: 0.8rem 1.2rem !important; color: #2d5016 !important; text-decoration: none !important; border-radius: 8px !important; background: #f0f7ed !important; font-weight: bold !important; border: 1px solid #2d501633 !important; gap: 12px !important;">
+                            <span style="position: static !important; display: inline-block !important; font-size: 1.3rem !important; margin: 0 !important; line-height: 1 !important;">🛒</span>
+                            <span style="position: static !important; display: inline-block !important;">Ir a Modo Comprador</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </nav>
         </aside>
 
-        <!-- Contenido de las secciones -->
         <div class="dashboard-content">
-            <!-- Sección Resumen -->
             <section id="overview" class="content-section active">
                 <div class="section-header">
-                    <h2>Resumen de tu Actividad</h2>
-                    <p>Vista general de tu finca y ventas</p>
+                    <div>
+                        <h2>Resumen</h2>
+                        <p>Estado actual de tu negocio agrícola</p>
+                    </div>
                 </div>
 
-                <!-- Tarjetas de estadísticas -->
                 <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <h3>Ventas del Mes</h3>
+                            <p class="stat-number">$<span id="monthlySales">0</span></p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🛒</div>
+                        <div class="stat-content">
+                            <h3>Pedidos Activos</h3>
+                            <p class="stat-number" id="activeOrders">0</p>
+                        </div>
+                    </div>
                     <div class="stat-card">
                         <div class="stat-icon">🌾</div>
                         <div class="stat-content">
-                            <h3>Productos Activos</h3>
-                            <div class="stat-number" id="activeProducts">{{ estadisticas.productos_activos }}</div>
+                            <h3>Productos</h3>
+                            <p class="stat-number" id="totalProductsCount">0</p>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
-                        <div class="stat-icon">📦</div>
-                        <div class="stat-content">
-                            <h3>Pedidos Pendientes</h3>
-                            <div class="stat-number" id="pendingOrders">{{ estadisticas.pedidos_pendientes }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-content">
-                            <h3>Ventas del Mes</h3>
-                            <div class="stat-number"><span id="monthSales">{{ estadisticas.ventas_mes|floatformat:0 }}</span></div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card" style="cursor: pointer; position: relative; transition: transform 0.2s; border: 1px solid transparent;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#88bf4b';" onmouseout="this.style.transform='none'; this.style.borderColor='transparent';" onclick="abrirModalMisResenas()">
                         <div class="stat-icon">⭐</div>
                         <div class="stat-content">
                             <h3>Calificación</h3>
-                            <div class="stat-number" id="rating">{{ estadisticas.calificacion|floatformat:1 }}</div>
-                            <small style="color: #6c757d; font-size: 0.8rem; text-decoration: underline; margin-top: 5px; display: inline-block;">Ver mis reseñas</small>
+                            <p class="stat-number" id="farmerRating">5.0</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Actividad reciente -->
                 <div class="recent-activity">
                     <h3>Actividad Reciente</h3>
-                    <div class="activity-list" id="recentActivityList">
-                        {% for actividad in actividad_reciente %}
-                        <div class="activity-item">
-                            <span class="activity-icon">
-                                {% if actividad.estado == 'completed' %}✅
-                                {% elif actividad.estado == 'pending' %}🕰️
-                                {% elif actividad.estado == 'confirmed' %}📝
-                                {% else %}📦{% endif %}
-                            </span>
-                            <div class="activity-content">
-                                <p><strong>{{ actividad.descripcion }}</strong></p>
-                                <small>{{ actividad.tiempo }}</small>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="activity-item">
-                            <span class="activity-icon">📈</span>
-                            <div class="activity-content">
-                                <p><strong>No hay actividad reciente</strong></p>
-                                <small>Comienza agregando productos a tu finca</small>
-                            </div>
-                        </div>
-                        {% endfor %}
+                    <div class="activity-list" id="activityList">
+                        <p class="no-activity">Cargando actividad reciente...</p>
                     </div>
                 </div>
             </section>
-
-            <!-- Sección Productos -->
-            <section id="products" class="content-section">
-                <div class="section-header">
-                    <h2>Mis Productos</h2>
-                    <button class="btn btn-primary" id="addProductBtn">
-                        <span>+</span> Agregar Producto
-                    </button>
-                </div>
-
-                <!-- Filtros de productos -->
-                <div class="filters">
-                    <select class="filter-select" id="categoryFilter">
-                        <option value="">Todas las categorías</option>
-                        <option value="vegetales">Vegetales</option>
-                        <option value="frutas">Frutas</option>
-                        <option value="granos">Granos</option>
-                        <option value="hierbas">Hierbas</option>
-                    </select>
-                    <select class="filter-select" id="statusFilter">
-                        <option value="">Todos los estados</option>
-                        <option value="disponible">Disponible</option>
-                        <option value="agotado">Agotado</option>
-                        <option value="temporada">Fuera de temporada</option>
-                    </select>
-                </div>
-
-                <!-- Lista de productos -->
-                <div class="products-grid" id="productsGrid">
-                    <!-- Los productos se generarán dinámicamente con JavaScript -->
-                </div>
-            </section>
-
-            <!-- Sección Pedidos -->
-            <section id="orders" class="content-section">
-                <div class="section-header">
-                    <h2>Pedidos</h2>
-                    <div class="order-tabs">
-                        <button class="tab-btn active" data-tab="pending">Pendientes (<span id="pendingCount">--</span>)</button>
-                        <button class="tab-btn" data-tab="completed">Completados</button>
-                        <button class="tab-btn" data-tab="cancelled">Cancelados</button>
-                    </div>
-                </div>
-
-                <div class="orders-list" id="ordersList">
-                    <!-- Los pedidos se generarán dinámicamente -->
-                </div>
-            </section>
-
-            <!-- Sección Mi Finca -->
-            <section id="farm" class="content-section">
-                <div class="section-header">
-                    <h2>Mi Finca</h2>
-                </div>
-
-                <div class="farm-info">
-                    <div class="farm-card">
-                        <h3>Información General</h3>
-                        {% if finca_info %}
-                        <div class="info-row">
-                            <label>Nombre de la Finca:</label>
-                            <span id="farmName">{{ finca_info.nombre }}</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Ubicación:</label>
-                            <span id="farmLocation">{{ finca_info.ubicacion }}</span>
-                        </div>
-                        {% else %}
-                        <div class="info-row">
-                            <label>Finca:</label>
-                            <span>No hay finca registrada</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </section>
-
-            <!-- Sección Ventas -->
-            <section id="sales" class="content-section">
-                <div class="section-header">
-                    <h2>Ventas y Estadísticas</h2>
-                    <select class="period-select" id="salesPeriod">
-                        <option value="week">Esta semana</option>
-                        <option value="month" selected>Este mes</option>
-                        <option value="year">Este año</option>
-                    </select>
-                </div>
-
-                <div class="sales-summary">
-                    <div class="summary-card">
-                        <h3>Ingresos Totales</h3>
-                        <div class="summary-amount" id="totalRevenue">${{ estadisticas.ventas_mes|floatformat:0 }}</div>
-                        <div class="summary-change positive" id="revenuePeriodLabel">Mes actual</div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Productos Vendidos</h3>
-                        <div class="summary-amount" id="productsSold">{{ estadisticas.productos_vendidos }} unidades</div>
-                        <div class="summary-change positive" id="productsPeriodLabel">Este mes</div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Clientes Únicos</h3>
-                        <div class="summary-amount" id="uniqueCustomers">{{ estadisticas.clientes_unicos }}</div>
-                        <div class="summary-change positive" id="customersPeriodLabel">Este mes</div>
-                    </div>
-                </div>
-
-            <!-- Gráfico placeholder -->
-                <div class="chart-container">
-                    <h3 id="chartPeriodLabel">Ventas por Día</h3>
-                    <div style="position: relative; height: 300px; width: 100%; margin-top: 1rem;">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-                </div>
-            </section>
-
-            <!-- Sección Mensajes -->
-            <section id="messages" class="content-section">
-                <div class="section-header">
-                    <h2>Mensajes</h2>
-                    <p>Habla con los compradores que han solicitado tus pedidos</p>
-                </div>
-
-                <div class="chat-wrapper" id="chatWrapper">
-                    <!-- Barra lateral de contactos -->
-                    <div class="chat-sidebar">
-                        <div class="chat-sidebar-header">
-                            <h3>Ventas / Chats</h3>
-                        </div>
-                        <ul class="chat-contacts-list" id="chatContactsList">
-                            <li style="padding: 20px; text-align: center; color: #888;">Cargando conversaciones...</li>
-                        </ul>
-                    </div>
-
-                    <!-- Área principal de chat -->
-                    <div class="chat-main" id="chatMainArea" style="display: none;">
-                        <div class="chat-header">
-                            <button id="chatMobileBackBtn" style="display:none; background:none; border:none; font-size:1.5rem; margin-right:10px; cursor:pointer;">⬅️</button>
-                            <div class="chat-avatar" id="activeChatAvatar">?</div>
-                            <div>
-                                <h3 id="activeChatName">Cargando...</h3>
-                                <small style="color: #666;">Comprador</small>
-                            </div>
-                        </div>
-                        
-                        <div class="chat-messages-area" id="chatMessagesArea">
-                            <!-- Los mensajes se inyectarán dinámicamente aquí -->
-                        </div>
-                        
-                        <form class="chat-input-area" id="chatForm">
-                            <input type="text" id="chatInputMessage" placeholder="Escribe un mensaje..." required autocomplete="off">
-                            <button type="submit" class="chat-btn-send">Enviar</button>
-                        </form>
-                    </div>
-
-                    <!-- Estado vacío cuando no hay chat seleccionado -->
-                    <div class="chat-main" id="chatEmptyState">
-                        <div class="chat-empty-state">
-                            <span style="font-size: 3rem; margin-bottom: 1rem;">💬</span>
-                            <h3>Bandeja de Entrada</h3>
-                            <p>Selecciona una conversación a la izquierda para empezar a chatear con tu cliente.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Sección Mi Perfil -->
-            <section id="profile" class="content-section">
-                <div class="section-header">
-                    <h2>Mi Perfil</h2>
-                    <p>Gestiona tus datos personales y de contacto</p>
-                </div>
-                
-                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <div class="profile-photo-selection" style="text-align: center; margin-bottom: 30px; position: relative;">
-                        <div class="profile-avatar-large" id="profileAvatarLarge" style="width: 120px; height: 120px; border-radius: 50%; background: #f0f0f0; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 3px solid #2d5016; overflow: hidden; position: relative;">
-                            {% if usuario.avatar %}
-                                <img src="{{ usuario.avatar.url }}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">
-                            {% else %}
-                                <span id="profileAvatarPlaceholder">👤</span>
-                            {% endif %}
-                        </div>
-                        <input type="file" id="profilePhotoInput" accept="image/jpeg, image/png, image/jpg" style="display: none;">
-                        <div style="display: flex; justify-content: center; gap: 10px;">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('profilePhotoInput').click()" style="padding: 5px 15px; font-size: 0.9rem; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                                📸 Cambiar Foto
-                            </button>
-                            <button type="button" id="deleteProfilePhotoBtn" class="btn btn-danger btn-sm" style="display: {% if usuario.avatar %}inline-block{% else %}none{% endif %}; padding: 5px 15px; font-size: 0.9rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 4px; cursor: pointer;">
-                                🗑️ Eliminar
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <form id="profileForm">
-                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label for="profileNombre" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre</label>
-                                <input type="text" id="profileNombre" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="profileApellido" style="display: block; margin-bottom: 8px; font-weight: 500;">Apellido</label>
-                                <input type="text" id="profileApellido" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="profileEmail" style="display: block; margin-bottom: 8px; font-weight: 500;">Correo Electrónico</label>
-                            <input type="email" id="profileEmail" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                        </div>
-
-                        <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 20px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label for="profileTelefono" style="display: block; margin-bottom: 8px; font-weight: 500;">Teléfono</label>
-                                <input type="tel" id="profileTelefono" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label for="profileFechaNacimiento" style="display: block; margin-bottom: 8px; font-weight: 500;">Fecha de Nacimiento</label>
-                                <input type="date" id="profileFechaNacimiento" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group" id="fincaFieldGroup" style="margin-bottom: 20px;">
-                            <label for="profileNombreFinca" style="display: block; margin-bottom: 8px; font-weight: 500;">Nombre de tu Finca</label>
-                            <input type="text" id="profileNombreFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
-                            <div style="display: flex; gap: 15px;">
-                                <div style="flex: 1;">
-                                    <label for="profileDepartamentoFinca" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: gray;">Departamento</label>
-                                    <select id="profileDepartamentoFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                                        <option value="">Selecciona Departamento</option>
-                                    </select>
-                                </div>
-                                <div style="flex: 1;">
-                                    <label for="profileMunicipioFinca" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: gray;">Ciudad / Municipio Mkt.</label>
-                                    <select id="profileMunicipioFinca" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" disabled>
-                                        <option value="">Selecciona Municipio</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                            💾 Guardar Cambios Personales
-                        </button>
-                    </form>
-                </div>
-                
-                <div class="section-header" style="margin-top: 40px;">
-                    <h2>Seguridad</h2>
-                    <p>Gestiona tu contraseña de acceso</p>
-                </div>
-                
-                <div class="profile-container" style="max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <form id="changePasswordForm">
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="currentPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Contraseña Actual</label>
-                            <input type="password" id="currentPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                        </div>
-                        
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="newPassword" style="display: block; margin-bottom: 8px; font-weight: 500;">Nueva Contraseña</label>
-                            <input type="password" id="newPassword" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                        </div>
-                        
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="newPasswordConfirm" style="display: block; margin-bottom: 8px; font-weight: 500;">Confirmar Nueva Contraseña</label>
-                            <input type="password" id="newPasswordConfirm" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" required>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary" id="changePasswordBtn" style="width: 100%; padding: 12px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                            🔑 Cambiar Contraseña
-                        </button>
-                    </form>
-                </div>
-            </section>
-    <!-- Modal para Calificar Pedido -->
-    <div id="ratingModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 8px;">
-            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-                <h3>Calificar a <span id="ratingTargetName">Comprador</span></h3>
-                <button class="modal-close" id="closeRatingModal" style="border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            </div>
-            <div class="modal-body" style="padding-top: 1rem; text-align: center;">
-                <p style="margin-bottom: 1rem; color: #666;">Selecciona una cantidad de estrellas para tu calificación.</p>
-                
-                <div class="rating-stars" id="ratingStars" style="font-size: 2.5rem; color: #ccc; cursor: pointer; display: flex; justify-content: center; gap: 5px; margin-bottom: 1.5rem;">
-                    <span class="star" data-value="1">★</span>
-                    <span class="star" data-value="2">★</span>
-                    <span class="star" data-value="3">★</span>
-                    <span class="star" data-value="4">★</span>
-                    <span class="star" data-value="5">★</span>
-                </div>
-                
-                <div class="form-group" style="text-align: left;">
-                    <label for="ratingComment">Comentario (Opcional):</label>
-                    <textarea id="ratingComment" rows="3" style="width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #ddd; border-radius: 4px; resize: none;" placeholder="Escribe tu opinión sobre el comprador..."></textarea>
-                </div>
-                
-                <input type="hidden" id="ratingOrderId">
-                <input type="hidden" id="ratingScore" value="0">
-            </div>
-            <div class="modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                <button type="button" class="btn btn-secondary" id="cancelRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #ccc; cursor: pointer;">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="submitRatingBtn" style="padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2d5016; color: white; cursor: pointer;" disabled>Enviar Calificación</button>
-            </div>
         </div>
     </main>
 
-    <!-- Modal para agregar producto -->
-    <div id="addProductModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Agregar Nuevo Producto</h3>
-                <button class="modal-close" id="closeModal">&times;</button>
-            </div>
-            <form id="addProductForm" class="modal-form">
-                {% csrf_token %}
-                
-                <div class="form-group">
-                    <label for="productName">Nombre del Producto</label>
-                    <input type="text" id="productName" name="productName" required>
-                </div>
-                <div class="form-group">
-                    <label for="productCategory">Categoría</label>
-                    <select id="productCategory" name="productCategory" required>
-                        <option value="">Seleccionar categoría</option>
-                        <!-- Las opciones se cargarán dinámicamente -->
-                    </select>
-                </div>
-                <div class="form-group" style="display: flex; gap: 1rem;">
-                    <div style="flex: 2;">
-                        <label for="productPrice">Precio por Unidad ($)</label>
-                        <input type="number" id="productPrice" name="productPrice" min="0" step="any" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label for="productUnit">Se vende por:</label>
-                        <select id="productUnit" name="productUnit" required style="width:100%; border:1px solid #ddd; padding:8px; border-radius:4px;">
-                            <option value="kg" selected>Kilogramo (Kg)</option>
-                            <option value="libra">Libra</option>
-                            <option value="arroba">Arroba</option>
-                            <option value="gramo">Gramo</option>
-                            <option value="bulto">Bulto</option>
-                            <option value="caja">Caja</option>
-                            <option value="canasta">Canasta</option>
-                            <option value="unidad">Unidad (Ej: Pollo)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="productStock">Cantidad disponible</label>
-                    <input type="number" id="productStock" name="productStock" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="productDescription">Descripción</label>
-                    <textarea id="productDescription" name="productDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="productImage">Imagen del producto</label>
-                    <input type="file" id="productImage" name="productImage" accept="image/*">
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelProduct">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Agregar Producto</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal para editar producto -->
-    <div id="editProductModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Editar Producto</h3>
-                <button class="modal-close" id="closeEditModal">&times;</button>
-            </div>
-            <form id="editProductForm" class="modal-form">
-                {% csrf_token %}
-                <input type="hidden" id="editProductId" name="productId">
-                
-                <div class="form-group">
-                    <label for="editProductName">Nombre del Producto</label>
-                    <input type="text" id="editProductName" name="productName" required>
-                </div>
-                <div class="form-group">
-                    <label for="editProductCategory">Categoría</label>
-                    <select id="editProductCategory" name="productCategory" required>
-                        <option value="">Seleccionar categoría</option>
-                        <!-- Las opciones se cargarán dinámicamente -->
-                    </select>
-                </div>
-                <div class="form-group" style="display: flex; gap: 1rem;">
-                    <div style="flex: 2;">
-                        <label for="editProductPrice">Precio por Unidad ($)</label>
-                        <input type="number" id="editProductPrice" name="productPrice" min="0" step="any" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label for="editProductUnit">Se vende por:</label>
-                        <select id="editProductUnit" name="productUnit" required style="width:100%; border:1px solid #ddd; padding:8px; border-radius:4px;">
-                            <option value="kg">Kilogramo (Kg)</option>
-                            <option value="libra">Libra</option>
-                            <option value="arroba">Arroba</option>
-                            <option value="gramo">Gramo</option>
-                            <option value="bulto">Bulto</option>
-                            <option value="caja">Caja</option>
-                            <option value="canasta">Canasta</option>
-                            <option value="unidad">Unidad (Ej: Pollo)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="editProductStock">Cantidad disponible</label>
-                    <input type="number" id="editProductStock" name="productStock" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="editProductDescription">Descripción</label>
-                    <textarea id="editProductDescription" name="productDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editProductImage">Cambiar imagen del producto</label>
-                    <input type="file" id="editProductImage" name="productImage" accept="image/*">
-                    <small class="form-text">Deja vacío para mantener la imagen actual</small>
-                </div>
-                <div class="form-group">
-                    <label for="editProductStatus">Estado</label>
-                    <select id="editProductStatus" name="productStatus" required>
-                        <option value="disponible">Disponible</option>
-                        <option value="agotado">Agotado</option>
-                        <option value="inactivo">Inactivo</option>
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" id="cancelEditProduct">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar Producto</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal de confirmación para eliminar -->
-    <div id="confirmDeleteModal" class="modal">
-        <div class="modal-content modal-small">
-            <div class="modal-header">
-                <h3>Confirmar eliminación</h3>
-                <button class="modal-close" id="closeConfirmModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="confirm-icon">⚠️</div>
-                <p><strong>¿Estás seguro de que quieres eliminar este producto?</strong></p>
-                <p id="deleteProductName" class="product-name-confirm"></p>
-                <p class="warning-text">Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" id="cancelDelete">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar Producto</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para ver Mis Reseñas -->
-    <div id="misResenasModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Mis Reseñas y Calificaciones</h2>
-                <span class="close" id="closeMisResenasModal" style="cursor: pointer;">&times;</span>
-            </div>
-            
-            <div class="modal-body">
-                <div id="misResenasContainer" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                    <!-- Las reseñas se insertarán aquí por JavaScript -->
-                    <div style="text-align: center; padding: 30px;">
-                        <span class="loader" style="width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #2d5016; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
-                        <p style="margin-top: 15px; color: #666;">Cargando tus reseñas...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sistema de notificaciones -->
-    <div id="notificationContainer" class="notification-container"></div>
-
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}"></script>
 <script>
-    console.log('[Dashboard Template] Verificando Chart.js:', typeof Chart !== 'undefined' ? 'Cargado' : 'No cargado');
-    // Variables globales para el JavaScript del dashboard
-    window.dashboardData = {
-        usuario: {
-            nombre: '{% if usuario %}{{ usuario.nombre|escapejs }}{% else %}{% endif %}',
-            apellido: '{% if usuario %}{{ usuario.apellido|escapejs }}{% else %}{% endif %}',
-            email: '{% if usuario %}{{ usuario.email|escapejs }}{% else %}{% endif %}',
-            tipo_usuario: '{% if usuario %}{{ usuario.tipo_usuario|escapejs }}{% else %}{% endif %}',
-            is_authenticated: {% if user.is_authenticated %}true{% else %}false{% endif %}
-        },
-        finca: {
-            tiene_finca: {% if finca_info %}true{% else %}false{% endif %},
-            nombre: '{% if finca_info %}{{ finca_info.nombre|escapejs }}{% else %}{% endif %}'
+    /* FIX DE EMERGENCIA PARA INTERACTIVIDAD */
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('dashboardSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        if (mobileBtn && sidebar && overlay) {
+            mobileBtn.onclick = function() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                mobileBtn.classList.toggle('active');
+            };
+            overlay.onclick = function() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                mobileBtn.classList.remove('active');
+            };
         }
-    };
-    
-    // console.log('[Dashboard Template] Datos del usuario:', window.dashboardData);
+    });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-<script src="{% static 'js/colombia.js' %}?v={% now 'U' %}" defer></script>
-<script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}" defer></script>
 {% endblock %}
