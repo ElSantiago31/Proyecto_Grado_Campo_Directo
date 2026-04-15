@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Guardar ID para el sistema de chat y otros componentes
         window.currentUserId = profile.id;
-: ${profile.nombre} ${profile.apellido}`);
+
 
         // Actualizar nombre en la UI
         const userNameElement = document.getElementById('userName');
