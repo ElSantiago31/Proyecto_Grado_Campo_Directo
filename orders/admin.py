@@ -52,7 +52,7 @@ class PedidoAdmin(admin.ModelAdmin):
     ]
     
     readonly_fields = [
-        'fecha_pedido', 'fecha_confirmacion', 'fecha_preparacion',
+        'id', 'fecha_pedido', 'fecha_confirmacion', 'fecha_preparacion',
         'fecha_entrega', 'fecha_completado', 'codigo_seguimiento',
         'estado_display_color', 'puede_ser_cancelado'
     ]
