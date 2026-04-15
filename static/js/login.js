@@ -174,8 +174,6 @@
                 }, 500);
             }
         } catch (error) {
-error
-
             // Restore button state
             loginBtn.textContent = originalText;
             loginBtn.disabled = false;
@@ -270,4 +268,3 @@ document.head.insertAdjacentHTML('beforeend', `
     opacity: 0.8;
 }
 </style>
-`);

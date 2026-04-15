@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // entonces NO debemos auto-redireccionar usando el JWT, pues creará un loop infinito.
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('next')) {
-warn
             localStorage.removeItem('refreshToken');
             if (authApi) authApi.setAuthToken(null); // Assuming 'authApi' is the correct global/available API object
             return; // Detener auto-login
@@ -86,7 +85,6 @@ warn
                 }
             } catch (error) {
                 // Token inválido, continuar con el login
-log
                 // Limpiar tokens inválidos
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
@@ -140,8 +138,6 @@ log
                     throw new ApiError('Respuesta de login inválida', 400);
                 }
             } catch (error) {
-error
-                
                 // Analizar si el rechazo fue por 2FA (401 + mensaje específico) o si fue contraseña
                 let isVisualError = false;
                 if (error.details && error.details.non_field_errors) {
@@ -386,5 +382,4 @@ if (!document.querySelector('#login-styles')) {
         display: block;
     }
     </style>
-    `);
 }

@@ -53,7 +53,6 @@ function displayUserData() {
             localStorage.removeItem('registroUsuario');
         }
     } catch (error) {
-log
     }
 }
 

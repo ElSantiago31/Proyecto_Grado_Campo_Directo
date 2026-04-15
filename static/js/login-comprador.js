@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 // Token inválido, continuar con el login
-log
                 // Limpiar tokens inválidos
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('refreshToken');
@@ -102,8 +101,6 @@ log
             }
             
         } catch (error) {
-error
-            
             // Restore button state
             loginBtn.innerHTML = originalText;
             loginBtn.disabled = false;

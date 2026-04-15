@@ -1,24 +1,15 @@
-// Dashboard JavaScript - Campo Directo (Campesinos)
+﻿// Dashboard JavaScript - Campo Directo (Campesinos)
 
 document.addEventListener('DOMContentLoaded', async function () {
-log
-
     // Verificar autenticación JWT (solo si no estamos ya en dashboard cargado por Django)
-log
-
     // Si estamos aquí, es porque Django ya verificó la autenticación en el servidor
     // No necesitamos redirigir, pero podemos intentar usar JWT si está disponible
     const hasJwtToken = isAuthenticated();
-log
-
     // Intentar obtener perfil usando API (funciona con JWT O con Cookie de Sesión de Django gracias a credentials: 'include')
     try {
-log
         const profile = await authApi.getProfile();
 
         if (profile && profile.tipo_usuario === 'campesino') {
-log
-            
             // Guardar ID para el sistema de chat y otros componentes
             window.currentUserId = profile.id;
 
@@ -29,22 +20,15 @@ log
             }
 
             // Cargar datos reales del dashboard
-log
             await loadRealDashboardData();
-log
         } else if (profile && profile.tipo_usuario !== 'campesino') {
-log
         }
 
     } catch (error) {
-warn
-        
         // Aún así, intentamos cargar los datos del dashboard en caso de que sea sólo el perfil lo que falló
         try {
-log
             await loadRealDashboardData();
         } catch (e) {
-error
         }
     }
 
@@ -64,7 +48,6 @@ error
     const salesPeriodSelect = document.getElementById('salesPeriod');
     if (salesPeriodSelect) {
         salesPeriodSelect.addEventListener('change', async function(e) {
-log
             await loadRealDashboardData(e.target.value);
             
             // Si la vista está en "ventas", necesitamos volver a renderizar con la nueva información
@@ -81,7 +64,6 @@ log
 
     // Cargar productos del usuario
     await loadUserProducts();
-log
 });
 
 let salesChart = null;
@@ -102,13 +84,9 @@ let dashboardData = {
 async function loadRealDashboardData(period = 'month') {
     try {
 ...`);
-log
-
         // Obtener datos del dashboard del usuario
 ...');
         const data = await authApi.getDashboard(period);
-log
-
         if (data) {
             // Actualizar datos del dashboard
             dashboardData.stats = {
@@ -128,21 +106,13 @@ log
             updateRecentActivity();
             
             // Renderizar gráfico si hay datos
-log
             if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
-log
                 renderSalesChart(dashboardData.stats.ventas_grafico);
             }
-log
         } else {
-warn
-log
             // No llamar updateStats() para no sobrescribir datos del template Django
         }
     } catch (error) {
-error
-error
-log
         // No llamar updateStats() para preservar datos del template Django
     }
 }
@@ -231,19 +201,13 @@ function setupLogout() {
 }
 
 async function handleLogout() {
-log
-
     // Limpiar tokens JWT inmediatamente
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
-log
-
     try {
         // Usar endpoint Django para logout de sesión
-log
         window.location.href = '/logout/';
     } catch (error) {
-warn
         // Fallback: redirigir directamente al home
         window.location.href = '/';
     }
@@ -301,7 +265,6 @@ function updateStats(period = 'month') {
 // FUNCIONALIDAD: MIS RESEÑAS (CAMPESINO)
 // ============================================================
 async function abrirModalMisResenas() {
-log
     const modal = document.getElementById('misResenasModal');
     const closeBtn = document.getElementById('closeMisResenasModal');
     const container = document.getElementById('misResenasContainer');
@@ -338,17 +301,14 @@ log
             // Intentamos usar el endpoint del usuario campesino
             const campesinoId = window.currentUserId;
             if (campesinoId && window.userApi && window.userApi.getResenasCampesino) {
-log
                 data = await window.userApi.getResenasCampesino(campesinoId);
             } else if (window.userApi && window.userApi.getMisResenas) {
-log
                 data = await window.userApi.getMisResenas();
                 esAutor = true;
             } else {
                 throw new Error("No hay método disponible para cargar reseñas");
             }
         } catch (apiError) {
-warn
             if (window.userApi && window.userApi.getMisResenas) {
                 data = await window.userApi.getMisResenas();
                 esAutor = true;
@@ -414,7 +374,6 @@ warn
         container.innerHTML = html;
         
     } catch (e) {
-error
         container.innerHTML = `
             <div style="text-align: center; padding: 30px; color: #e74c3c;">
                 <p>Ocurrió un error al cargar tus reseñas.</p>
@@ -428,22 +387,15 @@ error
  * Renderiza el gráfico de ventas usando Chart.js
  */
 function renderSalesChart(data) {
-log
-    
     if (typeof Chart === 'undefined') {
-error
         return;
     }
 
     const ctx = document.getElementById('salesChart');
     if (!ctx) {
-error
         return;
     }
-log
-
     if (salesChart) {
-log
         salesChart.destroy();
     }
 
@@ -523,9 +475,7 @@ log
             }
         }
     });
-log
     } catch (error) {
-error
     }
 }
 
@@ -583,8 +533,6 @@ function formatCurrency(amount) {
 // ============================================================
 
 function setupProductModal() {
-log
-
     // Elementos del modal
     const addProductBtn = document.getElementById('addProductBtn');
     const modal = document.getElementById('addProductModal');
@@ -624,20 +572,14 @@ log
     if (productForm) {
         productForm.addEventListener('submit', handleProductSubmit);
     }
-log
-
     // Configurar otros modales
     setupEditModal();
     setupDeleteModal();
-log
-
     // Inicializar sistema de notificaciones
     initNotificationSystem();
 }
 
 async function openProductModal() {
-log
-
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
 
@@ -663,8 +605,6 @@ log
 }
 
 function closeProductModal() {
-log
-
     const modal = document.getElementById('addProductModal');
     if (!modal) return;
 
@@ -680,14 +620,10 @@ log
 }
 
 async function loadProductCategories() {
-log
-
     const categorySelect = document.getElementById('productCategory');
     if (!categorySelect) return;
 
     try {
-log
-
         // Intentar cargar directamente sin usar authApi para evitar problemas con JWT
         let response;
         try {
@@ -699,20 +635,14 @@ log
                 },
                 credentials: 'include'
             });
-log
         } catch (fetchError) {
-error
             throw fetchError;
         }
 
         if (response.ok) {
             const categories = await response.json();
-log
-
             // La respuesta puede ser un array directo o tener results
             const categoryList = Array.isArray(categories) ? categories : (categories.results || []);
-log
-
             if (categoryList.length > 0) {
                 // Limpiar opciones existentes
                 categorySelect.innerHTML = '<option value="">Seleccionar categoría</option>';
@@ -723,19 +653,14 @@ log
                     option.value = category.id;
                     option.textContent = category.nombre;
                     categorySelect.appendChild(option);
-`);
                 });
-log
                 return;
             } else {
-warn
             }
         } else {
-warn
         }
 
         // Fallback: categorías hardcodeadas con IDs reales de la DB
-log
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
             <option value="13">Vegetales y Hortalizas</option>
@@ -753,10 +678,7 @@ log
         `;
 
     } catch (error) {
-error
-
         // Usar categorías por defecto en caso de error con IDs reales de la DB
-log
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
             <option value="13">Vegetales y Hortalizas</option>
@@ -777,15 +699,12 @@ log
 
 // Crear categorías por defecto si no existen
 async function createDefaultCategories() {
-log
     // Esta función podría hacer una llamada a la API para crear categorías si no existen
     // Por ahora es solo un placeholder
 }
 
 // Obtener la finca principal del usuario campesino
 async function getUserFinca() {
-log
-
     try {
         // Intentar obtener la finca del endpoint de fincas
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -802,25 +721,16 @@ log
 
         if (response.ok) {
             const data = await response.json();
-log
             const fincas = Array.isArray(data) ? data : (data.results || data);
-log
-
             if (fincas.length > 0) {
                 const miFinca = fincas[0];
-log
-log
                 return miFinca.id;
             } else {
-warn
                 return null;
             }
         } else {
             const responseText = await response.text();
-error
-
             // Fallback: intentar con el endpoint general si el específico falla
-log
             try {
                 const fallbackResponse = await fetch('/api/farms/fincas/', {
                     method: 'GET',
@@ -836,29 +746,22 @@ log
                     const misFincas = todasLasFincas.filter(finca =>
                         finca.campesino_nombre && finca.campesino_nombre.includes('Juan Carlos')
                     );
-log
-
                     if (misFincas.length > 0) {
-log
                         return misFincas[0].id;
                     }
                 }
             } catch (fallbackError) {
-error
             }
 
             return null;
         }
     } catch (error) {
-error
         return null;
     }
 }
 
 async function handleProductSubmit(e) {
     e.preventDefault();
-log
-
     // Limpiar errores anteriores
     clearFormErrors();
 
@@ -869,8 +772,6 @@ log
     const categorySelect = document.getElementById('productCategory');
     const selectedOption = categorySelect.options[categorySelect.selectedIndex];
     const categoryId = selectedOption ? selectedOption.value : null;
-log
-
     const productData = {
         nombre: formData.get('productName'),
         categoria: parseInt(categoryId), // Debe ser un ID numérico
@@ -883,7 +784,6 @@ log
 :', productData);
 
     // Obtener ID de finca del usuario
-log
     const fincaId = await getUserFinca();
 
     if (!fincaId) {
@@ -893,9 +793,6 @@ log
 
     // Agregar la finca a los datos del producto
     productData.finca = fincaId;
-log
-log
-
     // Validación básica
     const validation = validateProductData(productData);
     if (!validation.isValid) {
@@ -918,9 +815,7 @@ log
             const value = productData[key];
             if (value !== null && value !== undefined) {
                 submitData.append(key, value);
-log
             } else {
-warn
             }
         });
 
@@ -928,13 +823,10 @@ warn
         const imageFile = formData.get('productImage');
         if (imageFile && imageFile.size > 0) {
             submitData.append('imagen_principal', imageFile); // Usar el nombre correcto del campo
-log
         }
 
         // Obtener CSRF token
         const csrfToken = getCsrfToken();
-log
-
         // Configurar headers base
         const headers = {
             'X-CSRFToken': csrfToken
@@ -944,32 +836,20 @@ log
         const jwtToken = localStorage.getItem('authToken');
         if (jwtToken) {
             headers['Authorization'] = `Bearer ${jwtToken}`;
-log
         } else {
-log
         }
-log
-log
-
         // Verificar estado de autenticación adicional
         const sessionInfo = document.querySelector('[data-user-authenticated]');
         if (sessionInfo) {
-log
         }
 
         // Verificar información del usuario desde el DOM
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
-log
         }
 
         // Verificar datos del usuario desde el contexto Django
         if (window.dashboardData) {
-log
-log
-log
-log
-log
         }
 
         // Enviar a la API
@@ -979,13 +859,10 @@ log
             credentials: 'include', // Importante para cookies de sesión
             body: submitData
         });
-log
 ));
 
         if (response.ok) {
             const result = await response.json();
-log
-
             showNotification('¡Producto agregado exitosamente!', 'success');
             closeProductModal();
 
@@ -999,30 +876,22 @@ log
             }
 
         } else {
-error
-
             let errorData;
             try {
                 const responseText = await response.text();
-log
-
                 // Intentar parsear como JSON
                 if (responseText) {
                     try {
                         errorData = JSON.parse(responseText);
                     } catch (parseError) {
-error
                         errorData = { detail: responseText };
                     }
                 } else {
                     errorData = { detail: `Error ${response.status}: ${response.statusText}` };
                 }
             } catch (readError) {
-error
                 errorData = { detail: `Error de conexión (${response.status})` };
             }
-error
-
             if (response.status === 400 && errorData) {
                 // Errores de validación del servidor
                 showFormErrors(errorData);
@@ -1037,7 +906,6 @@ error
         }
 
     } catch (error) {
-error
         showNotification('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'error');
     } finally {
         // Restaurar botón
@@ -1142,8 +1010,6 @@ function clearFormErrors() {
 
 // Función para cargar productos del usuario
 async function loadUserProducts() {
-log
-
     try {
         const headers = { 'X-CSRFToken': getCsrfToken() };
         const jwtToken = localStorage.getItem('authToken');
@@ -1159,15 +1025,12 @@ log
 
         if (response.ok) {
             const productos = await response.json();
-log
             displayProducts(productos);
             updateProductStats(productos.length);
         } else {
-error
             displayNoProducts();
         }
     } catch (error) {
-error
         displayNoProducts();
     }
 }
@@ -1243,8 +1106,6 @@ function updateProductStats(count) {
 
 // Funciones placeholder para acciones de productos
 async function editProduct(productId) {
-log
-
     try {
         // Obtener datos del producto
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -1261,8 +1122,6 @@ log
 
         if (response.ok) {
             const producto = await response.json();
-log
-
             // Cargar categorías en el modal de edición
             await loadCategoriesForEdit();
 
@@ -1272,11 +1131,9 @@ log
             // Mostrar el modal
             showEditModal();
         } else {
-error
             showNotification('Error al cargar los datos del producto', 'error');
         }
     } catch (error) {
-error
         showNotification('Error de conexión al cargar el producto', 'error');
     }
 }
@@ -1317,7 +1174,6 @@ async function loadCategoriesForEdit() {
             });
         }
     } catch (error) {
-error
         // Usar categorías de fallback
         categorySelect.innerHTML = `
             <option value="">Seleccionar categoría</option>
@@ -1397,8 +1253,6 @@ function setupEditModal() {
 // Manejar envío de formulario de edición
 async function handleEditSubmit(e) {
     e.preventDefault();
-log
-
     const formData = new FormData(e.target);
     const productId = formData.get('productId');
 
@@ -1411,8 +1265,6 @@ log
         unidad_medida: formData.get('productUnit') || 'kg',
         estado: formData.get('productStatus')
     };
-log
-
     // Mostrar loading en el botón
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
@@ -1448,8 +1300,6 @@ log
 
         if (response.ok) {
             const result = await response.json();
-log
-
             showNotification('Producto actualizado exitosamente', 'success');
             hideEditModal();
 
@@ -1457,8 +1307,6 @@ log
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-error
-
             if (response.status === 400) {
                 // Mostrar errores específicos si los hay
                 let errorMessage = 'Error de validación:';
@@ -1478,7 +1326,6 @@ error
             }
         }
     } catch (error) {
-error
         showNotification('Error de conexión al actualizar el producto', 'error');
     } finally {
         // Restaurar botón
@@ -1489,8 +1336,6 @@ error
 
 // Mostrar modal de confirmación para eliminar
 async function deleteProduct(productId) {
-log
-
     try {
         // Obtener datos del producto para mostrar el nombre
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -1512,7 +1357,6 @@ log
             showDeleteModal(productId, 'Producto desconocido');
         }
     } catch (error) {
-error
         showDeleteModal(productId, 'Producto');
     }
 }
@@ -1549,8 +1393,6 @@ function hideDeleteModal() {
 
 // Confirmar eliminación del producto
 async function confirmDeleteProduct(productId) {
-log
-
     // Cerrar modal
     hideDeleteModal();
 
@@ -1574,18 +1416,15 @@ log
         closeNotification(processingNotification);
 
         if (response.ok) {
-log
             showNotification('Producto eliminado exitosamente', 'success');
 
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-error
             showNotification('Error al eliminar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
         }
     } catch (error) {
-error
         closeNotification(processingNotification);
         showNotification('Error de conexión al eliminar el producto', 'error');
     }
@@ -1616,8 +1455,6 @@ function setupDeleteModal() {
 
 // Función para cambiar el estado de un producto
 async function changeProductStatus(productId, newStatus) {
-log
-
     const statusNames = {
         'disponible': 'disponible',
         'agotado': 'agotado',
@@ -1650,18 +1487,15 @@ log
         });
 
         if (response.ok) {
-log
             showNotification(`Producto ${actionNames[newStatus]} exitosamente`, 'success');
 
             // Recargar la lista de productos
             await loadUserProducts();
         } else {
             const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-error
             showNotification('Error al actualizar el producto: ' + (errorData.detail || 'Error desconocido'), 'error');
         }
     } catch (error) {
-error
         showNotification('Error de conexión al actualizar el producto', 'error');
     }
 }
@@ -1671,34 +1505,23 @@ function initNotificationSystem() {
     // Verificar si el contenedor existe
     let container = document.getElementById('notificationContainer');
     if (container) {
-log
-log
-
         // Asegurarse de que tiene la clase correcta
         if (!container.classList.contains('notification-container')) {
-log
             container.classList.add('notification-container');
         }
 
         // Verificar estilos
         const computedStyle = window.getComputedStyle(container);
-log
-log
-log
-log
     } else {
-log
         container = document.createElement('div');
         container.id = 'notificationContainer';
         container.className = 'notification-container';
         document.body.appendChild(container);
-log
     }
 
     // Forzar estilos CSS críticos si no se están aplicando
     const computedStyle = window.getComputedStyle(container);
     if (computedStyle.position === 'static') {
-warn
         container.style.cssText = `
             position: fixed !important;
             top: 20px !important;
@@ -1748,31 +1571,21 @@ warn
         `;
         document.head.appendChild(animationStyles);
     }
-log
 }
 
 function showNotification(message, type = 'info', title = null, duration = 4000) {
-`);
-
     // Asegurar que el contenedor existe
     let container = document.getElementById('notificationContainer');
-log
-
     if (!container) {
-warn
         initNotificationSystem();
         container = document.getElementById('notificationContainer');
-log
     }
 
     if (!container) {
-error
         // Fallback: usar alert como último recurso
         alert(`${title || type.toUpperCase()}: ${message}`);
         return null;
     }
-log
-log
 .position);
 
     const notification = document.createElement('div');
@@ -1821,8 +1634,6 @@ log
     `;
 
     container.appendChild(notification);
-log
-log
 .position,
         display: window.getComputedStyle(notification).display,
         background: window.getComputedStyle(notification).backgroundColor
@@ -2044,30 +1855,17 @@ if (!document.querySelector('#modal-styles')) {
 
 // Inicializar dashboard cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function () {
-log
-
     // Verificar elementos críticos del DOM
     const productsGrid = document.getElementById('productsGrid');
     const notificationContainer = document.getElementById('notificationContainer');
     const sidebar = document.querySelector('.dashboard-sidebar');
     const navItems = document.querySelectorAll('.nav-item');
-log
-log
-log
-log
-log
-
     // Verificar si estamos en móvil
     if (window.innerWidth <= 768) {
-log
         if (sidebar) {
             const computedStyles = window.getComputedStyle(sidebar);
-log
-
             // Forzar estilos de navegación móvil si no se están aplicando
             if (computedStyles.width !== '100%' || computedStyles.position !== 'sticky') {
-warn
-
                 // Forzar estilos del sidebar
                 sidebar.style.cssText = `
                     width: 100% !important;
@@ -2124,7 +1922,6 @@ warn
                         item.style.color = '#2d5016';
                     }
                 });
-log
             }
         }
     }
@@ -2149,19 +1946,12 @@ log
 
     // Probar notificación inicial y estado del sistema después de 3 segundos
     setTimeout(() => {
-log
         showNotification('Sistema inicializado correctamente', 'success', '¡Bienvenido!');
 
         // Debug adicional sobre el estado del DOM
         setTimeout(() => {
             const container = document.getElementById('notificationContainer');
             const productsGrid = document.getElementById('productsGrid');
-log
-log
-log
-log
-log
-log
         }, 1000);
 
     }, 3000);
@@ -2176,12 +1966,10 @@ log
 
     // Listener para redimensionado de ventana
     window.addEventListener('resize', function () {
-log
         setTimeout(() => {
             applyMobileNavigation();
         }, 100);
     });
-log
 });
 
 // ============================================================
@@ -2190,8 +1978,6 @@ log
 
 // Configurar autenticación
 function setupAuthentication() {
-log
-
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function (e) {
@@ -2206,8 +1992,6 @@ log
 
 // Configurar navegación
 function setupNavigation() {
-log
-
     const navItems = document.querySelectorAll('.nav-item[data-section]');
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
@@ -2237,8 +2021,6 @@ log
 
 // Mostrar sección
 function showSection(sectionName) {
-log
-
     // Ocultar todas las secciones
     const sections = document.querySelectorAll('.content-section');
     sections.forEach(section => {
@@ -2269,7 +2051,6 @@ log
     } else if (sectionName === 'messages') {
         // Asegurar que se carguen las conversaciones al entrar a la sección
         // Esto es crítico para la navegación móvil que usa showSection directamente
-log
         loadConversations();
     }
 }
@@ -2277,8 +2058,6 @@ log
 // Aplicar navegación móvil
 function applyMobileNavigation() {
     if (window.innerWidth <= 768) {
-log
-
         const sidebar = document.querySelector('.dashboard-sidebar');
         if (sidebar) {
             // Forzar estilos del sidebar
@@ -2353,15 +2132,12 @@ log
                     `;
                 }
             });
-log
         }
     }
 }
 
 // Cargar datos iniciales
 function loadInitialData() {
-log
-
     // Aplicar navegación móvil
     applyMobileNavigation();
 
@@ -2562,7 +2338,6 @@ async function loadCampesinoOrders() {
         }).join('');
 
     } catch (error) {
-error
         list.innerHTML = '<div style="color:red; text-align:center;">Error al cargar tus pedidos de la base de datos.</div>';
     }
 }
@@ -2591,8 +2366,6 @@ window.changeOrderStatus = async function (orderId, newStatus) {
         }
 
     } catch (error) {
-error
-
         // Mejor manejo para mostrar la causa raíz al usuario
         let msgDetalle = error.message;
         if (error.details) {
@@ -2636,7 +2409,6 @@ function setupRatingModal() {
                 closeRatingModal();
                 loadCampesinoOrders(); // Recarga la pestaña actual
             } catch (error) {
-error
                 showNotification(error.message || 'Error al enviar calificación', 'error');
             } finally {
                 this.disabled = false;
@@ -2802,7 +2574,6 @@ async function loadProfileData() {
         // Configurar listener para la foto de perfil (solo una vez)
         setupProfilePhotoUpload();
     } catch (error) {
-error
     }
 }
 
@@ -2840,10 +2611,7 @@ function setupProfilePhotoUpload() {
         formData.append('avatar', file);
         
         try {
-log
             const response = await authApi.updateProfile(formData);
-log
-            
             const userData = response.user || response;
             if (userData && userData.avatar) {
                 // Actualizar todas las imágenes en la UI
@@ -2864,7 +2632,6 @@ log
                 showNotification('¡Foto de perfil actualizada!', 'success');
             }
         } catch (error) {
-error
             avatarLarge.innerHTML = originalContent;
             showNotification('Error al subir la foto: ' + error.message, 'error');
         } finally {
@@ -2885,8 +2652,6 @@ error
             try {
                 // Enviar null para eliminar la foto
                 const response = await authApi.updateProfile({ avatar: null });
-log
-                
                 // Actualizar UI al estado predeterminado
                 const avatarLarge = document.getElementById('profileAvatarLarge');
                 if (avatarLarge) {
@@ -2902,7 +2667,6 @@ log
                 this.style.display = 'none';
                 showNotification('Foto de perfil eliminada', 'success');
             } catch (error) {
-error
                 showNotification('Error al eliminar la foto', 'error');
                 this.textContent = originalText;
                 this.disabled = false;
@@ -2953,7 +2717,6 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         if (userNameElement) userNameElement.textContent = profileData.nombre + ' ' + profileData.apellido;
 
     } catch (error) {
-error
         if (typeof showNotification === 'function') {
             showNotification('Error al guardar el perfil: ' + error.message, 'error');
         } else {
@@ -2995,7 +2758,6 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
         
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
-error
         let msgDetalle = error.message;
         if (error.details) {
             try { msgDetalle += " - " + JSON.stringify(error.details); } catch (ex) { }
@@ -3036,7 +2798,6 @@ async function loadConversations() {
         const response = await chatApi.getConversations();
         renderConversations(response.results || response);
     } catch (error) {
-error
         document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
     }
 }
@@ -3091,8 +2852,6 @@ function renderConversations(conversations) {
 
         const convId = parseInt(li.dataset.id);
         const name = li.dataset.name;
-log
-
         // Actualizar UI activa
         document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
         li.classList.add('active');
@@ -3144,7 +2903,6 @@ async function loadMessages(convId, isPolling = false) {
         // Guardia de sincronización: Verificar si el ID de la petición 
         // coincide con la conversación activa actualmente
         if (activeConversationId !== convId) {
-`);
             return;
         }
 
@@ -3154,7 +2912,6 @@ async function loadMessages(convId, isPolling = false) {
             await chatApi.markAsRead(convId);
         }
     } catch (error) {
-error
     }
 }
 
@@ -3227,7 +2984,6 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
         loadMessages(activeConversationId);
         loadConversations();
     } catch(err) {
-error
         alert('Error enviando mensaje.');
         input.value = txt; 
     } finally {
@@ -3297,7 +3053,6 @@ async function pollUnreadMessages() {
 
     } catch (e) {
         // Silenciar errores del poller para no distraer con alertas en pantalla
-debug
     }
 }
 
