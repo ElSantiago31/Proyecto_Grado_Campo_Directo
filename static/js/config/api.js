@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // CONFIGURACIÓN DE API - CAMPO DIRECTO FRONTEND
 // ============================================================
 
@@ -434,7 +434,6 @@ function handleAuthError() {
     // Redirigir al login unificado si no estamos ya ahí
     const currentPath = window.location.pathname;
     if (!currentPath.includes('login') && !currentPath.includes('registro')) {
-log
         window.location.href = '/login/';
     }
 }
@@ -453,10 +452,9 @@ api.request = async function (endpoint, options = {}) {
         if (error instanceof ApiError && error.isAuthError()) {
             // Evitar bucles infinitos para endpoints de auth
             if (endpoint.includes('/auth/') || options._isRetry) {
-log
                 throw error;
             }
-log
+
 
             // Si ya estamos renovando el token, esperar
             if (isRefreshingToken && refreshPromise) {
@@ -466,7 +464,7 @@ log
                     options._isRetry = true;
                     return await originalRequest.call(this, endpoint, options);
                 } catch (refreshError) {
-log
+
                     handleAuthError();
                     throw error;
                 }
@@ -475,7 +473,7 @@ log
             // Intentar renovar el token automáticamente
             const refreshToken = localStorage.getItem('refreshToken');
             if (refreshToken && !isRefreshingToken) {
-log
+
                 isRefreshingToken = true;
                 refreshPromise = authApi.refreshToken();
 
@@ -483,19 +481,19 @@ log
                     await refreshPromise;
                     isRefreshingToken = false;
                     refreshPromise = null;
-log
+
                     // Reintentar la petición original con el nuevo token
                     options._isRetry = true;
                     return await originalRequest.call(this, endpoint, options);
                 } catch (refreshError) {
-log
+
                     isRefreshingToken = false;
                     refreshPromise = null;
                     handleAuthError();
                     throw error;
                 }
             } else {
-log
+
                 handleAuthError();
                 throw error;
             }
@@ -503,7 +501,7 @@ log
         throw error;
     }
 };
-log
+
 
 // Exportar para uso global
 window.api = api;

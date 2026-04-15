@@ -1,4 +1,4 @@
-﻿// Login JavaScript - Campo Directo (Versión con API)
+// Login JavaScript - Campo Directo (Versión con API)
 
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
@@ -382,4 +382,5 @@ if (!document.querySelector('#login-styles')) {
         display: block;
     }
     </style>
-}
+    `);
+});
