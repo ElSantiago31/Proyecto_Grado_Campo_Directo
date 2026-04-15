@@ -779,7 +779,6 @@ async function handleProductSubmit(e) {
         unidad_medida: formData.get('productUnit') || 'kg',
         estado: 'disponible'
     };
-: ', productData);
 
     // Obtener ID de finca del usuario
     const fincaId = await getUserFinca();
@@ -857,7 +856,6 @@ async function handleProductSubmit(e) {
             credentials: 'include', // Importante para cookies de sesión
             body: submitData
         });
-));
 
         if (response.ok) {
             const result = await response.json();
@@ -1584,7 +1582,7 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
         alert(`${title || type.toUpperCase()}: ${message}`);
         return null;
     }
-.position);
+
 
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -1632,17 +1630,13 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
     `;
 
     container.appendChild(notification);
-.position,
-        display: window.getComputedStyle(notification).display,
-            background: window.getComputedStyle(notification).backgroundColor
-});
 
-// Auto-cerrar después del tiempo especificado
-setTimeout(() => {
-    closeNotification(notification);
-}, duration);
+    // Auto-cerrar después del tiempo especificado
+    setTimeout(() => {
+        closeNotification(notification);
+    }, duration);
 
-return notification;
+    return notification;
 }
 
 function closeNotification(notification) {

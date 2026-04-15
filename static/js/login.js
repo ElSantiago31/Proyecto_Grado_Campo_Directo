@@ -268,3 +268,5 @@ document.head.insertAdjacentHTML('beforeend', `
     opacity: 0.8;
 }
 </style>
+`);
+
