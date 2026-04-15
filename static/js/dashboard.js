@@ -83,9 +83,7 @@ let dashboardData = {
 // Cargar datos reales del dashboard desde la API
 async function loadRealDashboardData(period = 'month') {
     try {
-...`);
         // Obtener datos del dashboard del usuario
-...');
         const data = await authApi.getDashboard(period);
         if (data) {
             // Actualizar datos del dashboard
