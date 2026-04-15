@@ -6,6 +6,30 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/registro.css' %}">
+<style>
+    /* Estilos Responsivos para el PIN Visual en Registro */
+    @media (max-width: 480px) {
+        .visual-2fa-group {
+            padding: 10px !important;
+            margin-top: 10px !important;
+        }
+
+        .visual-2fa-group label {
+            font-size: 1rem !important;
+        }
+
+        .emoji-grid {
+            grid-template-columns: repeat(3, 1fr) !important; /* 3 columnas en móvil */
+            gap: 8px !important;
+            max-width: 100% !important;
+        }
+
+        .btn-emoji {
+            font-size: 1.8rem !important;
+            padding: 8px !important;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
