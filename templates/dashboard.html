@@ -115,7 +115,7 @@
 
     <!-- Eliminados estilos en línea destructivos de main y aside -->
     <main class="dashboard-main-unico">
-        <aside class="sidebar-unico" id="dashboardSidebar">
+        <aside class="sidebar-unico dashboard-sidebar" id="dashboardSidebar">
             <nav class="sidebar-nav-unico">
                 <ul class="nav-items-verticales" style="display: flex !important; flex-direction: column !important; padding: 0 !important; margin: 0 !important; list-style: none !important;">
                     <li>
@@ -632,25 +632,4 @@
 
 {% block extra_js %}
 <script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}"></script>
-<script>
-    /* FIX DE EMERGENCIA PARA INTERACTIVIDAD */
-    document.addEventListener('DOMContentLoaded', function() {
-        const mobileBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('dashboardSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        
-        if (mobileBtn && sidebar && overlay) {
-            mobileBtn.onclick = function() {
-                sidebar.classList.toggle('active');
-                overlay.classList.toggle('active');
-                mobileBtn.classList.toggle('active');
-            };
-            overlay.onclick = function() {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                mobileBtn.classList.remove('active');
-            };
-        }
-    });
-</script>
 {% endblock %}
