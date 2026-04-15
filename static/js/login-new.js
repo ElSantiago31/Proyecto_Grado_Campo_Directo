@@ -43,17 +43,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const close2faBtn = document.getElementById('close2faBtn');
     const btnLoginEmojis = document.querySelectorAll('.btn-login-emoji');
     const error2faMsg = document.getElementById('error2faMsg');
-    
+
     let resolve2faPromise = null;
 
-    if(close2faBtn) {
+    if (close2faBtn) {
         close2faBtn.addEventListener('click', () => {
             visual2faModal.style.display = 'none';
         });
     }
 
     btnLoginEmojis.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const val = this.getAttribute('data-value');
             if (resolve2faPromise) {
                 resolve2faPromise(val);
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const remember = rememberCheckbox.checked;
 
         // Mostrar Modal 2FA en vez de hacer request inmediato
-        if(visual2faModal) {
+        if (visual2faModal) {
             visual2faModal.style.display = 'flex';
             error2faMsg.textContent = '';
             error2faMsg.style.color = '#dc3545';
@@ -114,8 +114,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const response = await authApi.login({ email, password, imagen_2fa });
 
                 // Éxito absoluto (Credenciales + 2FA OK)
-                if(visual2faModal) visual2faModal.style.display = 'none';
-                
+                if (visual2faModal) visual2faModal.style.display = 'none';
+
                 if (response.access && response.refresh) {
                     if (remember) {
                         localStorage.setItem('rememberedUser', email);
@@ -146,15 +146,15 @@ document.addEventListener('DOMContentLoaded', function () {
                         isVisualError = true;
                     }
                 }
-                
+
                 if (isVisualError) {
                     // Fallo solo el PIN Visual: mostrar el mensaje exacto del servidor
                     error2faMsg.style.color = '#dc3545';
                     const serverMsg = error.details?.non_field_errors?.[0] || '❌ PIN Visual incorrecto. Intenta de nuevo.';
                     error2faMsg.textContent = serverMsg;
-                    
+
                     // Efecto Shake en la ventanita del Modal
-                    if(visual2faBox) {
+                    if (visual2faBox) {
                         visual2faBox.style.transform = 'translateX(10px)';
                         setTimeout(() => visual2faBox.style.transform = 'translateX(-10px)', 100);
                         setTimeout(() => visual2faBox.style.transform = 'translateX(10px)', 200);
@@ -162,8 +162,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 } else {
                     // Contraseña incorrecta, inactivo, servidor caído...
-                    if(visual2faModal) visual2faModal.style.display = 'none';
-                    
+                    if (visual2faModal) visual2faModal.style.display = 'none';
+
                     let customErrorMessage = null;
                     if (error.details && error.details.non_field_errors) {
                         customErrorMessage = error.details.non_field_errors[0];
@@ -383,4 +383,4 @@ if (!document.querySelector('#login-styles')) {
     }
     </style>
     `);
-});
+};
