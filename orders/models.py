@@ -323,6 +323,8 @@ class DetallePedido(models.Model):
     @property
     def subtotal(self):
         """Calcula el subtotal de este detalle"""
+        if self.cantidad is None or self.precio_unitario is None:
+            return 0
         return self.cantidad * self.precio_unitario
     
     def save(self, *args, **kwargs):
@@ -330,9 +332,19 @@ class DetallePedido(models.Model):
         if self.producto:
             self.nombre_producto_snapshot = self.producto.nombre
             self.unidad_medida_snapshot = self.producto.unidad_medida
-            
+
             # Si no se especificó precio, usar el actual del producto
             if not self.precio_unitario:
                 self.precio_unitario = self.producto.precio_por_kg
-                
+
         super().save(*args, **kwargs)
+
+        # Recalcular el total del pedido padre automaticamente
+        try:
+            nuevo_total = sum(
+                (d.cantidad or 0) * (d.precio_unitario or 0)
+                for d in self.pedido.detalles.all()
+            )
+            self.pedido.__class__.objects.filter(pk=self.pedido.pk).update(total=nuevo_total)
+        except Exception:
+            pass  # No romper el flujo si falla el recalculo
