@@ -1957,7 +1957,84 @@
     }
 
     /* Asegurar que el contenedor principal no intente poner el sidebar en fila */
-    .dashboard-main {
-        display: block !important;
+}
+
+/* ==========================================================================
+   MODALES UNIFICADOS (MODAL-UNICO)
+   ========================================================================== */
+.modal-unico {
+    display: none;
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content-unico {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    animation: modalSlideUp 0.3s ease-out;
+    position: relative;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header-unico {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-unico h3 {
+    margin: 0;
+    color: #2d5016;
+    font-size: 1.25rem;
+}
+
+.modal-close-unico {
+    background: #f8f9fa;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close-unico:hover {
+    background: #e9ecef;
+    color: #2d5016;
+}
+
+.modal-body-unico {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
     }
 }

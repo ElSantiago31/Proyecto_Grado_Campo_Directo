@@ -309,6 +309,7 @@ function updateStats(period = 'month') {
 // FUNCIONALIDAD: MIS RESEÑAS (CAMPESINO)
 // ============================================================
 async function abrirModalMisResenas() {
+    console.log("Invocando abrirModalMisResenas...");
     const modal = document.getElementById('misResenasModal');
     const closeBtn = document.getElementById('closeMisResenasModal');
     const container = document.getElementById('misResenasContainer');
@@ -326,7 +327,7 @@ async function abrirModalMisResenas() {
     });
 
     // Mostrar modal con loader
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
     container.innerHTML = `
@@ -2008,6 +2009,8 @@ document.addEventListener('DOMContentLoaded', function () {
             applyMobileNavigation();
         }, 100);
     });
+    // Exponer funciones globales para disparadores onclick en HTML
+    window.abrirModalMisResenas = abrirModalMisResenas;
 });
 
 // ============================================================
