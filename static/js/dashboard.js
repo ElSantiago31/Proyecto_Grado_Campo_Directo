@@ -791,13 +791,8 @@ async function getUserFinca() {
                     const todasLasFincas = Array.isArray(fallbackData) ? fallbackData : (fallbackData.results || []);
 
                     // Filtrar solo las fincas que pertenecen al usuario actual
-                    // Filtrar fincas que pertenecen al usuario actual (Ronald u otros)
-                    const userNameStr = document.getElementById('userName')?.textContent || '';
-                    const misFincas = todasLasFincas.filter(finca => 
-                        !userNameStr || (finca.campesino_nombre && finca.campesino_nombre.toLowerCase().includes(userNameStr.toLowerCase().split(' ')[0]))
-                    );
-                    if (misFincas.length > 0) {
-                        return misFincas[0].id;
+                    if (todasLasFincas.length > 0) {
+                        return todasLasFincas[0].id;
                     }
                 }
             } catch (fallbackError) {
@@ -1016,7 +1011,10 @@ function showFieldError(fieldName, message) {
         'nombre': 'productName',
         'categoria': 'productCategory',
         'stock_disponible': 'productStock',
-        'descripcion': 'productDescription'
+        'descripcion': 'productDescription',
+        'unidad_medida': 'productUnit',
+        'finca': 'general',
+        'categoria': 'productCategory'
     };
 
     // Si el nombre viene del Python, intentar pasarlo a ID del HTML
