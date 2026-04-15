@@ -43,13 +43,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupProductModal();
     setupRatingModal();
     setupOrderTabsCampesino();
-    
+
     // Escuchar el cambio en el selector de periodo para estadísticas
     const salesPeriodSelect = document.getElementById('salesPeriod');
     if (salesPeriodSelect) {
-        salesPeriodSelect.addEventListener('change', async function(e) {
+        salesPeriodSelect.addEventListener('change', async function (e) {
             await loadRealDashboardData(e.target.value);
-            
+
             // Si la vista está en "ventas", necesitamos volver a renderizar con la nueva información
             const salesSection = document.getElementById('sales');
             if (salesSection && salesSection.classList.contains('active')) {
@@ -83,9 +83,7 @@ let dashboardData = {
 // Cargar datos reales del dashboard desde la API
 async function loadRealDashboardData(period = 'month') {
     try {
-...`);
         // Obtener datos del dashboard del usuario
-...');
         const data = await authApi.getDashboard(period);
         if (data) {
             // Actualizar datos del dashboard
@@ -104,7 +102,7 @@ async function loadRealDashboardData(period = 'month') {
             // Actualizar UI con datos reales
             updateStats(period);
             updateRecentActivity();
-            
+
             // Renderizar gráfico si hay datos
             if (dashboardData.stats.ventas_grafico && dashboardData.stats.ventas_grafico.labels.length > 0) {
                 renderSalesChart(dashboardData.stats.ventas_grafico);
@@ -173,11 +171,11 @@ function setupLogout() {
         const showSection = (sectionId, e) => {
             e.preventDefault();
             userDropdown.classList.remove('show');
-            
+
             // Remover 'active' de navegación lateral y todas las secciones
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-            
+
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
@@ -250,14 +248,14 @@ function updateStats(period = 'month') {
 
     if (activeProductsEl) activeProductsEl.textContent = dashboardData.stats.activeProducts;
     if (pendingOrdersEl) pendingOrdersEl.textContent = dashboardData.stats.pendingOrders;
-    
+
     // El dashboard campesino tiene IDs diferentes para las tarjetas de resumen
     if (monthSalesEl) monthSalesEl.textContent = formatCurrency(dashboardData.stats.monthSales);
     if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(dashboardData.stats.monthSales);
-    
+
     if (productsSoldEl) productsSoldEl.textContent = `${dashboardData.stats.productsSold} unidades`;
     if (uniqueCustomersEl) uniqueCustomersEl.textContent = dashboardData.stats.uniqueCustomers;
-    
+
     if (ratingEl) ratingEl.textContent = dashboardData.stats.rating.toFixed(1);
 }
 
@@ -268,35 +266,35 @@ async function abrirModalMisResenas() {
     const modal = document.getElementById('misResenasModal');
     const closeBtn = document.getElementById('closeMisResenasModal');
     const container = document.getElementById('misResenasContainer');
-    
+
     if (!modal) return;
-    
+
     // Configurar cierre
     if (closeBtn) {
         closeBtn.onclick = () => modal.style.display = 'none';
     }
-    
+
     // Cerrar si hace clic fuera
     window.addEventListener('click', (e) => {
         if (e.target === modal) modal.style.display = 'none';
     });
-    
+
     // Mostrar modal con loader
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
-    
+
     container.innerHTML = `
         <div style="text-align: center; padding: 30px;">
             <span class="loader" style="width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid #2d5016; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span>
             <p style="margin-top: 15px; color: #666;">Cargando tus reseñas...</p>
         </div>
     `;
-    
+
     try {
         // Cargar reseñas utilizando el authApi genérico (o userApi)
         let data;
         let esAutor = false;
-        
+
         try {
             // Intentamos usar el endpoint del usuario campesino
             const campesinoId = window.currentUserId;
@@ -316,9 +314,9 @@ async function abrirModalMisResenas() {
                 throw apiError;
             }
         }
-        
+
         const resenas = data.resenas || data.results || data;
-        
+
         if (!resenas || !Array.isArray(resenas) || resenas.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 30px; color: #666;">
@@ -329,7 +327,7 @@ async function abrirModalMisResenas() {
             `;
             return;
         }
-        
+
         // Estructura General:
         let html = `
             <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
@@ -344,7 +342,7 @@ async function abrirModalMisResenas() {
             
             <div style="display: flex; flex-direction: column; gap: 15px;">
         `;
-        
+
         resenas.forEach(resena => {
             // Manejar diferencias entre formatos de API
             const stars = resena.calificacion || resena.estrellas || resena.calificacion_campesino || 5;
@@ -353,9 +351,9 @@ async function abrirModalMisResenas() {
             let name = "Usuario Anónimo";
             if (resena.comprador_nombre) name = resena.comprador_nombre;
             else if (resena.autor) name = resena.autor;
-            
+
             let date = resena.fecha ? new Date(resena.fecha).toLocaleDateString() : "";
-            
+
             html += `
                 <div style="padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -369,10 +367,10 @@ async function abrirModalMisResenas() {
                 </div>
             `;
         });
-        
+
         html += `</div>`;
         container.innerHTML = html;
-        
+
     } catch (e) {
         container.innerHTML = `
             <div style="text-align: center; padding: 30px; color: #e74c3c;">
@@ -401,80 +399,80 @@ function renderSalesChart(data) {
 
     try {
         salesChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: 'Ventas Diarias ($)',
-                data: data.data,
-                borderColor: '#2d5016',
-                backgroundColor: 'rgba(45, 80, 22, 0.1)',
-                borderWidth: 3,
-                pointBackgroundColor: '#2d5016',
-                pointBorderColor: '#fff',
-                pointHoverRadius: 6,
-                pointRadius: 4,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            if (value >= 1000) {
-                                return '$' + (value / 1000) + 'k';
-                            }
-                            return '$' + value;
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Ventas Diarias ($)',
+                    data: data.data,
+                    borderColor: '#2d5016',
+                    backgroundColor: 'rgba(45, 80, 22, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#2d5016',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 6,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
                         },
-                        font: {
-                            family: "'Segoe UI', sans-serif",
-                            size: 11
+                        ticks: {
+                            callback: function (value) {
+                                if (value >= 1000) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                                return '$' + value;
+                            },
+                            font: {
+                                family: "'Segoe UI', sans-serif",
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Segoe UI', sans-serif",
+                                size: 11
+                            },
+                            maxRotation: 45,
+                            minRotation: 45
                         }
                     }
                 },
-                x: {
-                    grid: {
+                plugins: {
+                    legend: {
                         display: false
                     },
-                    ticks: {
-                        font: {
-                            family: "'Segoe UI', sans-serif",
-                            size: 11
-                        },
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    titleColor: '#2d5016',
-                    bodyColor: '#333',
-                    borderColor: '#2d5016',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Ventas: ' + formatCurrency(context.parsed.y);
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#2d5016',
+                        bodyColor: '#333',
+                        borderColor: '#2d5016',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function (context) {
+                                return 'Ventas: ' + formatCurrency(context.parsed.y);
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
     } catch (error) {
     }
 }
@@ -781,7 +779,7 @@ async function handleProductSubmit(e) {
         unidad_medida: formData.get('productUnit') || 'kg',
         estado: 'disponible'
     };
-:', productData);
+: ', productData);
 
     // Obtener ID de finca del usuario
     const fincaId = await getUserFinca();
@@ -969,11 +967,11 @@ function showFieldError(fieldName, message) {
         'stock_disponible': 'productStock',
         'descripcion': 'productDescription'
     };
-    
+
     // Si el nombre viene del Python, intentar pasarlo a ID del HTML
     const finalId = fieldMap[fieldName] || fieldName;
     const field = document.getElementById(finalId);
-    
+
     if (!field) {
         // En caso de que sea un error general y no encaje en un ID, mostramos una alerta flotante obligatoria
         showNotification(message, 'error');
@@ -1636,15 +1634,15 @@ function showNotification(message, type = 'info', title = null, duration = 4000)
     container.appendChild(notification);
 .position,
         display: window.getComputedStyle(notification).display,
-        background: window.getComputedStyle(notification).backgroundColor
-    });
+            background: window.getComputedStyle(notification).backgroundColor
+});
 
-    // Auto-cerrar después del tiempo especificado
-    setTimeout(() => {
-        closeNotification(notification);
-    }, duration);
+// Auto-cerrar después del tiempo especificado
+setTimeout(() => {
+    closeNotification(notification);
+}, duration);
 
-    return notification;
+return notification;
 }
 
 function closeNotification(notification) {
@@ -2391,18 +2389,18 @@ function setupRatingModal() {
 
     if (closeBtn) closeBtn.addEventListener('click', closeRatingModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeRatingModal);
-    
+
     if (submitBtn) {
-        submitBtn.addEventListener('click', async function() {
+        submitBtn.addEventListener('click', async function () {
             const orderId = document.getElementById('ratingOrderId').value;
             const score = document.getElementById('ratingScore').value;
             const comment = document.getElementById('ratingComment').value;
-            
+
             if (!score || score === '0') return;
-            
+
             this.disabled = true;
             this.textContent = 'Enviando...';
-            
+
             try {
                 await orderApi.calificar(orderId, { calificacion: parseInt(score), comentario: comment });
                 showNotification('¡Gracias! Calificación enviada existosamente', 'success');
@@ -2419,21 +2417,21 @@ function setupRatingModal() {
 
     // Efectos de Hover y Click para estrellas
     stars.forEach(star => {
-        star.addEventListener('mouseover', function() {
+        star.addEventListener('mouseover', function () {
             const value = this.getAttribute('data-value');
             highlightStars(value);
         });
-        
-        star.addEventListener('mouseout', function() {
+
+        star.addEventListener('mouseout', function () {
             const currentScore = document.getElementById('ratingScore').value;
             highlightStars(currentScore);
         });
-        
-        star.addEventListener('click', function() {
+
+        star.addEventListener('click', function () {
             const value = this.getAttribute('data-value');
             document.getElementById('ratingScore').value = value;
             highlightStars(value);
-            
+
             // Habilitar botón
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -2454,25 +2452,25 @@ function highlightStars(count) {
     });
 }
 
-window.openRatingModal = function(orderId, targetName) {
+window.openRatingModal = function (orderId, targetName) {
     const modal = document.getElementById('ratingModal');
     if (!modal) return;
 
     document.getElementById('ratingTargetName').textContent = targetName;
     document.getElementById('ratingOrderId').value = orderId;
-    
+
     // Reset
     document.getElementById('ratingScore').value = "0";
     document.getElementById('ratingComment').value = "";
     highlightStars(0);
-    
+
     const submitBtn = document.getElementById('submitRatingBtn');
     if (submitBtn) submitBtn.disabled = true;
 
     modal.style.display = 'block';
 };
 
-window.closeRatingModal = function() {
+window.closeRatingModal = function () {
     const modal = document.getElementById('ratingModal');
     if (modal) modal.style.display = 'none';
 };
@@ -2489,7 +2487,7 @@ async function loadProfileData() {
             document.getElementById('profileTelefono').value = profile.telefono || '';
             document.getElementById('profileEmail').value = profile.email || '';
             document.getElementById('profileFechaNacimiento').value = profile.fecha_nacimiento || '';
-            
+
             const fincaField = document.getElementById('profileNombreFinca');
             if (fincaField) {
                 fincaField.value = profile.nombre_finca || '';
@@ -2498,7 +2496,7 @@ async function loadProfileData() {
             if (profile.tipo_usuario === 'campesino') {
                 const deptoSelect = document.getElementById('profileDepartamentoFinca');
                 const muniSelect = document.getElementById('profileMunicipioFinca');
-                
+
                 if (typeof colombiaData !== 'undefined' && deptoSelect && muniSelect) {
                     // Cargar imagen de perfil si existe
                     if (profile.avatar) {
@@ -2506,7 +2504,7 @@ async function loadProfileData() {
                         const headerAvatarImg = document.getElementById('headerAvatarImg');
                         const placeholder = document.getElementById('profileAvatarPlaceholder');
                         const headerPlaceholder = document.getElementById('headerAvatarContainer');
-                        
+
                         if (avatarImg) avatarImg.src = profile.avatar;
                         else if (placeholder) {
                             const container = document.getElementById('profileAvatarLarge');
@@ -2514,7 +2512,7 @@ async function loadProfileData() {
                                 container.innerHTML = `<img src="${profile.avatar}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
                             }
                         }
-                        
+
                         if (headerAvatarImg) headerAvatarImg.src = profile.avatar;
                         else if (headerPlaceholder) {
                             headerPlaceholder.innerHTML = `<img src="${profile.avatar}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
@@ -2529,7 +2527,7 @@ async function loadProfileData() {
                         deptoSelect.appendChild(option);
                     });
 
-                    deptoSelect.addEventListener('change', function() {
+                    deptoSelect.addEventListener('change', function () {
                         muniSelect.innerHTML = '<option value="">Selecciona Municipio</option>';
                         if (this.value) {
                             const deptoData = colombiaData.find(d => d.departamento === this.value);
@@ -2549,7 +2547,7 @@ async function loadProfileData() {
                 }
 
                 document.getElementById('profileNombreFinca').value = profile.nombre_finca || '';
-                
+
                 // Set default values after building the options
                 if (profile.departamento_finca) {
                     deptoSelect.value = profile.departamento_finca;
@@ -2559,7 +2557,7 @@ async function loadProfileData() {
                         muniSelect.value = profile.municipio_finca;
                     }
                 }
-                
+
                 document.getElementById('fincaFieldGroup').style.display = 'block';
             } else {
             }
@@ -2570,7 +2568,7 @@ async function loadProfileData() {
                 deleteBtn.style.display = profile.avatar ? 'inline-block' : 'none';
             }
         }
-        
+
         // Configurar listener para la foto de perfil (solo una vez)
         setupProfilePhotoUpload();
     } catch (error) {
@@ -2580,14 +2578,14 @@ async function loadProfileData() {
 function setupProfilePhotoUpload() {
     const photoInput = document.getElementById('profilePhotoInput');
     const deleteBtn = document.getElementById('deleteProfilePhotoBtn');
-    
+
     if (!photoInput || photoInput.dataset.initialized) return;
     photoInput.dataset.initialized = 'true';
-    
-    photoInput.addEventListener('change', async function() {
+
+    photoInput.addEventListener('change', async function () {
         const file = this.files[0];
         if (!file) return;
-        
+
         // Validar tipo (solo fotos, nada de gif o video)
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (!allowedTypes.includes(file.type)) {
@@ -2595,40 +2593,40 @@ function setupProfilePhotoUpload() {
             this.value = '';
             return;
         }
-        
+
         // Validar tamaño (máx 5MB)
         if (file.size > 5 * 1024 * 1024) {
             showNotification('La imagen es demasiado grande. Máximo 5MB.', 'error');
             return;
         }
-        
+
         // Mostrar previsualización inmediata y loading
         const avatarLarge = document.getElementById('profileAvatarLarge');
         const originalContent = avatarLarge.innerHTML;
         avatarLarge.style.opacity = '0.5';
-        
+
         const formData = new FormData();
         formData.append('avatar', file);
-        
+
         try {
             const response = await authApi.updateProfile(formData);
             const userData = response.user || response;
             if (userData && userData.avatar) {
                 // Actualizar todas las imágenes en la UI
                 const newAvatarUrl = userData.avatar;
-                
+
                 // Avatar grande
                 avatarLarge.innerHTML = `<img src="${newAvatarUrl}" alt="Foto de Perfil" id="profileAvatarImg" style="width: 100%; height: 100%; object-fit: cover;">`;
-                
+
                 // Avatar en el header
                 const headerAvatarContainer = document.getElementById('headerAvatarContainer');
                 if (headerAvatarContainer) {
                     headerAvatarContainer.innerHTML = `<img src="${newAvatarUrl}" alt="Perfil" id="headerAvatarImg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                 }
-                
+
                 // Mostrar botón eliminar
                 if (deleteBtn) deleteBtn.style.display = 'inline-block';
-                
+
                 showNotification('¡Foto de perfil actualizada!', 'success');
             }
         } catch (error) {
@@ -2642,13 +2640,13 @@ function setupProfilePhotoUpload() {
     });
 
     if (deleteBtn) {
-        deleteBtn.addEventListener('click', async function() {
+        deleteBtn.addEventListener('click', async function () {
             if (!confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?')) return;
-            
+
             const originalText = this.textContent;
             this.disabled = true;
             this.textContent = 'Eliminando...';
-            
+
             try {
                 // Enviar null para eliminar la foto
                 const response = await authApi.updateProfile({ avatar: null });
@@ -2657,13 +2655,13 @@ function setupProfilePhotoUpload() {
                 if (avatarLarge) {
                     avatarLarge.innerHTML = '<span id="profileAvatarPlaceholder">👤</span>';
                 }
-                
+
                 const headerAvatarContainer = document.getElementById('headerAvatarContainer');
                 if (headerAvatarContainer) {
                     // Restaurar avatar predeterminado
                     headerAvatarContainer.innerHTML = '👤';
                 }
-                
+
                 this.style.display = 'none';
                 showNotification('Foto de perfil eliminada', 'success');
             } catch (error) {
@@ -2687,20 +2685,20 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
         telefono: document.getElementById('profileTelefono').value.trim(),
         email: document.getElementById('profileEmail').value.trim()
     };
-    
+
     const fecha = document.getElementById('profileFechaNacimiento').value;
     if (fecha) {
         profileData.fecha_nacimiento = fecha;
     }
-    
+
     const fincaName = document.getElementById('profileNombreFinca').value;
-    if(fincaName) profileData.nombre_finca = fincaName;
-    
+    if (fincaName) profileData.nombre_finca = fincaName;
+
     const depto = document.getElementById('profileDepartamentoFinca').value;
-    if(depto) profileData.departamento_finca = depto;
-    
+    if (depto) profileData.departamento_finca = depto;
+
     const muni = document.getElementById('profileMunicipioFinca').value;
-    if(muni) profileData.municipio_finca = muni;
+    if (muni) profileData.municipio_finca = muni;
 
     profileData.direccion = undefined;
 
@@ -2731,17 +2729,17 @@ document.getElementById('profileForm')?.addEventListener('submit', async functio
 // Manejo del Cambio de Contraseña
 document.getElementById('changePasswordForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const cp = document.getElementById('currentPassword').value;
     const np = document.getElementById('newPassword').value;
     const npc = document.getElementById('newPasswordConfirm').value;
-    
+
     if (np !== npc) {
         if (typeof showNotification === 'function') showNotification('Las nuevas contraseñas no coinciden', 'error');
         else alert('Las nuevas contraseñas no coinciden');
         return;
     }
-    
+
     const btn = document.getElementById('changePasswordBtn');
     btn.disabled = true;
     btn.textContent = 'Guardando...';
@@ -2752,10 +2750,10 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
             new_password: np,
             new_password_confirm: npc
         });
-        
+
         if (typeof showNotification === 'function') showNotification('Contraseña actualizada con éxito', 'success');
         else alert('Contraseña actualizada con éxito');
-        
+
         document.getElementById('changePasswordForm').reset();
     } catch (error) {
         let msgDetalle = error.message;
@@ -2791,21 +2789,21 @@ let activeConversationId = null;
 let chatPollingInterval = null;
 // myChatUserId se inicializará con window.currentUserId si está disponible, 
 // o se autodetectará de la primera conversación como respaldo.
-let myChatUserId = window.currentUserId || null; 
+let myChatUserId = window.currentUserId || null;
 
 async function loadConversations() {
     try {
         const response = await chatApi.getConversations();
         renderConversations(response.results || response);
     } catch (error) {
-        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0,100)}</small></li>`;
+        document.getElementById('chatContactsList').innerHTML = `<li style="padding: 20px; text-align: center; color: red;">Error al cargar chats: <br><small>${error.message}</small><br><small>${error.stack?.substring(0, 100)}</small></li>`;
     }
 }
 
 function renderConversations(conversations) {
     const listEl = document.getElementById('chatContactsList');
     listEl.innerHTML = '';
-    
+
     if (!conversations || conversations.length === 0) {
         listEl.innerHTML = `<li style="padding: 20px; text-align: center; color: #888;">No hay chats iniciados. Cuando realicen compras aparecerán aquí.</li>`;
         return;
@@ -2827,12 +2825,12 @@ function renderConversations(conversations) {
         li.className = `chat-contact ${activeConversationId === conv.id ? 'active' : ''}`;
         li.dataset.id = conv.id;
         li.dataset.name = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
-        
+
         // Identificar nombre de la contraparte a renderizar
         let counterPartName = iAmCampesino ? conv.comprador_nombre : conv.campesino_nombre;
         let lastMsg = conv.ultimo_mensaje ? conv.ultimo_mensaje.contenido : 'Conversación iniciada';
         let unreadBadge = conv.mensajes_no_leidos > 0 ? `<span class="unread-badge" style="background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.75rem; margin-left: auto; font-weight: bold;">${conv.mensajes_no_leidos}</span>` : '';
-        
+
         li.innerHTML = `
             <div class="chat-avatar">${escapeHTML(counterPartName.charAt(0).toUpperCase())}</div>
             <div class="chat-contact-info">
@@ -2841,7 +2839,7 @@ function renderConversations(conversations) {
             </div>
             ${unreadBadge}
         `;
-        
+
         listEl.appendChild(li);
     });
 
@@ -2855,35 +2853,35 @@ function renderConversations(conversations) {
         // Actualizar UI activa
         document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active'));
         li.classList.add('active');
-        
+
         // Quitar badge si existe
         const badge = li.querySelector('.unread-badge');
         if (badge) badge.remove();
-        
+
         openChat(convId, name);
     };
 }
 
 function openChat(convId, counterPartName) {
     activeConversationId = convId;
-    
+
     // Cambiar vistas
     document.getElementById('chatEmptyState').style.display = 'none';
     document.getElementById('chatMainArea').style.display = 'flex';
     document.getElementById('activeChatName').textContent = counterPartName;
     document.getElementById('activeChatAvatar').textContent = counterPartName.charAt(0).toUpperCase();
-    
+
     // Ajuste móvil
-    if(window.innerWidth <= 768) {
+    if (window.innerWidth <= 768) {
         document.querySelector('.chat-sidebar').style.display = 'none';
         document.getElementById('chatMobileBackBtn').style.display = 'block';
     }
-    
+
     // Carga inicial 
     loadMessages(convId);
-    
+
     // Iniciar el Polling por si responden en vivo (cada 4 segundos)
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     chatPollingInterval = setInterval(() => loadMessages(convId, true), 4000);
 }
 
@@ -2891,7 +2889,7 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
     document.querySelector('.chat-sidebar').style.display = 'flex';
     document.getElementById('chatMainArea').style.display = 'none';
     document.getElementById('chatMobileBackBtn').style.display = 'none';
-    if(chatPollingInterval) clearInterval(chatPollingInterval);
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
     activeConversationId = null;
     loadConversations();
 });
@@ -2899,7 +2897,7 @@ document.getElementById('chatMobileBackBtn')?.addEventListener('click', () => {
 async function loadMessages(convId, isPolling = false) {
     try {
         const messages = await chatApi.getMessages(convId);
-        
+
         // Guardia de sincronización: Verificar si el ID de la petición 
         // coincide con la conversación activa actualmente
         if (activeConversationId !== convId) {
@@ -2907,7 +2905,7 @@ async function loadMessages(convId, isPolling = false) {
         }
 
         renderMessages(messages);
-        
+
         if (!isPolling || document.visibilityState === 'visible') {
             await chatApi.markAsRead(convId);
         }
@@ -2917,16 +2915,16 @@ async function loadMessages(convId, isPolling = false) {
 
 function renderMessages(messages) {
     const area = document.getElementById('chatMessagesArea');
-    
+
     // Optimización de polling: solo evitar re-render si es polling Y el convId Y el conteo son iguales
     // NOTA: No usar solo el conteo, dos chats pueden tener el mismo número de mensajes
     const newLength = messages.length;
     const storedConvId = area.dataset.convId ? parseInt(area.dataset.convId) : -1;
     const oldLength = area.dataset.msgCount ? parseInt(area.dataset.msgCount) : 0;
-    
+
     // Saltar solo durante polling cuando el chat Y el conteo no cambiaron
     if (newLength === oldLength && newLength > 0 && storedConvId === activeConversationId) return;
-    
+
     area.innerHTML = '';
     area.dataset.msgCount = newLength;
     area.dataset.convId = activeConversationId;
@@ -2938,7 +2936,7 @@ function renderMessages(messages) {
 
     messages.forEach(msg => {
         const div = document.createElement('div');
-        
+
         let msgType = 'received';
         if (msg.tipo_mensaje === 'sistema') {
             // El mensaje sistema o autogenerado por el backend lo tratamos con estilo neutral si quieres, o si decidimos mandarlo como 'texto' (como hicimos en serializers.py) se pintará verde/blanco segun remitente.
@@ -2946,10 +2944,10 @@ function renderMessages(messages) {
         } else if (msg.remitente === myChatUserId) {
             msgType = 'sent';
         }
-        
+
         div.className = `chat-bubble-wrapper ${msgType}`;
-        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
+        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
         // SEGURIDAD: Usar escapeHTML() para prevenir XSS en mensajes del chat
         div.innerHTML = `
             <div class="chat-bubble">
@@ -2959,7 +2957,7 @@ function renderMessages(messages) {
         `;
         area.appendChild(div);
     });
-    
+
     // Auto-scroll the chat
     area.scrollTop = area.scrollHeight;
 }
@@ -2967,25 +2965,25 @@ function renderMessages(messages) {
 document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!activeConversationId) return;
-    
+
     const input = document.getElementById('chatInputMessage');
     const txt = input.value.trim();
-    if(!txt) return;
-    
+    if (!txt) return;
+
     input.value = '';
     input.disabled = true;
-    
+
     try {
         await chatApi.sendMessage(activeConversationId, {
             tipo_mensaje: 'texto',
             contenido: txt
         });
-        
+
         loadMessages(activeConversationId);
         loadConversations();
-    } catch(err) {
+    } catch (err) {
         alert('Error enviando mensaje.');
-        input.value = txt; 
+        input.value = txt;
     } finally {
         input.disabled = false;
         input.focus();
@@ -2995,13 +2993,13 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
 // Listener extra para refrescar chats a demanda cuando se abre la ventana (al darle a Navegación -> Mensajes)
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
-        if(e.currentTarget.getAttribute('data-section') === 'messages') {
+        if (e.currentTarget.getAttribute('data-section') === 'messages') {
             // Al abrir la sección, resetear el badge y cargar conversaciones
             updateMsgBadge(0);
             loadConversations();
         } else {
             // Si nos vamos a otra tab, apagamos el polling del chat activo
-            if(chatPollingInterval) clearInterval(chatPollingInterval);
+            if (chatPollingInterval) clearInterval(chatPollingInterval);
         }
     });
 });

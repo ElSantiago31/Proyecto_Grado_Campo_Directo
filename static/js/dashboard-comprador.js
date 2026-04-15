@@ -1,7 +1,6 @@
 ﻿// Dashboard JavaScript - Campo Directo (Compradores)
 
 document.addEventListener('DOMContentLoaded', async function () {
-);
 
     // Verificar autenticación JWT
     if (!isAuthenticated()) {
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Guardar ID para el sistema de chat y otros componentes
         window.currentUserId = profile.id;
-: ${profile.nombre} ${profile.apellido}`);
+
 
         // Actualizar nombre en la UI
         const userNameElement = document.getElementById('userName');
@@ -591,7 +590,7 @@ function loadOrders() {
     updateCartBadge();
 
     const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
-    
+
     list.innerHTML = '<div style="text-align:center; padding: 2rem;">Cargando...</div>';
 
     // 1. Si hay texto en el buscador, ignoramos las pestañas temporalmente
@@ -604,7 +603,7 @@ function loadOrders() {
 
     // 2. Comportamiento normal si no hay texto
     if (tabsContainer) tabsContainer.style.opacity = '1';
-    
+
     const activeTabObj = document.querySelector('.order-tabs .tab-btn.active');
     const activeTab = activeTabObj ? activeTabObj.dataset.tab : 'cart';
 
@@ -689,7 +688,7 @@ async function fetchRealOrders(type) {
             filtered = pedidos.filter(p => ['completed', 'cancelled'].includes(p.estado));
         } else if (type === 'search') {
             filtered = pedidos; // Busca en todos los pedidos sin importar el estado
-            
+
             // Si el texto coincide con algo en el carrito, mostramos una alerta opcional
             const cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
             const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
@@ -702,8 +701,8 @@ async function fetchRealOrders(type) {
 
         const searchTerm = document.getElementById('orderSearch') ? document.getElementById('orderSearch').value.trim().toLowerCase() : '';
         if (searchTerm) {
-            filtered = filtered.filter(p => 
-                p.id.toString().toLowerCase().includes(searchTerm) || 
+            filtered = filtered.filter(p =>
+                p.id.toString().toLowerCase().includes(searchTerm) ||
                 (p.detalles && p.detalles.some(d => d.nombre_producto_snapshot.toLowerCase().includes(searchTerm)))
             );
         }
@@ -787,7 +786,7 @@ async function fetchRealOrders(type) {
                  </div>
              </div>`;
         }).join('');
-        
+
         list.innerHTML += appendHtml;
 
     } catch (error) {
@@ -861,7 +860,7 @@ function setupOrderTabs() {
 
     const orderSearch = document.getElementById('orderSearch');
     if (orderSearch && !orderSearch.hasAttribute('data-listener')) {
-        orderSearch.addEventListener('input', function() {
+        orderSearch.addEventListener('input', function () {
             clearTimeout(window.orderSearchTimeout);
             window.orderSearchTimeout = setTimeout(() => {
                 loadOrders();
