@@ -35,23 +35,25 @@ class DetallePedidoCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DetallePedido
-        fields = ['producto', 'cantidad', 'precio_unitario']
+        # SEGURIDAD: precio_unitario NO se acepta del cliente.
+        # Se calcula siempre desde la base de datos en validate().
+        fields = ['producto', 'cantidad']
     
     def validate(self, attrs):
         """Validaciones para el detalle del pedido"""
         producto = attrs['producto']
         cantidad = attrs['cantidad']
-        precio_unitario = attrs.get('precio_unitario')
-        
+
+        # SEGURIDAD: El precio SIEMPRE se toma de la base de datos.
+        # NUNCA se acepta el precio enviado por el cliente para evitar
+        # ataques de price manipulation.
+        attrs['precio_unitario'] = producto.precio_por_kg
+
         # Verificar disponibilidad del producto
         disponible, mensaje = producto.puede_ser_comprado_por_cantidad(cantidad)
         if not disponible:
             raise serializers.ValidationError(f"Producto {producto.nombre}: {mensaje}")
-        
-        # Usar precio actual si no se especifica
-        if not precio_unitario:
-            attrs['precio_unitario'] = producto.precio_por_kg
-        
+
         return attrs
 
 
@@ -184,8 +186,9 @@ class PedidoCreateSerializer(serializers.ModelSerializer):
         for detalle_data in detalles_data:
             producto = detalle_data['producto']
             cantidad = detalle_data['cantidad']
-            precio_unitario = detalle_data.get('precio_unitario', producto.precio_por_kg)
-            
+            # SEGURIDAD: precio siempre tomado de la BD, no del cliente
+            precio_unitario = producto.precio_por_kg
+
             # Crear detalle
             DetallePedido.objects.create(
                 pedido=pedido,
@@ -195,10 +198,10 @@ class PedidoCreateSerializer(serializers.ModelSerializer):
                 nombre_producto_snapshot=producto.nombre,
                 unidad_medida_snapshot=producto.unidad_medida
             )
-            
+
             # Reducir stock
             producto.reducir_stock(cantidad)
-            
+
             total += cantidad * precio_unitario
         
         # Actualizar total del pedido
