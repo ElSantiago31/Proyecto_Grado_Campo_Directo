@@ -137,7 +137,7 @@
             <h3 style="color: #2d5016; margin-top: 0; margin-bottom: 10px; font-size: 1.4rem;">Autenticación Segura 🔒</h3>
             <p style="color: #555; margin-bottom: 25px; line-height: 1.5;">Selecciona tu <b>PIN Visual</b> (Emoji) que configuraste al registrarte para continuar.</p>
             
-            <div class="emoji-grid" id="loginEmojiGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px;">
+            <div class="emoji-grid" id="loginEmojiGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
                 <button type="button" class="btn-login-emoji" data-value="🍎" aria-label="Emoji manzana roja" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍎</button>
                 <button type="button" class="btn-login-emoji" data-value="🍌" aria-label="Emoji banano" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍌</button>
                 <button type="button" class="btn-login-emoji" data-value="🍅" aria-label="Emoji tomate" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍅</button>
@@ -151,7 +151,57 @@
                 <button type="button" class="btn-login-emoji" data-value="🍏" aria-label="Emoji manzana verde" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🍏</button>
                 <button type="button" class="btn-login-emoji" data-value="🥑" aria-label="Emoji aguacate" style="font-size: 2.5rem; padding: 10px; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">🥑</button>
             </div>
-            <p id="error2faMsg" style="color: #dc3545; font-size: 0.9rem; min-height: 20px; font-weight: 500; margin:0;"></p>
+            
+            <p id="error2faMsg" style="color: #dc3545; font-size: 0.9rem; min-height: 20px; font-weight: 500; margin-bottom: 15px;"></p>
+
+            <div style="border-top: 1px solid #eee; padding-top: 15px;">
+                <a href="#" id="forgotPinBtn" style="color: #2d5016; text-decoration: none; font-size: 0.9rem; font-weight: 600;">¿Olvidaste tu PIN Visual? 🔑</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Recuperación de PIN -->
+    <div id="pinRecoveryModal" class="visual-2fa-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1100; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div class="visual-2fa-content" style="background: white; padding: 2rem; border-radius: 20px; text-align: center; max-width: 90%; width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative;">
+            <button type="button" id="closeRecoveryBtn" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            
+            <div id="recoveryStep1">
+                <h3 style="color: #2d5016; margin-bottom: 10px;">Recuperar PIN Visual 📧</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ingresa tu correo electrónico para recibir un código de verificación.</p>
+                <input type="email" id="recoveryEmail" class="form-input" placeholder="Tu correo electrónico" style="margin-bottom: 15px;">
+                <button type="button" id="sendRecoveryCodeBtn" class="login-button" style="width: 100%;">Enviar Código</button>
+            </div>
+
+            <div id="recoveryStep2" style="display: none;">
+                <h3 style="color: #2d5016; margin-bottom: 10px;">Verificar Código 🔢</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Ingresa el código de 6 dígitos enviado a tu correo.</p>
+                <input type="text" id="recoveryCode" class="form-input" placeholder="Código de 6 dígitos" maxlength="6" style="margin-bottom: 15px; text-align: center; letter-spacing: 5px; font-size: 1.2rem; font-weight: bold;">
+                <button type="button" id="verifyCodeBtn" class="login-button" style="width: 100%;">Verificar</button>
+                <p style="margin-top: 15px;"><a href="#" id="resendCodeLink" style="color: #2d5016; font-size: 0.85rem; text-decoration: none;">Reenviar código</a></p>
+            </div>
+
+            <div id="recoveryStep3" style="display: none;">
+                <h3 style="color: #2d5016; margin-bottom: 10px;">Nuevo PIN Visual 🍎</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Elige tu nuevo Emoji de Seguridad favorito.</p>
+                <div class="emoji-grid" id="recoveryEmojiGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                    <button type="button" class="btn-recovery-emoji" data-value="🍎" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍎</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🍌" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍌</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🍅" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍅</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🥕" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🥕</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🥔" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🥔</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🌽" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🌽</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🍊" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍊</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🍓" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍓</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🥬" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🥬</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🌶" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🌶️</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🍏" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🍏</button>
+                    <button type="button" class="btn-recovery-emoji" data-value="🥑" style="font-size: 2.2rem; padding: 8px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; cursor: pointer;">🥑</button>
+                </div>
+            </div>
+            
+            <p id="recoveryMsg" style="font-size: 0.85rem; margin-top: 15px; min-height: 20px;"></p>
+        </div>
+    </div>
         </div>
     </div>
 {% endblock %}

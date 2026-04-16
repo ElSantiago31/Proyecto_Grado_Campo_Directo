@@ -61,6 +61,142 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ============================================================
+    // RECUPERACIÓN DE PIN VISUAL
+    // ============================================================
+    const forgotPinBtn = document.getElementById('forgotPinBtn');
+    const pinRecoveryModal = document.getElementById('pinRecoveryModal');
+    const closeRecoveryBtn = document.getElementById('closeRecoveryBtn');
+    const sendRecoveryCodeBtn = document.getElementById('sendRecoveryCodeBtn');
+    const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+    const recoveryEmailInput = document.getElementById('recoveryEmail');
+    const recoveryCodeInput = document.getElementById('recoveryCode');
+    const recoveryEmojiGrid = document.querySelector('#recoveryStep3 .emoji-grid');
+    const recoveryMsg = document.getElementById('recoveryMsg');
+
+    const recoveryStep1 = document.getElementById('recoveryStep1');
+    const recoveryStep2 = document.getElementById('recoveryStep2');
+    const recoveryStep3 = document.getElementById('recoveryStep3');
+
+    if (forgotPinBtn) {
+        forgotPinBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            visual2faModal.style.display = 'none';
+            pinRecoveryModal.style.display = 'flex';
+            resetRecoveryUI();
+            
+            // Si ya hay un correo en el login, ponerlo por defecto
+            if (usernameInput.value) {
+                recoveryEmailInput.value = usernameInput.value;
+            }
+        });
+    }
+
+    if (closeRecoveryBtn) {
+        closeRecoveryBtn.addEventListener('click', () => {
+            pinRecoveryModal.style.display = 'none';
+        });
+    }
+
+    function resetRecoveryUI() {
+        recoveryStep1.style.display = 'block';
+        recoveryStep2.style.display = 'none';
+        recoveryStep3.style.display = 'none';
+        recoveryMsg.textContent = '';
+        recoveryEmailInput.value = '';
+        recoveryCodeInput.value = '';
+    }
+
+    if (sendRecoveryCodeBtn) {
+        sendRecoveryCodeBtn.addEventListener('click', async () => {
+            const email = recoveryEmailInput.value.trim();
+            if (!email) {
+                showRecoveryMsg('Por favor ingresa tu correo.', 'error');
+                return;
+            }
+
+            try {
+                sendRecoveryCodeBtn.disabled = true;
+                sendRecoveryCodeBtn.textContent = 'Enviando...';
+                await authApi.requestPinRecovery(email);
+                
+                showRecoveryMsg('Código enviado exitosamente.', 'success');
+                setTimeout(() => {
+                    recoveryStep1.style.display = 'none';
+                    recoveryStep2.style.display = 'block';
+                    recoveryMsg.textContent = '';
+                }, 1500);
+            } catch (error) {
+                const errorMsg = error.details?.email?.[0] || error.message || 'Error al enviar código.';
+                showRecoveryMsg(errorMsg, 'error');
+            } finally {
+                sendRecoveryCodeBtn.disabled = false;
+                sendRecoveryCodeBtn.textContent = 'Enviar Código';
+            }
+        });
+    }
+
+    const resendCodeLink = document.getElementById('resendCodeLink');
+    if (resendCodeLink) {
+        resendCodeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendRecoveryCodeBtn.click();
+        });
+    }
+
+    if (verifyCodeBtn) {
+        verifyCodeBtn.addEventListener('click', () => {
+            const code = recoveryCodeInput.value.trim();
+            if (code.length !== 6) {
+                showRecoveryMsg('El código debe ser de 6 dígitos.', 'error');
+                return;
+            }
+            
+            // Nota: La verificación real se hace en el paso final del reset,
+            // pero pasamos a la selección de emoji para mejorar la UX.
+            recoveryStep2.style.display = 'none';
+            recoveryStep3.style.display = 'block';
+            recoveryMsg.textContent = '¡Código verificado! Ahora elige tu nuevo PIN Visual.';
+            recoveryMsg.style.color = '#2d5016';
+        });
+    }
+
+    // Manejar selección de emoji en recuperación
+    const recoveryEmojis = document.querySelectorAll('.btn-recovery-emoji');
+    recoveryEmojis.forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const email = recoveryEmailInput.value.trim();
+            const code = recoveryCodeInput.value.trim();
+            const new_pin = this.getAttribute('data-value');
+
+            try {
+                showRecoveryMsg('Restableciendo PIN...', 'info');
+                await authApi.resetPin({ email, code, new_pin });
+                
+                showRecoveryMsg('✅ ¡PIN restablecido! Ya puedes ingresar.', 'success');
+                setTimeout(() => {
+                    pinRecoveryModal.style.display = 'none';
+                }, 2000);
+            } catch (error) {
+                const errorMsg = error.details?.code?.[0] || error.details?.non_field_errors?.[0] || 'Error al restablecer PIN.';
+                showRecoveryMsg(errorMsg, 'error');
+                
+                // Si el error es de código, volver al paso 2
+                if (error.details?.code) {
+                    setTimeout(() => {
+                        recoveryStep3.style.display = 'none';
+                        recoveryStep2.style.display = 'block';
+                    }, 1500);
+                }
+            }
+        });
+    });
+
+    function showRecoveryMsg(msg, type) {
+        recoveryMsg.textContent = msg;
+        recoveryMsg.style.color = type === 'error' ? '#dc3545' : (type === 'success' ? '#2d5016' : '#666');
+    }
+
     async function checkAuthenticationStatus() {
         // CIRCUIT BREAKER: Si acabamos de ser rebotados por Django (falta de Cookie de sesión)
         // entonces NO debemos auto-redireccionar usando el JWT, pues creará un loop infinito.

@@ -254,8 +254,15 @@ const authApi = {
         if (response.access) {
             api.setAuthToken(response.access);
         }
-
         return response;
+    },
+
+    async requestPinRecovery(email) {
+        return await api.post('/auth/pin-recovery/request/', { email });
+    },
+
+    async resetPin(resetData) {
+        return await api.post('/auth/pin-recovery/reset/', resetData);
     }
 };
 

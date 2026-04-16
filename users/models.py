@@ -123,6 +123,19 @@ class Usuario(AbstractUser):
         help_text='Fecha/hora hasta la que está bloqueada la cuenta por contraseña incorrecta repetida'
     )
     
+    # Campos para recuperación de PIN Visual
+    pin_recovery_code = models.CharField(
+        max_length=6, 
+        blank=True, 
+        null=True,
+        help_text='Código temporal de 6 dígitos para recuperar el PIN Visual'
+    )
+    pin_recovery_expires = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text='Fecha/hora de expiración del código de recuperación'
+    )
+    
     suspendido_hasta = models.DateTimeField(
         null=True,
         blank=True,

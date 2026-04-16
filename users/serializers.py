@@ -557,9 +557,7 @@ class UserDashboardSerializer(serializers.ModelSerializer):
                 return {
                     'id': finca.id,
                     'nombre': finca.nombre_finca,
-                    'ubicacion': finca.ubicacion_completa,
-                    'area_hectareas': finca.area_hectareas,
-                    'tipo_cultivo': finca.get_tipo_cultivo_display()
+                    'ubicacion': finca.ubicacion_completa
                 }
         return None
     
@@ -652,3 +650,37 @@ class UserDashboardSerializer(serializers.ModelSerializer):
                 })
                 
         return actividades
+
+class PinRecoveryRequestSerializer(serializers.Serializer):
+    """Serializer para solicitar recuperación de PIN Visual"""
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not Usuario.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No existe un usuario registrado con este correo electrónico.")
+        return value
+
+
+class PinResetSerializer(serializers.Serializer):
+    """Serializer para restablecer el PIN Visual con el código recibido"""
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6, min_length=6)
+    new_pin = serializers.CharField(max_length=50)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        code = attrs.get('code')
+        
+        try:
+            user = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            raise serializers.ValidationError({"email": "Usuario no encontrado."})
+            
+        if not user.pin_recovery_code or user.pin_recovery_code != code:
+            raise serializers.ValidationError({"code": "Código de recuperación incorrecto."})
+            
+        if not user.pin_recovery_expires or timezone.now() > user.pin_recovery_expires:
+            raise serializers.ValidationError({"code": "El código ha expirado. Solicita uno nuevo."})
+            
+        attrs['user'] = user
+        return attrs

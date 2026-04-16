@@ -28,4 +28,8 @@ urlpatterns = [
 
     # Mis reseñas recibidas como comprador
     path('mis-resenas/', views.MisResenasCompradorView.as_view(), name='mis-resenas-comprador'),
+
+    # Recuperación de PIN Visual
+    path('pin-recovery/request/', views.PinRecoveryRequestView.as_view(), name='pin-recovery-request'),
+    path('pin-recovery/reset/', views.PinResetView.as_view(), name='pin-recovery-reset'),
 ]

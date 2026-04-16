@@ -16,7 +16,8 @@ from drf_yasg import openapi
 
 from .serializers import (
     RegisterSerializer, LoginSerializer, UsuarioSerializer,
-    ProfileUpdateSerializer, ChangePasswordSerializer, UserDashboardSerializer
+    ProfileUpdateSerializer, ChangePasswordSerializer, UserDashboardSerializer,
+    PinRecoveryRequestSerializer, PinResetSerializer
 )
 from .models import Usuario
 import json
@@ -338,4 +339,84 @@ class MisResenasCompradorView(APIView):
             'total_calificaciones': total_real,
             'resenas': resenas
         })
+
+
+class PinRecoveryRequestView(APIView):
+    """
+    Vista para solicitar el código de recuperación de PIN Visual
+    """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PinRecoveryRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = Usuario.objects.get(email=email)
+            
+            # Generar código de 6 dígitos
+            import random
+            from django.utils import timezone
+            from datetime import timedelta
+            from django.core.mail import send_mail
+            from django.conf import settings
+            
+            code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            user.pin_recovery_code = code
+            user.pin_recovery_expires = timezone.now() + timedelta(minutes=15)
+            user.save()
+            
+            # Enviar correo
+            subject = 'Código de recuperación de PIN Visual - Campo Directo'
+            message = f'Hola {user.nombre},\n\n' \
+                      f'Has solicitado recuperar tu PIN Visual (Emoji de Seguridad).\n' \
+                      f'Tu código de verificación es: {code}\n\n' \
+                      f'Este código expirará en 15 minutos.\n\n' \
+                      f'Si no solicitaste este cambio, por favor ignora este correo.'
+            
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                return Response({'message': 'Código enviado exitosamente a tu correo.'})
+            except Exception as e:
+                return Response(
+                    {'error': 'Error al enviar el correo. Por favor intenta más tarde.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PinResetView(APIView):
+    """
+    Vista para restablecer el PIN Visual usando el código de verificación
+    """
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PinResetSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            new_pin = serializer.validated_data['new_pin']
+            
+            # Actualizar PIN y limpiar campos de recuperación
+            user.imagen_2fa = new_pin
+            user.pin_recovery_code = None
+            user.pin_recovery_expires = None
+            
+            # Resetear intentos de bloqueo si existían
+            user.intentos_2fa_fallidos = 0
+            user.bloqueado_2fa_hasta = None
+            
+            user.save()
+            
+            return Response({'message': 'Tu PIN Visual ha sido restablecido exitosamente. Ya puedes iniciar sesión.'})
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setupProductModal();
     setupRatingModal();
     setupOrderTabsCampesino();
+    setupFarmSection();
 
     // Escuchar el cambio en el selector de periodo para estadísticas
     const salesPeriodSelect = document.getElementById('salesPeriod');
@@ -1963,6 +1964,20 @@ function setupOrderTabsCampesino() {
             loadCampesinoOrders();
         });
     });
+}
+
+function setupFarmSection() {
+    const editFarmBtn = document.getElementById('editFarmBtn');
+    if (editFarmBtn) {
+        editFarmBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            // Simular click en el link de perfil de la barra lateral
+            const profileLink = document.getElementById('profileLink');
+            if (profileLink) {
+                profileLink.click();
+            }
+        });
+    }
 }
 
 function updatePendingCount(count) {

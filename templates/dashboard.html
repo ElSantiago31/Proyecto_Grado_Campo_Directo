@@ -294,29 +294,12 @@
                             <label>Ubicación:</label>
                             <span id="farmLocation">{{ finca_info.ubicacion }}</span>
                         </div>
-                        <div class="info-row">
-                            <label>Área:</label>
-                            <span id="farmArea">{{ finca_info.area|floatformat:1 }} hectáreas</span>
-                        </div>
-                        <div class="info-row">
-                            <label>Tipo de Cultivo:</label>
-                            <span id="farmType">{{ finca_info.tipo_cultivo }}</span>
-                        </div>
                         {% else %}
                         <div class="info-row">
                             <label>Finca:</label>
                             <span>No hay finca registrada</span>
                         </div>
                         {% endif %}
-                    </div>
-
-                    <div class="farm-card">
-                        <h3>Certificaciones</h3>
-                        <div class="certifications" id="certificationsList">
-                            <div class="cert-badge">🌱 Orgánico</div>
-                            <div class="cert-badge">✅ BPA</div>
-                            <div class="cert-badge">🌿 Sostenible</div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -655,5 +638,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/colombia.js' %}"></script>
 <script src="{% static 'js/dashboard.js' %}?v={% now 'U' %}"></script>
 {% endblock %}
