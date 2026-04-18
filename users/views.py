@@ -104,32 +104,50 @@ class LoginView(APIView):
     )
     def post(self, request):
         try:
+            # Log de depuración inicial (visible en consola/stdout)
+            print(f"DEBUG LOGIN: Intento recibido para: {request.data.get('email')}")
+            logger.info(f"Iniciando post() de LoginView para: {request.data.get('email')}")
+
             serializer = LoginSerializer(data=request.data, context={'request': request})
-            if serializer.is_valid():
+            
+            # Capturar errores específicamente en la validación do-or-die
+            try:
+                is_valid = serializer.is_valid()
+            except Exception as val_error:
+                error_trace = traceback.format_exc()
+                print(f"DEBUG LOGIN: Error en is_valid(): {str(val_error)}")
+                logger.error(f"Error durante validación de serializer: {str(val_error)}\n{error_trace}")
+                return Response({'error': 'Error de validación interna del servidor'}, status=500)
+
+            if is_valid:
                 user = serializer.validated_data['user']
                 
                 # Actualizar último login
-                user.ultimo_login = timezone.now()
-                user.save()
+                try:
+                    user.ultimo_login = timezone.now()
+                    user.save(update_fields=['ultimo_login'])
+                except Exception as save_error:
+                    logger.warning(f"No se pudo actualizar ultimo_login: {str(save_error)}")
                 
-                # Crear sesión Django para el usuario (para que funcione con @login_required)
-                login(request, user)
+                # Crear sesión Django
+                try:
+                    login(request, user)
+                except Exception as login_err:
+                    logger.warning(f"Fallo login(request, user): {str(login_err)}")
                 
-                # --- PROTECCIÓN ANTI-DUPLICIDAD DE SESIÓN (Producción) ---
-                # Si un campesino inicia sesión en Celular B, quemamos los tokens del Celular A
+                # --- PROTECCIÓN ANTI-DUPLICIDAD ---
                 try:
                     from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
                     tokens_viejos = OutstandingToken.objects.filter(user=user)
                     for token in tokens_viejos:
-                        # Añadir a Blacklist revoca instantáneamente su capacidad de ser refrescados
                         BlacklistedToken.objects.get_or_create(token=token)
                 except (ImportError, Exception) as e:
                     logger.warning(f"Omitiendo revocación de sesiones antiguas: {str(e)}")
-                # --------------------------------------------------------
                 
-                # Generar tokens JWT nuevos y únicos para este nuevo dispositivo
+                # Generar tokens JWT
                 refresh = RefreshToken.for_user(user)
                 
+                logger.info(f"Login exitoso para: {user.email}")
                 return Response({
                     'message': 'Inicio de sesión exitoso',
                     'user': UsuarioSerializer(user).data,
@@ -137,13 +155,12 @@ class LoginView(APIView):
                     'refresh': str(refresh)
                 }, status=status.HTTP_200_OK)
                 
-            # Retornar 400 (Bad Request) para errores de validación (como suspensiones)
-            # para que el frontend los identifique correctamente.
+            logger.warning(f"Login fallido (400) para: {request.data.get('email')} - Errores: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
-            # Capturar CUALQUIER error y logearlo con traceback completo para diagnóstico
             error_details = traceback.format_exc()
+            print(f"DEBUG LOGIN CRITICAL: {error_details}")
             logger.error(f"ERROR CRÍTICO EN LOGIN: {str(e)}\n{error_details}")
             return Response({
                 'error': 'Error interno del servidor en el proceso de login',

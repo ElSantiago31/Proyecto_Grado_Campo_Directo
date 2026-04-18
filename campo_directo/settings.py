@@ -267,6 +267,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'users': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 
