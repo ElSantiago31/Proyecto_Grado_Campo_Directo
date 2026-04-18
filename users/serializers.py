@@ -115,6 +115,11 @@ class LoginSerializer(serializers.Serializer):
                     )
             except Usuario.DoesNotExist:
                 candidate = None
+            except Usuario.MultipleObjectsReturned:
+                # Esto no debería ocurrir por el unique=True, pero si ocurre es un error crítico
+                raise serializers.ValidationError(
+                    'Error de integridad de datos: Múltiples usuarios con el mismo email.'
+                )
 
             user = authenticate(
                 request=self.context.get('request'),

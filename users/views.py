@@ -21,7 +21,10 @@ from .serializers import (
 )
 from .models import Usuario
 import json
+import logging
+import traceback
 
+logger = logging.getLogger(__name__)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(APIView):
@@ -41,7 +44,7 @@ class RegisterView(APIView):
                     type=openapi.TYPE_OBJECT,
                     properties={
                         'message': openapi.Schema(type=openapi.TYPE_STRING),
-                        'user': UsuarioSerializer(),
+                        'user': openapi.Schema(type=openapi.TYPE_OBJECT, description="Datos del usuario"),
                         'access': openapi.Schema(type=openapi.TYPE_STRING),
                         'refresh': openapi.Schema(type=openapi.TYPE_STRING),
                     }
@@ -90,7 +93,7 @@ class LoginView(APIView):
                     type=openapi.TYPE_OBJECT,
                     properties={
                         'message': openapi.Schema(type=openapi.TYPE_STRING),
-                        'user': UsuarioSerializer(),
+                        'user': openapi.Schema(type=openapi.TYPE_OBJECT, description="Datos del usuario"),
                         'access': openapi.Schema(type=openapi.TYPE_STRING),
                         'refresh': openapi.Schema(type=openapi.TYPE_STRING),
                     }
@@ -100,43 +103,52 @@ class LoginView(APIView):
         }
     )
     def post(self, request):
-        serializer = LoginSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
+        try:
+            serializer = LoginSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                user = serializer.validated_data['user']
+                
+                # Actualizar último login
+                user.ultimo_login = timezone.now()
+                user.save()
+                
+                # Crear sesión Django para el usuario (para que funcione con @login_required)
+                login(request, user)
+                
+                # --- PROTECCIÓN ANTI-DUPLICIDAD DE SESIÓN (Producción) ---
+                # Si un campesino inicia sesión en Celular B, quemamos los tokens del Celular A
+                try:
+                    from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+                    tokens_viejos = OutstandingToken.objects.filter(user=user)
+                    for token in tokens_viejos:
+                        # Añadir a Blacklist revoca instantáneamente su capacidad de ser refrescados
+                        BlacklistedToken.objects.get_or_create(token=token)
+                except (ImportError, Exception) as e:
+                    logger.warning(f"Omitiendo revocación de sesiones antiguas: {str(e)}")
+                # --------------------------------------------------------
+                
+                # Generar tokens JWT nuevos y únicos para este nuevo dispositivo
+                refresh = RefreshToken.for_user(user)
+                
+                return Response({
+                    'message': 'Inicio de sesión exitoso',
+                    'user': UsuarioSerializer(user).data,
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                }, status=status.HTTP_200_OK)
+                
+            # Retornar 400 (Bad Request) para errores de validación (como suspensiones)
+            # para que el frontend los identifique correctamente.
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            # Actualizar último login
-            user.ultimo_login = timezone.now()
-            user.save()
-            
-            # Crear sesión Django para el usuario (para que funcione con @login_required)
-            login(request, user)
-            
-            # --- PROTECCIÓN ANTI-DUPLICIDAD DE SESIÓN (Producción) ---
-            # Si un campesino inicia sesión en Celular B, quemamos los tokens del Celular A
-            try:
-                from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
-                tokens_viejos = OutstandingToken.objects.filter(user=user)
-                for token in tokens_viejos:
-                    # Añadir a Blacklist revoca instantáneamente su capacidad de ser refrescados
-                    BlacklistedToken.objects.get_or_create(token=token)
-            except Exception as e:
-                import logging
-                logging.error(f"Error revocando sesiones antiguas: {str(e)}")
-            # --------------------------------------------------------
-            
-            # Generar tokens JWT nuevos y únicos para este nuevo dispositivo
-            refresh = RefreshToken.for_user(user)
-            
+        except Exception as e:
+            # Capturar CUALQUIER error y logearlo con traceback completo para diagnóstico
+            error_details = traceback.format_exc()
+            logger.error(f"ERROR CRÍTICO EN LOGIN: {str(e)}\n{error_details}")
             return Response({
-                'message': 'Inicio de sesión exitoso',
-                'user': UsuarioSerializer(user).data,
-                'access': str(refresh.access_token),
-                'refresh': str(refresh)
-            }, status=status.HTTP_200_OK)
-            
-        # Retornar 400 (Bad Request) para errores de validación (como suspensiones)
-        # para que el frontend los identifique correctamente.
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'Error interno del servidor en el proceso de login',
+                'detail': str(e) if settings.DEBUG else 'Contacte al administrador'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ProfileView(APIView):
