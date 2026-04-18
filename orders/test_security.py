@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from orders.models import Pedido
 from products.models import Producto, CategoriaProducto
 from farms.models import Finca
+from decimal import Decimal
 
 Usuario = get_user_model()
 
@@ -16,14 +17,18 @@ class OrderSecurityTests(APITestCase):
             password='password123',
             tipo_usuario='comprador',
             nombre='Comprador Tramposo',
-            fecha_nacimiento='1990-01-01'
+            apellido='Test',
+            fecha_nacimiento='1990-01-01',
+            telefono='3129998877'
         )
         self.campesino = Usuario.objects.create_user(
             email='campesino@pedidos.test',
             password='password123',
             tipo_usuario='campesino',
             nombre='Campesino Trabajador',
-            fecha_nacimiento='1980-05-05'
+            apellido='Test',
+            fecha_nacimiento='1980-05-05',
+            telefono='3126665544'
         )
         
         # 2. Emular un pedido en estado "Entregado"

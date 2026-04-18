@@ -3,6 +3,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from products.models import CategoriaProducto, Producto, SipsaPrecio
 from farms.models import Finca
+from decimal import Decimal
 
 Usuario = get_user_model()
 
@@ -15,7 +16,9 @@ class AdvancedSecurityTests(APITestCase):
             password='password123',
             tipo_usuario='comprador',
             nombre='Mr. Hacker',
-            fecha_nacimiento='1990-01-01'
+            apellido='Test',
+            fecha_nacimiento='1990-01-01',
+            telefono='3157776655'
         )
         
         self.campesino_a = Usuario.objects.create_user(
@@ -23,7 +26,9 @@ class AdvancedSecurityTests(APITestCase):
             password='password123',
             tipo_usuario='campesino',
             nombre='Campesino Bueno',
-            fecha_nacimiento='1980-05-05'
+            apellido='Test',
+            fecha_nacimiento='1980-05-05',
+            telefono='3158889900'
         )
         
         self.campesino_b = Usuario.objects.create_user(
@@ -31,7 +36,9 @@ class AdvancedSecurityTests(APITestCase):
             password='password123',
             tipo_usuario='campesino',
             nombre='Campesino Usurpador',
-            fecha_nacimiento='1985-05-05'
+            apellido='Test',
+            fecha_nacimiento='1985-05-05',
+            telefono='3151112233'
         )
         
         # 2. Infraestructura Básica (Finca y Categoría)
@@ -43,8 +50,9 @@ class AdvancedSecurityTests(APITestCase):
         self.finca_victima = Finca.objects.create(
             usuario=self.campesino_a,
             nombre_finca='Finca de Paz',
-            area_hectareas=2,
-            ubicacion_departamento='Boyaca'
+            area_hectareas=Decimal('2.0'),
+            ubicacion_departamento='Boyaca',
+            ubicacion_municipio='Tunja'
         )
         
         # 3. El Producto de la Víctima (Campesino A)

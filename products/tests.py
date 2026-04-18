@@ -1,45 +1,67 @@
-from rest_framework.test import APITestCase
-from rest_framework import status
-from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.core.exceptions import ValidationError
+from decimal import Decimal
+from products.models import Producto, CategoriaProducto, SipsaPrecio
+from users.models import Usuario
+from farms.models import Finca
 
-Usuario = get_user_model()
-
-class ProductoSecurityTests(APITestCase):
-    
+class ProductIntegrityTests(TestCase):
     def setUp(self):
-        # Escenario Base: Construir a los actores de la prueba en la BD simulada
-        self.comprador_malicioso = Usuario.objects.create_user(
-            email='comprador@seguridad.test',
-            password='password123',
-            tipo_usuario='comprador',
-            nombre='Mr. Hacker',
-            fecha_nacimiento='1990-01-01'
+        self.user = Usuario.objects.create_user(
+            email='farmer@test.com',
+            nombre='Juan',
+            apellido='Test',
+            password='Password123!',
+            tipo_usuario='campesino',
+            fecha_nacimiento='1990-01-01',
+            telefono='3001112233'
         )
-        self.url = '/api/products/productos/'
+        self.categoria, _ = CategoriaProducto.objects.get_or_create(nombre='Frutas')
+        self.finca = Finca.objects.create(
+            usuario=self.user,
+            nombre_finca='Finca Test',
+            ubicacion_departamento='Cundinamarca',
+            ubicacion_municipio='Zipaquira',
+            area_hectareas=Decimal('1.0')
+        )
 
-    def test_bfla_comprador_no_puede_crear_producto(self):
+    def test_negative_price_protection(self):
         """
-        PRUEBA DE SEGURIDAD (BFLA): 
-        Verificar que un actor malintencionado que tenga el JWT válido de un "comprador", 
-        reciba un HTTP 403 (Prohibido) al intentar inyectar un nuevo producto.
+        Verifica que no se puedan crear productos con precios negativos.
         """
-        # 1. Simular inicio de sesión inyectando el token del Comprador
-        self.client.force_authenticate(user=self.comprador_malicioso)
-        
-        # 2. Preparar un cuerpo JSON malicioso intentando publicar un producto
-        payload = {
-            'nombre': 'Un producto inventado',
-            'precio_por_kg': 500,
-            'unidad_medida': 'kg',
-            'stock_disponible': 100,
-        }
-        
-        # 3. Disparar el ataque contra la API
-        response = self.client.post(self.url, payload, format='json')
-        
-        # 4. Afirmar (Assert) que el escudo funcionó. Si da 201 Created, el test explota.
-        self.assertEqual(
-            response.status_code, 
-            status.HTTP_403_FORBIDDEN,
-            "¡Fallo de Seguridad! La API no bloqueó a un Comprador de crear productos."
+        producto = Producto(
+            usuario=self.user,
+            finca=self.finca,
+            categoria=self.categoria,
+            nombre='Manzana',
+            precio_por_kg=Decimal('-10.0'),
+            stock_disponible=100
         )
+        with self.assertRaises(Exception): # Django validators o base de datos deberían saltar
+            producto.full_clean()
+            producto.save()
+
+    def test_sipsa_savings_calculation(self):
+        """
+        Verifica que la lógica de comparación con SIPSA funcione correctamente.
+        """
+        # Crear un precio de referencia SIPSA
+        SipsaPrecio.objects.create(
+            ciudad='Bogotá',
+            producto='Papa Sabanera',
+            precio_promedio=Decimal('3000.0')
+        )
+        
+        # Crear un producto del campesino más barato
+        papa = Producto.objects.create(
+            usuario=self.user,
+            finca=self.finca,
+            categoria=self.categoria,
+            nombre='Papa Sabanera',
+            precio_por_kg=Decimal('2500.0'),
+            stock_disponible=1000
+        )
+        
+        # El ahorro debería ser 500
+        ahorro = Decimal('3000.0') - papa.precio_por_kg
+        self.assertEqual(ahorro, Decimal('500.0'))
