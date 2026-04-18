@@ -104,22 +104,9 @@ class LoginView(APIView):
     )
     def post(self, request):
         try:
-            # Log de depuración inicial (visible en consola/stdout)
-            print(f"DEBUG LOGIN: Intento recibido para: {request.data.get('email')}")
-            logger.info(f"Iniciando post() de LoginView para: {request.data.get('email')}")
-
             serializer = LoginSerializer(data=request.data, context={'request': request})
             
-            # Capturar errores específicamente en la validación do-or-die
-            try:
-                is_valid = serializer.is_valid()
-            except Exception as val_error:
-                error_trace = traceback.format_exc()
-                print(f"DEBUG LOGIN: Error en is_valid(): {str(val_error)}")
-                logger.error(f"Error durante validación de serializer: {str(val_error)}\n{error_trace}")
-                return Response({'error': 'Error de validación interna del servidor'}, status=500)
-
-            if is_valid:
+            if serializer.is_valid():
                 user = serializer.validated_data['user']
                 
                 # Actualizar último login
@@ -142,12 +129,11 @@ class LoginView(APIView):
                     for token in tokens_viejos:
                         BlacklistedToken.objects.get_or_create(token=token)
                 except (ImportError, Exception) as e:
-                    logger.warning(f"Omitiendo revocación de sesiones antiguas: {str(e)}")
+                    logger.info(f"Omitiendo revocación de sesiones: {str(e)}")
                 
                 # Generar tokens JWT
                 refresh = RefreshToken.for_user(user)
                 
-                logger.info(f"Login exitoso para: {user.email}")
                 return Response({
                     'message': 'Inicio de sesión exitoso',
                     'user': UsuarioSerializer(user).data,
@@ -155,12 +141,10 @@ class LoginView(APIView):
                     'refresh': str(refresh)
                 }, status=status.HTTP_200_OK)
                 
-            logger.warning(f"Login fallido (400) para: {request.data.get('email')} - Errores: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
             error_details = traceback.format_exc()
-            print(f"DEBUG LOGIN CRITICAL: {error_details}")
             logger.error(f"ERROR CRÍTICO EN LOGIN: {str(e)}\n{error_details}")
             return Response({
                 'error': 'Error interno del servidor en el proceso de login',
@@ -403,6 +387,11 @@ class PinRecoveryRequestView(APIView):
                       f'Este código expirará en 15 minutos.\n\n' \
                       f'Si no solicitaste este cambio, por favor ignora este correo.'
             
+            'users': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
             try:
                 send_mail(
                     subject,
