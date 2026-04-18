@@ -11,6 +11,7 @@ from django.contrib.auth import update_session_auth_hash, login
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.conf import settings
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -385,13 +386,7 @@ class PinRecoveryRequestView(APIView):
                       f'Has solicitado recuperar tu PIN Visual (Emoji de Seguridad).\n' \
                       f'Tu código de verificación es: {code}\n\n' \
                       f'Este código expirará en 15 minutos.\n\n' \
-                      f'Si no solicitaste este cambio, por favor ignora este correo.'
-            
-            'users': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
+                      
             try:
                 send_mail(
                     subject,
