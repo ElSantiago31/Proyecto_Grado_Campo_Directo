@@ -2612,20 +2612,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
             } catch (error) {
-                let msg = 'Error al cambiar el PIN';
-                if (error.response && error.response.data) {
-                    if (error.response.data.current_password) {
-                        msg = error.response.data.current_password[0];
-                    } else if (error.response.data.new_pin) {
-                        msg = error.response.data.new_pin[0];
-                    } else if (error.response.data.detail) {
-                        msg = error.response.data.detail;
-                    } else if (error.response.data.non_field_errors) {
-                        msg = error.response.data.non_field_errors[0];
+                let msg = error.message || 'Error al cambiar el PIN';
+                if (error.details) {
+                    if (error.details.current_password) {
+                        msg = error.details.current_password[0];
+                    } else if (error.details.new_pin) {
+                        msg = error.details.new_pin[0];
+                    } else if (error.details.detail) {
+                        msg = error.details.detail;
+                    } else if (error.details.non_field_errors) {
+                        msg = error.details.non_field_errors[0];
                     }
-                } else if (error.message) {
-                    msg = error.message;
                 }
+                
                 if (typeof showNotification === 'function') {
                     showNotification(msg, 'error');
                 } else {
