@@ -88,13 +88,30 @@ TEMPLATES = [
 WSGI_APPLICATION = 'campo_directo.wsgi.application'
 
 # Database Configuration
-# Configuracion simplificada: Usamos SQLite tanto en local como en produccion (PythonAnywhere free tier)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Si el archivo .env tiene configuración de MySQL (para Producción), usa MySQL.
+# De lo contrario, usa SQLite por defecto (para Desarrollo Local).
+if config('PROD_DB_NAME', default=''):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': config('PROD_DB_NAME'),
+            'USER': config('PROD_DB_USER', default=''),
+            'PASSWORD': config('PROD_DB_PASSWORD', default=''),
+            'HOST': config('PROD_DB_HOST', default='localhost'),
+            'PORT': config('PROD_DB_PORT', default='3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            }
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Database router para manejar múltiples bases de datos (temporalmente deshabilitado)
