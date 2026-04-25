@@ -1492,7 +1492,8 @@ function renderMessages(messages) {
         }
 
         div.className = `chat-bubble-wrapper ${msgType}`;
-        const timeStr = new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateObj = new Date(msg.fecha_envio);
+        const timeStr = dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }) + ', ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         // SEGURIDAD: Usar escapeHTML() para prevenir XSS en mensajes del chat
         div.innerHTML = `
