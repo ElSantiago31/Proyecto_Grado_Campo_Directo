@@ -2548,72 +2548,42 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
 // ==========================================
 // Lógica para el Cambio de PIN Visual
 // ==========================================
-let selectedEmojisForPin = [];
-const maxEmojisForPin = 4;
+let selectedPinEmoji = null;
 const dashEmojiBtns = document.querySelectorAll('.dash-btn-emoji');
-const dashPinSlots = document.querySelectorAll('.pin-slot');
-const clearPinBtn = document.getElementById('clearPinBtn');
 const changePinForm = document.getElementById('changePinForm');
 
-function updateDashPinDisplay() {
-    dashPinSlots.forEach((slot, index) => {
-        if (index < selectedEmojisForPin.length) {
-            slot.textContent = selectedEmojisForPin[index];
-            slot.style.borderStyle = 'solid';
-            slot.style.borderColor = '#4a7c29';
-            slot.style.background = '#e8f3e1';
-        } else {
-            slot.textContent = '';
-            slot.style.borderStyle = 'dashed';
-            slot.style.borderColor = '#ccc';
-            slot.style.background = '#f9f9f9';
-        }
-    });
-
-    if (selectedEmojisForPin.length > 0) {
-        if (clearPinBtn) clearPinBtn.style.display = 'inline-block';
-    } else {
-        if (clearPinBtn) clearPinBtn.style.display = 'none';
-    }
-}
-
 dashEmojiBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        if (selectedEmojisForPin.length < maxEmojisForPin) {
-            selectedEmojisForPin.push(btn.dataset.value);
-            updateDashPinDisplay();
-        } else {
-            if (typeof showNotification === 'function') {
-                showNotification('Ya has seleccionado el máximo de 4 figuras', 'warning');
-            } else {
-                alert('Ya has seleccionado el máximo de 4 figuras');
-            }
-        }
+    btn.addEventListener('click', function() {
+        // Remover clase activa de todos
+        dashEmojiBtns.forEach(b => {
+            b.style.background = 'white';
+            b.style.borderColor = '#dde8d5';
+            b.style.transform = 'scale(1)';
+        });
+        
+        // Añadir al clickeado
+        this.style.background = '#e8f5e2';
+        this.style.borderColor = '#5a9e2f';
+        this.style.transform = 'scale(1.05)';
+        
+        selectedPinEmoji = this.dataset.value;
     });
 });
-
-if (clearPinBtn) {
-    clearPinBtn.addEventListener('click', () => {
-        selectedEmojisForPin = [];
-        updateDashPinDisplay();
-    });
-}
 
 if (changePinForm) {
     changePinForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        if (selectedEmojisForPin.length !== maxEmojisForPin) {
+        if (!selectedPinEmoji) {
             if (typeof showNotification === 'function') {
-                showNotification('Debes seleccionar exactamente 4 figuras para tu PIN', 'error');
+                showNotification('Debes seleccionar 1 figura para tu nuevo PIN', 'error');
             } else {
-                alert('Debes seleccionar exactamente 4 figuras para tu PIN');
+                alert('Debes seleccionar 1 figura para tu nuevo PIN');
             }
             return;
         }
 
         const currentPassword = document.getElementById('currentPasswordForPin').value;
-        const newPin = selectedEmojisForPin.join(',');
 
         const btn = document.getElementById('changePinBtn');
         const originalText = btn.innerHTML;
@@ -2623,7 +2593,7 @@ if (changePinForm) {
         try {
             await authApi.changePin({
                 current_password: currentPassword,
-                new_pin: newPin
+                new_pin: selectedPinEmoji
             });
 
             if (typeof showNotification === 'function') {
@@ -2633,8 +2603,12 @@ if (changePinForm) {
             }
             
             this.reset();
-            selectedEmojisForPin = [];
-            updateDashPinDisplay();
+            selectedPinEmoji = null;
+            dashEmojiBtns.forEach(b => {
+                b.style.background = 'white';
+                b.style.borderColor = '#dde8d5';
+                b.style.transform = 'scale(1)';
+            });
             
         } catch (error) {
             let msg = 'Error al cambiar el PIN';

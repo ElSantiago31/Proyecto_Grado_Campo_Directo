@@ -367,9 +367,9 @@ class ChangePinSerializer(serializers.Serializer):
         return value
         
     def validate_new_pin(self, value):
-        emojis = value.split(',')
-        if len(emojis) != 4:
-            raise serializers.ValidationError("El PIN Visual debe contener exactamente 4 figuras")
+        # Permitimos 1 figura
+        if not value:
+            raise serializers.ValidationError("Debes seleccionar una figura para el PIN")
         return value
 
 
