@@ -1919,12 +1919,18 @@
         display: none !important;
     }
 
-    .chat-wrapper.chat-active .chat-main {
+    .chat-wrapper.chat-active #chatMainArea {
         display: flex !important;
         position: absolute;
         top: 0;
         left: 0;
         z-index: 5;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .chat-wrapper.chat-active #chatEmptyState {
+        display: none !important;
     }
 
     .chat-bubble {
