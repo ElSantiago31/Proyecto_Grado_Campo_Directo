@@ -922,6 +922,27 @@ async function processPurchase() {
     let cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
     if (cart.length === 0) return;
 
+    const paymentMethod = document.getElementById('paymentMethodSelect')?.value || 'efectivo';
+    
+    if (paymentMethod === 'tarjeta') {
+        const modal = document.getElementById('paymentGatewayModal');
+        if (modal) {
+            const totalSpan = document.getElementById('paymentGatewayTotal');
+            const cartTotal = document.getElementById('cartTotalAmount').textContent;
+            if (totalSpan) totalSpan.textContent = cartTotal;
+            modal.style.display = 'flex';
+        } else {
+            await executeOrderCreation('tarjeta');
+        }
+    } else {
+        await executeOrderCreation('efectivo');
+    }
+}
+
+async function executeOrderCreation(metodoPago) {
+    let cart = JSON.parse(localStorage.getItem('comprador_cart') || '[]');
+    if (cart.length === 0) return;
+
     // Filtrar posibles items del carrito antiguos (sin campesino_id)
     const validCart = cart.filter(item => item.campesino_id);
     if (validCart.length < cart.length) {
@@ -948,7 +969,7 @@ async function processPurchase() {
             ordersByCampesino[campId] = {
                 campesino: parseInt(campId),
                 notas_comprador: "Pedido generado desde la web",
-                metodo_pago: "efectivo",
+                metodo_pago: metodoPago,
                 metodo_entrega: "recogida",
                 direccion_entrega: profileData?.direccion || "Dirección no registrada",
                 telefono_contacto: profileData?.telefono || "Teléfono no registrado",
@@ -969,9 +990,12 @@ async function processPurchase() {
     }
 
     const btn = document.getElementById('processPurchaseBtn');
-    const originalText = btn.textContent;
-    btn.textContent = "Procesando...";
-    btn.disabled = true;
+    let originalText = "Procesar Compra";
+    if (btn) {
+        originalText = btn.textContent;
+        btn.textContent = "Procesando...";
+        btn.disabled = true;
+    }
 
     try {
         const promises = validOrders.map(orderPayload => {
@@ -1738,3 +1762,50 @@ async function showMyReviewsModal() {
         lista.innerHTML = '<p style="text-align:center; color:#e74c3c; padding:20px;">❌ No se pudieron cargar las reseñas. Inténtalo luego.</p>';
     }
 }
+
+// ==========================================================================
+// CONFIGURACIÓN DE LA PASARELA DE PAGOS FALSA
+// ==========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const paymentModal = document.getElementById('paymentGatewayModal');
+    const closeBtn = document.getElementById('closePaymentModal');
+    const paymentForm = document.getElementById('fakePaymentForm');
+    const submitBtn = document.getElementById('submitPaymentBtn');
+
+    if (closeBtn && paymentModal) {
+        closeBtn.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+        });
+    }
+
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '🔄 Contactando Banco...';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
+
+            // Simular demora del banco (2 segundos)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            submitBtn.innerHTML = '✅ Pago Exitoso';
+            submitBtn.style.backgroundColor = '#2d5016';
+            submitBtn.style.opacity = '1';
+            
+            // Esperar 1 seg para que el usuario lea "Pago Exitoso"
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            paymentModal.style.display = 'none';
+            
+            // Restaurar estado del boton para la proxima
+            submitBtn.innerHTML = originalText;
+            submitBtn.style.backgroundColor = '#2b70c9';
+            submitBtn.disabled = false;
+            paymentForm.reset();
+
+            // Ejecutar la creación del pedido en el backend con el método de pago 'tarjeta'
+            await executeOrderCreation('tarjeta');
+        });
+    }
+});

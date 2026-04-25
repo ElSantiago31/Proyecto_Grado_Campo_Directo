@@ -292,11 +292,68 @@
                     <div style="margin-bottom: 15px; font-size: 1.2rem;">
                         <strong>Total Estimado: </strong> <span id="cartTotalAmount">$0</span>
                     </div>
+                    <div style="margin-bottom: 15px; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+                        <label for="paymentMethodSelect" style="font-weight: bold; color: #555;">Método de Pago:</label>
+                        <select id="paymentMethodSelect" class="form-control" style="width: auto; padding: 8px 15px; border-radius: 4px; border: 1px solid #ccc;">
+                            <option value="efectivo">💵 Pago en Efectivo (Contra entrega)</option>
+                            <option value="tarjeta" selected>💳 Pagar con Tarjeta (Pasarela Segura)</option>
+                        </select>
+                    </div>
                     <button id="processPurchaseBtn" class="btn btn-primary" style="padding: 10px 20px; font-size: 1.1rem; background-color: #2d5016; color: white; border: none; border-radius: 5px; cursor: pointer;">
                         Procesar Compra
                     </button>
                 </div>
             </section>
+
+            <!-- Modal Pasarela de Pagos Falsa -->
+            <div id="paymentGatewayModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center;">
+                <div class="modal-content" style="background: white; padding: 0; border-radius: 12px; width: 90%; max-width: 450px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    <!-- Header Pasarela -->
+                    <div style="background: #1a1a1a; color: white; padding: 20px; text-align: center; position: relative;">
+                        <span id="closePaymentModal" style="position: absolute; right: 15px; top: 15px; cursor: pointer; font-size: 1.5rem; color: #aaa;">&times;</span>
+                        <div style="font-size: 1.8rem; margin-bottom: 5px;">🔒 PaySecure</div>
+                        <div style="font-size: 0.9rem; color: #aaa;">Pasarela de Pagos Simulada</div>
+                    </div>
+                    
+                    <!-- Body Pasarela -->
+                    <div style="padding: 25px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <span style="font-size: 1.1rem; color: #555;">Total a Pagar:</span><br>
+                            <span id="paymentGatewayTotal" style="font-size: 2rem; font-weight: bold; color: #2d5016;">$0</span>
+                        </div>
+                        
+                        <form id="fakePaymentForm">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; color: #555;">Número de Tarjeta</label>
+                                <div style="position: relative;">
+                                    <input type="text" placeholder="0000 0000 0000 0000" maxlength="19" class="form-control" style="width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; letter-spacing: 1px;" required>
+                                    <span style="position: absolute; left: 12px; top: 12px; font-size: 1.2rem;">💳</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; color: #555;">Expiración</label>
+                                    <input type="text" placeholder="MM/YY" maxlength="5" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: center;" required>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; color: #555;">CVV</label>
+                                    <input type="password" placeholder="•••" maxlength="4" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: center; letter-spacing: 2px;" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 25px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; color: #555;">Nombre del Titular</label>
+                                <input type="text" placeholder="Nombre como aparece en la tarjeta" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;" required>
+                            </div>
+                            
+                            <button type="submit" id="submitPaymentBtn" style="width: 100%; padding: 15px; font-size: 1.1rem; font-weight: bold; background-color: #2b70c9; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.3s;">
+                                Pagar Ahora
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
             <!-- Sección Favoritos -->
             <section id="favorites" class="content-section">
