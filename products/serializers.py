@@ -210,20 +210,38 @@ class ProductoCreateUpdateSerializer(serializers.ModelSerializer):
                     # Un bulto suele ser de 50kg, pero varía. Solo validamos si es bulto de 50kg.
                     precio_equivalente_kg = precio / Decimal('50')
 
-                # El precio máximo permitido será un 130% (x1.3) del valor SIPSA (por kg)
                 limite_maximo = sipsa_val.precio_promedio * Decimal('1.30')
                 if precio_equivalente_kg > limite_maximo:
+                    # Convertir para mostrar en el mensaje
+                    if unidad == 'libra':
+                        sipsa_mostrar = sipsa_val.precio_promedio / Decimal('2')
+                        limite_mostrar = limite_maximo / Decimal('2')
+                    elif unidad == 'arroba':
+                        sipsa_mostrar = sipsa_val.precio_promedio * Decimal('12.5')
+                        limite_mostrar = limite_maximo * Decimal('12.5')
+                    elif unidad == 'gramo':
+                        sipsa_mostrar = sipsa_val.precio_promedio / Decimal('1000')
+                        limite_mostrar = limite_maximo / Decimal('1000')
+                    elif unidad == 'bulto':
+                        sipsa_mostrar = sipsa_val.precio_promedio * Decimal('50')
+                        limite_mostrar = limite_maximo * Decimal('50')
+                    else:
+                        sipsa_mostrar = sipsa_val.precio_promedio
+                        limite_mostrar = limite_maximo
+                        
+                    unidad_mostrar = unidad.capitalize()
+
                     if es_exacto or sipsa_val.producto.lower() == palabra_clave.lower():
                         mensaje = (
                             f'Precio demasiado alto (${precio:,.0f} por {unidad}). '
-                            f'La referencia oficial para "{sipsa_val.producto}" es de ${sipsa_val.precio_promedio:,.0f} COP/Kg. '
-                            f'El límite máximo permitido es ${limite_maximo:,.0f} COP/Kg.'
+                            f'La referencia oficial para "{sipsa_val.producto}" es de ${sipsa_mostrar:,.0f} COP/{unidad_mostrar}. '
+                            f'El límite máximo permitido es ${limite_mostrar:,.0f} COP/{unidad_mostrar}.'
                         )
                     else:
                         mensaje = (
                             f'Precio demasiado alto para la referencia. '
-                            f'Basado en "{sipsa_val.producto}" (${sipsa_val.precio_promedio:,.0f} COP/Kg), '
-                            f'el límite es ${limite_maximo:,.0f} COP/Kg. Tu precio equivale a ${precio_equivalente_kg:,.0f} COP/Kg.'
+                            f'Basado en "{sipsa_val.producto}" (${sipsa_mostrar:,.0f} COP/{unidad_mostrar}), '
+                            f'el límite es ${limite_mostrar:,.0f} COP/{unidad_mostrar}. Tu precio ingresado fue ${precio:,.0f} COP/{unidad_mostrar}.'
                         )
 
                     raise serializers.ValidationError({
