@@ -255,6 +255,11 @@ class PedidoCreateSerializer(serializers.ModelSerializer):
                 mensaje_texto += f"🏠 Dirección de envío: {pedido.direccion_entrega}\n"
             if pedido.telefono_contacto:
                 mensaje_texto += f"📞 Teléfono: {pedido.telefono_contacto}\n"
+            
+            # Se añade el método de pago al mensaje automático
+            metodo_pago_texto = pedido.get_metodo_pago_display() or "No especificado"
+            mensaje_texto += f"💳 Método de pago: {metodo_pago_texto}\n"
+            
             mensaje_texto += "\n¡Quedo atento/a a la confirmación!"
                 
             Mensaje.objects.create(
