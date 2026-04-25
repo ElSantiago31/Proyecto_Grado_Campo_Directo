@@ -237,6 +237,10 @@ const authApi = {
         return await api.post('/auth/change-password/', passwordData);
     },
 
+    async changePin(pinData) {
+        return await api.post('/auth/change-pin/', pinData);
+    },
+
     async getDashboard(period = 'month') {
         return await api.get(`/auth/dashboard/?period=${period}`);
     },

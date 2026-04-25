@@ -353,6 +353,26 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class ChangePinSerializer(serializers.Serializer):
+    """
+    Serializer para cambio de PIN Visual (imagen_2fa)
+    """
+    current_password = serializers.CharField(style={'input_type': 'password'})
+    new_pin = serializers.CharField(min_length=1)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("La contraseña de texto actual es incorrecta")
+        return value
+        
+    def validate_new_pin(self, value):
+        emojis = value.split(',')
+        if len(emojis) != 4:
+            raise serializers.ValidationError("El PIN Visual debe contener exactamente 4 figuras")
+        return value
+
+
 class UserDashboardSerializer(serializers.ModelSerializer):
     """
     Serializer para dashboard del usuario con estadísticas

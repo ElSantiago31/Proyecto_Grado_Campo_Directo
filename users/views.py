@@ -17,8 +17,8 @@ from drf_yasg import openapi
 
 from .serializers import (
     RegisterSerializer, LoginSerializer, UsuarioSerializer,
-    ProfileUpdateSerializer, ChangePasswordSerializer, UserDashboardSerializer,
-    PinRecoveryRequestSerializer, PinResetSerializer
+    ProfileUpdateSerializer, ChangePasswordSerializer, ChangePinSerializer, 
+    UserDashboardSerializer, PinRecoveryRequestSerializer, PinResetSerializer
 )
 from .models import Usuario
 import json
@@ -240,6 +240,41 @@ class ChangePasswordView(APIView):
             
             return Response({
                 'message': 'Contraseña cambiada exitosamente'
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePinView(APIView):
+    """
+    Vista para cambiar el PIN Visual (imagen_2fa) del usuario
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    @swagger_auto_schema(
+        operation_description="Cambiar PIN Visual del usuario",
+        request_body=ChangePinSerializer,
+        responses={
+            200: openapi.Response(
+                description="PIN cambiado exitosamente",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: openapi.Response(description="Error de validación")
+        }
+    )
+    def post(self, request):
+        serializer = ChangePinSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.imagen_2fa = serializer.validated_data['new_pin']
+            user.save()
+            
+            return Response({
+                'message': 'PIN Visual cambiado exitosamente'
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
