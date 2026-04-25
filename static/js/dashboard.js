@@ -2548,94 +2548,96 @@ document.getElementById('changePasswordForm')?.addEventListener('submit', async 
 // ==========================================
 // Lógica para el Cambio de PIN Visual
 // ==========================================
-let selectedPinEmoji = null;
-const dashEmojiBtns = document.querySelectorAll('.dash-btn-emoji');
-const changePinForm = document.getElementById('changePinForm');
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedPinEmoji = null;
+    const dashEmojiBtns = document.querySelectorAll('.dash-btn-emoji');
+    const changePinForm = document.getElementById('changePinForm');
 
-dashEmojiBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Remover clase activa de todos
-        dashEmojiBtns.forEach(b => {
-            b.style.background = 'white';
-            b.style.borderColor = '#dde8d5';
-            b.style.transform = 'scale(1)';
-        });
-        
-        // Añadir al clickeado
-        this.style.background = '#e8f5e2';
-        this.style.borderColor = '#5a9e2f';
-        this.style.transform = 'scale(1.05)';
-        
-        selectedPinEmoji = this.dataset.value;
-    });
-});
-
-if (changePinForm) {
-    changePinForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-
-        if (!selectedPinEmoji) {
-            if (typeof showNotification === 'function') {
-                showNotification('Debes seleccionar 1 figura para tu nuevo PIN', 'error');
-            } else {
-                alert('Debes seleccionar 1 figura para tu nuevo PIN');
-            }
-            return;
-        }
-
-        const currentPassword = document.getElementById('currentPasswordForPin').value;
-
-        const btn = document.getElementById('changePinBtn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.textContent = 'Actualizando PIN...';
-
-        try {
-            await authApi.changePin({
-                current_password: currentPassword,
-                new_pin: selectedPinEmoji
-            });
-
-            if (typeof showNotification === 'function') {
-                showNotification('PIN Visual actualizado exitosamente', 'success');
-            } else {
-                alert('PIN Visual actualizado exitosamente');
-            }
-            
-            this.reset();
-            selectedPinEmoji = null;
+    dashEmojiBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover clase activa de todos
             dashEmojiBtns.forEach(b => {
                 b.style.background = 'white';
                 b.style.borderColor = '#dde8d5';
                 b.style.transform = 'scale(1)';
             });
             
-        } catch (error) {
-            let msg = 'Error al cambiar el PIN';
-            if (error.response && error.response.data) {
-                if (error.response.data.current_password) {
-                    msg = error.response.data.current_password[0];
-                } else if (error.response.data.new_pin) {
-                    msg = error.response.data.new_pin[0];
-                } else if (error.response.data.detail) {
-                    msg = error.response.data.detail;
-                } else if (error.response.data.non_field_errors) {
-                    msg = error.response.data.non_field_errors[0];
-                }
-            } else if (error.message) {
-                msg = error.message;
-            }
-            if (typeof showNotification === 'function') {
-                showNotification(msg, 'error');
-            } else {
-                alert(msg);
-            }
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
+            // Añadir al clickeado
+            this.style.background = '#e8f5e2';
+            this.style.borderColor = '#5a9e2f';
+            this.style.transform = 'scale(1.05)';
+            
+            selectedPinEmoji = this.dataset.value;
+        });
     });
-}
+
+    if (changePinForm) {
+        changePinForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            if (!selectedPinEmoji) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Debes seleccionar 1 figura para tu nuevo PIN', 'error');
+                } else {
+                    alert('Debes seleccionar 1 figura para tu nuevo PIN');
+                }
+                return;
+            }
+
+            const currentPassword = document.getElementById('currentPasswordForPin').value;
+
+            const btn = document.getElementById('changePinBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = 'Actualizando PIN...';
+
+            try {
+                await authApi.changePin({
+                    current_password: currentPassword,
+                    new_pin: selectedPinEmoji
+                });
+
+                if (typeof showNotification === 'function') {
+                    showNotification('PIN Visual actualizado exitosamente', 'success');
+                } else {
+                    alert('PIN Visual actualizado exitosamente');
+                }
+                
+                this.reset();
+                selectedPinEmoji = null;
+                dashEmojiBtns.forEach(b => {
+                    b.style.background = 'white';
+                    b.style.borderColor = '#dde8d5';
+                    b.style.transform = 'scale(1)';
+                });
+                
+            } catch (error) {
+                let msg = 'Error al cambiar el PIN';
+                if (error.response && error.response.data) {
+                    if (error.response.data.current_password) {
+                        msg = error.response.data.current_password[0];
+                    } else if (error.response.data.new_pin) {
+                        msg = error.response.data.new_pin[0];
+                    } else if (error.response.data.detail) {
+                        msg = error.response.data.detail;
+                    } else if (error.response.data.non_field_errors) {
+                        msg = error.response.data.non_field_errors[0];
+                    }
+                } else if (error.message) {
+                    msg = error.message;
+                }
+                if (typeof showNotification === 'function') {
+                    showNotification(msg, 'error');
+                } else {
+                    alert(msg);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    }
+});
 
 // ==========================================================================
 // MÓDULO DE CHAT (ANTI-INTERMEDIARIOS)
