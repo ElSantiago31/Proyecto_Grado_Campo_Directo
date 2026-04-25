@@ -1894,7 +1894,7 @@
 @media (max-width: 768px) {
     .chat-wrapper {
         flex-direction: column;
-        height: 82vh; /* Ajuste para evitar scroll del body */
+        height: calc(100vh - 220px); /* Ajuste dinámico para evitar scroll del body hacia el input */
         border-radius: 12px;
         position: relative;
         overflow: hidden;
