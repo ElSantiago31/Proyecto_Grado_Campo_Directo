@@ -121,8 +121,19 @@ Debes insertar una tabla por cada funcionalidad clave. Las columnas estándar qu
 | **Resultado Obtenido:** | Imagen optimizada y servida velozmente sin pérdida aparente de calidad gráfica. |
 | **Estado:** | ✅ Aprobado |
 
+### Caso de Prueba 10: Bifurcación de Roles y Seguridad de Rutas
+| Atributo | Descripción |
+| :--- | :--- |
+| **ID del Caso:** | CP-10 |
+| **Nombre:** | Bloqueo de acceso cruzado entre paneles de Campesino y Comprador |
+| **Precondición:** | El usuario está autenticado en el sistema como "Comprador". |
+| **Pasos de Ejecución:** | 1. Iniciar sesión como Comprador en `dashboard-comprador.html`.<br>2. Forzar manualmente la navegación en la barra de direcciones del navegador (URL) apuntando hacia la ruta privada del campesino: `http://127.0.0.1:8000/dashboard/`.<br>3. Presionar Enter. |
+| **Resultado Esperado:** | El backend intercepta la petición, verifica el token y el rol (`tipo_usuario`), denegando el acceso y redirigiendo obligatoriamente al usuario de vuelta a su panel correspondiente (`/dashboard/comprador/`). |
+| **Resultado Obtenido:** | Seguridad de rutas efectiva; es imposible para un Comprador acceder a las herramientas de venta del Campesino, y viceversa. |
+| **Estado:** | ✅ Aprobado |
+
 ---
 
 ## ¿Cómo Ejecutarlas Oficialmente?
 1. **Capturas de Pantalla (Evidencias):** Cuando pegues estas tablas en tu Word, debes poner debajo de cada tabla **una captura de pantalla** tuya realizando los "Pasos de Ejecución" (Ej: Una foto del modal de PaySecure, otra foto del gráfico de Chart.js).
-2. Eso es lo que las universidades llaman "Evidencia de Pruebas". Con estos 5 casos documentados, cubres Seguridad, Front-End, Back-End, API y Lógica de Negocio.
+2. Eso es lo que las universidades llaman "Evidencia de Pruebas". Con estos 10 casos documentados, cubres Seguridad, Front-End, Back-End, API y Lógica de Negocio.
