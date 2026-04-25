@@ -1921,12 +1921,15 @@
 
     .chat-wrapper.chat-active #chatMainArea {
         display: flex !important;
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
-        z-index: 5;
-        width: 100% !important;
-        height: 100% !important;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        width: 100vw !important;
+        height: 100dvh !important; /* Dynamic viewport height para teclados de iOS/Android */
+        border-radius: 0;
     }
 
     .chat-wrapper.chat-active #chatEmptyState {
